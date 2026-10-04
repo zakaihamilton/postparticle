@@ -1,0 +1,80 @@
+.brand {
+  text-decoration: none;
+  color: var(--text);
+  display: inline-flex;
+}
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 24px;
+  font-weight: 750;
+  letter-spacing: -1.2px;
+}
+.highlight {
+  color: var(--accent);
+}
+.logoGlyph {
+  width: 31px;
+  height: 33px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.themeControl {
+  min-width: 110px;
+  width: 110px;
+}
+.themeControl > button {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 8px 12px;
+  gap: 10px;
+}
+.error,
+.notice {
+  padding: 13px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin: 14px 0;
+  overflow-wrap: anywhere;
+}
+.error {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+.notice {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+.empty {
+  padding: 64px 20px;
+  text-align: center;
+  color: var(--muted);
+}
+.empty h3 {
+  color: var(--text);
+  margin: 18px 0 8px;
+}
+.empty p {
+  max-width: 400px;
+  margin: auto;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.emptyIcon {
+  display: inline-flex;
+  padding: 15px;
+  border-radius: 16px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.icon {
+  flex-shrink: 0;
+  vertical-align: middle;
+}

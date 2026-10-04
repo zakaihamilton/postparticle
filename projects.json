@@ -1,0 +1,8 @@
+[
+  {
+    "id": "demo",
+    "name": "Demo Journal",
+    "description": "Stories, ideas, and everything in between.",
+    "envPrefix": "PROJECT_DEMO"
+  }
+]

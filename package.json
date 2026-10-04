@@ -1,0 +1,55 @@
+{
+  "name": "postparticle",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p examples/next-blog/tsconfig.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:run": "vitest run",
+    "test:e2e": "npm run build && npm run example:build && playwright test",
+    "health": "repnix check",
+    "bootstrap": "tsx --conditions=react-server --env-file=.env.local scripts/bootstrap.ts",
+    "storage:verify": "tsx --conditions=react-server --env-file=.env.local scripts/verify-storage.ts",
+    "example:dev": "next dev examples/next-blog",
+    "example:build": "next build examples/next-blog",
+    "example:start": "next start examples/next-blog"
+  },
+  "engines": {
+    "node": ">=22.20.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1146.0",
+    "@aws-sdk/s3-request-presigner": "^3.1146.0",
+    "next": "^16.3.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.8",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "knip": "^6.39.0",
+    "prettier": "^3.9.9",
+    "repnix": "^1.0.4",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
+  }
+}

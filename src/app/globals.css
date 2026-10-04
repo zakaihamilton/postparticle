@@ -1,0 +1,130 @@
+:root {
+  --bg: #f7f9fc;
+  --surface: #fff;
+  --surface-alt: #f2f5fa;
+  --text: #17243b;
+  --muted: #5d6d85;
+  --border: #e3e9f1;
+  --accent: #316de6;
+  --accent-ink: #255bc8;
+  --accent-soft: #edf3ff;
+  --green: #18836a;
+  --green-bg: #eaf7f1;
+  --danger: #ba3648;
+  --danger-bg: #fff0f1;
+  --shadow: 0 8px 35px #142d5010;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #101721;
+  --surface: #171f2c;
+  --surface-alt: #202a39;
+  --text: #e5ecf8;
+  --muted: #a1aec4;
+  --border: #2c384b;
+  --accent: #82aaff;
+  --accent-ink: #82aaff;
+  --accent-soft: #222f4b;
+  --green: #76d9b8;
+  --green-bg: #19382f;
+  --danger: #ff9daa;
+  --danger-bg: #3a242d;
+  --shadow: 0 8px 35px #0002;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --bg: #101721;
+    --surface: #171f2c;
+    --surface-alt: #202a39;
+    --text: #e5ecf8;
+    --muted: #a1aec4;
+    --border: #2c384b;
+    --accent: #82aaff;
+    --accent-ink: #82aaff;
+    --accent-soft: #222f4b;
+    --green: #76d9b8;
+    --green-bg: #19382f;
+    --danger: #ff9daa;
+    --danger-bg: #3a242d;
+    --shadow: 0 8px 35px #0002;
+    color-scheme: dark;
+  }
+}
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a {
+  color: inherit;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+button,
+a,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+input,
+textarea,
+select {
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px 12px;
+  width: 100%;
+  outline: none;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+textarea {
+  resize: vertical;
+}
+::selection {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}

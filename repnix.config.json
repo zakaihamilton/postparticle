@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "categories": {
+    "types": { "mode": "required" },
+    "lint": { "mode": "required" },
+    "format": { "mode": "required" },
+    "tests": { "mode": "required" },
+    "accessibility": { "mode": "required" },
+    "dead-code": { "mode": "required" }
+  },
+  "severityThreshold": "warning",
+  "execution": { "jobs": 2, "timeoutSeconds": 300 }
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/app/**/{page,layout,route,error,loading,not-found}.tsx",
+    "src/app/**/route.ts",
+    "scripts/*.ts",
+    "tests/**/*.test.ts",
+    "tests/e2e/*.spec.ts",
+    "src/lib/client.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}", "scripts/*.ts", "tests/**/*.{ts,tsx}"],
+  "ignoreDependencies": []
+}
