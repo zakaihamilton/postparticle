@@ -10,19 +10,21 @@ memberships/{projectId}/{username}/{timestamp_uuid}.json
 sessions/{sha256_token}.json
 ```
 
-Each project Space stores:
+The shared content Space stores each project's objects under its own prefix:
 
 ```text
-content/articles/{slug}/{timestamp_uuid}.json
-content/documents/{key}/{timestamp_uuid}.json
-checkpoints/content/{kind}/{generation}/manifest.json
-checkpoints/content/{kind}/{generation}/shard-00000.json
-media/{uuid}/{timestamp_uuid}.json
-uploads/{uuid}.json
-incoming/{uuid}/asset
-originals/{uuid}/asset
-public/media/{uuid}/asset
+projects/{projectId}/content/articles/{slug}/{timestamp_uuid}.json
+projects/{projectId}/content/documents/{key}/{timestamp_uuid}.json
+projects/{projectId}/checkpoints/content/{kind}/{generation}/manifest.json
+projects/{projectId}/checkpoints/content/{kind}/{generation}/shard-00000.json
+projects/{projectId}/media/{uuid}/{timestamp_uuid}.json
+projects/{projectId}/uploads/{uuid}.json
+projects/{projectId}/incoming/{uuid}/asset
+projects/{projectId}/originals/{uuid}/asset
+projects/{projectId}/public/media/{uuid}/asset
 ```
+
+The content storage credential can access every project prefix. Project membership is enforced by the application. The control Space remains a separate bucket for accounts, memberships, and sessions.
 
 Every event records ID, UTC time, actor, action, and payload. Events use unique keys and remain immutable. Reads order by timestamp and UUID, independently of storage listing order. Append observes the newest existing event in that stream and chooses a timestamp later than it. Truly concurrent writes can still share a timestamp; UUID ordering breaks the tie. All writes are retained. The latest save wins for drafts; publish/unpublish events independently determine the public snapshot.
 
@@ -32,7 +34,7 @@ Listings still enumerate immutable event keys, while checkpoints reduce how many
 
 Content checkpoints are versioned derived snapshots; the event objects remain authoritative. Each checkpoint generation has a manifest written after its shards. Shards are capped at 4 MiB or 1,000 records and contain each record's reduced state, last folded event cursor, and replay cutoff. The newest event timestamp for a record remains in the replay tail, so events sharing that timestamp continue to follow the existing UUID tie ordering. Readers verify shard hashes and fall back to an older valid generation or full event replay when a checkpoint is missing or invalid. If source keys change while a generation is built, the builder retries twice; if it remains unstable, it publishes no manifest. Orphaned shards from an interrupted build are ignored.
 
-Build checkpoints for a single project using its configured storage credentials:
+Build checkpoints for a single project using the shared content storage credentials:
 
 ```sh
 npm run storage:checkpoint -- demo

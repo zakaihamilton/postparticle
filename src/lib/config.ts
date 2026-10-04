@@ -7,7 +7,6 @@ const projectSchema = z.object({
   id: identifier,
   name: z.string().min(1),
   description: z.string(),
-  envPrefix: z.string().regex(/^[A-Z][A-Z0-9_]*$/),
 });
 export const projects: Project[] = z.array(projectSchema).parse(registry);
 if (new Set(projects.map((p) => p.id)).size !== projects.length)

@@ -4,7 +4,6 @@ export interface Project {
   id: string;
   name: string;
   description: string;
-  envPrefix: string;
 }
 export interface Actor {
   username: string;

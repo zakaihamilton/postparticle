@@ -2,7 +2,11 @@
   {
     "id": "demo",
     "name": "Demo Journal",
-    "description": "Stories, ideas, and everything in between.",
-    "envPrefix": "PROJECT_DEMO"
+    "description": "Stories, ideas, and everything in between."
+  },
+  {
+    "id": "sentry8",
+    "name": "SENTRY8",
+    "description": "SENTRY8 content and media."
   }
 ]

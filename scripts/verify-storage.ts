@@ -5,9 +5,11 @@ if (process.env.STORAGE_DRIVER !== "spaces")
   throw new Error(
     "Verification requires STORAGE_DRIVER=spaces and real Spaces credentials",
   );
-for (const prefix of ["CONTROL", ...projects.map((p) => p.envPrefix)]) {
+if (projects.length === 0) throw new Error("Configure at least one project");
+for (const prefix of ["CONTROL", "CONTENT"]) {
   const store = new SpacesStore(prefix);
-  const base = `verification/${randomUUID()}`;
+  const root = prefix === "CONTENT" ? `projects/${projects[0].id}/` : "";
+  const base = `${root}verification/${randomUUID()}`;
   try {
     await store.put(`${base}/record.json`, { test: "postparticle" });
     if (
