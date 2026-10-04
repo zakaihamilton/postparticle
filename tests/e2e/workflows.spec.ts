@@ -25,7 +25,7 @@ test("public welcome leads to a separate login page, supports themes and reduced
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "Publish something",
+    "Create, manage, publish.",
   );
   await page.getByRole("combobox", { name: "Color theme" }).click();
   await page.getByRole("option", { name: "Dark", exact: true }).click();
@@ -43,7 +43,9 @@ test("public welcome leads to a separate login page, supports themes and reduced
     .filter({ hasText: "Where does my content live?" })
     .click();
   await expect(page.getByText(/In your DigitalOcean Spaces/)).toBeVisible();
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await expect
+    .poll(async () => (await new AxeBuilder({ page }).analyze()).violations)
+    .toEqual([]);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -216,7 +218,9 @@ test("custom dropdown supports keyboard selection, dismissal and a rotating inse
   await expect
     .poll(() => arrow.evaluate((el) => getComputedStyle(el).transform))
     .toBe("matrix(-1, 0, 0, -1, 0, 0)");
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await expect
+    .poll(async () => (await new AxeBuilder({ page }).analyze()).violations)
+    .toEqual([]);
   expect(
     await control.evaluate((el) => {
       const svg = el.querySelector("svg[data-open]")!;
