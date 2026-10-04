@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Brand, Icon, ThemeSwitch } from "@/components/ui";
 import { WelcomePreview } from "@/components/welcome-preview";
 import WelcomeReveal from "@/components/welcome-reveal";
@@ -42,18 +43,15 @@ export default function Welcome() {
           <div className={styles.heroCopy}>
             <div className={styles.eyebrow}>
               <span className={styles.accentDot} />
-              YOUR CONTENT. YOUR STORAGE. YOUR NEXT IDEA.
+              POSTPARTICLE / CONTENT MANAGEMENT
             </div>
             <h1>
-              <span>Create, manage, publish.</span>
-              <span className={styles.headlineAccent}>
-                Your content, connected.
-              </span>
+              Manage your website’s{" "}
+              <span className={styles.headlineAccent}>content.</span>
             </h1>
             <p>
-              A focused workspace for articles, media, and dynamic content.
-              Publish to any website, with your own DigitalOcean Spaces behind
-              it.
+              Write articles, organize media, and publish JSON content from one
+              workspace. Everything is stored in your DigitalOcean Spaces.
             </p>
             <div className={styles.actions}>
               <Link className={styles.primary} href="/login">
@@ -81,7 +79,7 @@ export default function Welcome() {
         </section>
         <section id="product" className={styles.product} data-reveal>
           <div className={styles.productCaption}>
-            <span>ONE WORKSPACE. EVERY PIECE OF CONTENT.</span>
+            <span>YOUR PUBLISHING WORKSPACE</span>
             <span>
               <Icon name="arrow-down" size={14} />
               Try the publishing preview
@@ -97,13 +95,13 @@ export default function Welcome() {
           <div className={styles.sectionHeading}>
             <span className={styles.eyebrow}>01 / FROM DRAFT TO DELIVERY</span>
             <h2>
-              A clear path from idea
+              Write privately.
               <br />
-              to published content.
+              Publish when ready.
             </h2>
             <p>
-              Work privately. Refine the details. Decide when your readers see
-              the result.
+              Draft changes stay private. Your website receives a new version
+              only when you publish.
             </p>
           </div>
           <ol className={styles.steps}>
@@ -118,11 +116,11 @@ export default function Welcome() {
                 icon: "image",
                 title: "Prepare the details",
                 text: "Bring in your media, check the preview, and configure search and social metadata.",
-                detail: "Ready when you are",
+                detail: "Media and SEO checked",
               },
               {
                 icon: "globe",
-                title: "Publish with intent",
+                title: "Publish the version",
                 text: "Release a finished version. Further edits stay private until you publish again.",
                 detail: "Available through the API",
               },
@@ -146,109 +144,107 @@ export default function Welcome() {
         </section>
         <section id="media" className={styles.capabilities} data-reveal>
           <div className={styles.sectionHeading}>
-            <span className={styles.eyebrow}>
-              02 / BUILT FOR DYNAMIC WEBSITES
-            </span>
-            <h2>
-              More than words.
-              <br />
-              Everything that brings them to life.
-            </h2>
-            <p>
-              Keep your stories, assets, and structured content together without
-              forcing your website into a template.
-            </p>
+            <span className={styles.eyebrow}>CONTENT LIBRARY</span>
+            <h2>Articles, images, and video.</h2>
           </div>
-          <div className={styles.capabilityGrid}>
-            <article className={styles.capability}>
-              <div className={styles.articleMini} aria-hidden="true">
-                <div>
-                  <span className={styles.miniLabel}>ARTICLE / DRAFT</span>
-                  <Icon name="article" size={19} />
-                </div>
-                <strong>Behind the next idea</strong>
-                <span>A little context makes a better story.</span>
-                <div className={styles.miniLines}>
-                  <i />
-                  <i />
-                  <i />
-                </div>
-                <div className={styles.miniTags}>
-                  <span>Process</span>
-                  <span>Ideas</span>
-                </div>
+          <div className={styles.contentRow}>
+            <div className={styles.editorialGallery}>
+              <figure className={styles.featurePhoto}>
+                <Image
+                  src="/images/welcome/architecture.webp"
+                  width={1536}
+                  height={1024}
+                  sizes="(max-width: 720px) 90vw, 50vw"
+                  alt="Sunlit stone courtyard with an olive tree and blue doorway"
+                />
+                <figcaption>
+                  <span>ARTICLE COVER</span>
+                  <strong>Light, stone, and open space</strong>
+                </figcaption>
+              </figure>
+              <div className={styles.photoPair}>
+                <figure>
+                  <Image
+                    src="/images/welcome/studio.webp"
+                    width={1536}
+                    height={1024}
+                    sizes="(max-width: 720px) 44vw, 25vw"
+                    alt="Working studio with materials and tools on a wooden table"
+                  />
+                  <figcaption>studio-notes.jpg</figcaption>
+                </figure>
+                <figure>
+                  <Image
+                    src="/images/welcome/coast.webp"
+                    width={1536}
+                    height={1024}
+                    sizes="(max-width: 720px) 44vw, 25vw"
+                    alt="Rocky coastline and quiet blue sea"
+                  />
+                  <figcaption>
+                    <Icon name="play" size={16} /> coastal-film.mp4{" "}
+                    <span>Sample cover</span>
+                  </figcaption>
+                </figure>
               </div>
-              <div className={styles.capabilityCopy}>
-                <Icon name="article" />
-                <h3>Articles that are ready for the web</h3>
-                <p>
-                  Markdown, searchable tags, editable dates, and SEO fields.
-                  Draft and published versions stay separate.
-                </p>
+            </div>
+            <div className={styles.contentCopy}>
+              <Icon name="image" size={28} />
+              <h3>
+                Write the article.
+                <br />
+                Keep the assets with it.
+              </h3>
+              <p>
+                Markdown articles with tags, dates, and SEO fields. Images and
+                video with alt text, captions, and metadata.
+              </p>
+              <p>
+                Original files remain private. Referenced media gets a delivery
+                copy when you publish.
+              </p>
+              <div className={styles.previewTags}>
+                <span>Architecture</span>
+                <span>Studio</span>
+                <span>Travel</span>
               </div>
-            </article>
-            <article className={styles.capability}>
-              <div className={styles.mediaMini} aria-hidden="true">
-                <div className={styles.assetOne}>
-                  <Icon name="image" size={30} />
-                  <span>studio-cover.jpg</span>
-                </div>
-                <div className={styles.assetTwo}>
-                  <Icon name="play" size={28} />
-                  <span>process-film.mp4</span>
-                </div>
-                <div className={styles.assetCaption}>
-                  <Icon name="check" size={14} />
-                  Originals + context, together
-                </div>
-              </div>
-              <div className={styles.capabilityCopy}>
-                <Icon name="image" />
-                <h3>A library for images and video</h3>
-                <p>
-                  Keep private originals, alt text, captions, and JSON metadata.
-                  Publish delivery copies of referenced assets.
-                </p>
-              </div>
-            </article>
-            <article className={styles.capability}>
-              <div className={styles.jsonMini} aria-hidden="true">
-                <span className={styles.miniLabel}>
-                  DOCUMENT / HOMEPAGE-BANNER
-                </span>
-                <pre>
-                  <code>
-                    {
-                      '{\n  "headline": "Something new",\n  "link": "/journal",\n  "visible": true\n}'
-                    }
-                  </code>
-                </pre>
-                <span className={styles.jsonStatus}>
-                  <Icon name="check" size={13} />
-                  Valid JSON
-                </span>
-              </div>
-              <div className={styles.capabilityCopy}>
-                <Icon name="code" />
-                <h3>Content beyond the blog</h3>
-                <p>
-                  Named JSON documents for banners, navigation, or other dynamic
-                  sections. Use the structure your website needs.
-                </p>
-              </div>
-            </article>
+            </div>
+          </div>
+          <div className={styles.contentRow}>
+            <div className={styles.contentCopy}>
+              <Icon name="code" size={28} />
+              <h3>Update more than the blog.</h3>
+              <p>
+                Store banners, navigation, and other website content as named
+                JSON documents. Choose the structure your frontend needs.
+              </p>
+              <p>
+                Save a draft, check the JSON, then publish it through the same
+                API.
+              </p>
+            </div>
+            <div className={styles.jsonMini}>
+              <span className={styles.miniLabel}>
+                DOCUMENT / HOMEPAGE-BANNER
+              </span>
+              <pre>
+                <code>
+                  {
+                    '{\n  "headline": "Studio open days",\n  "link": "/visit",\n  "visible": true\n}'
+                  }
+                </code>
+              </pre>
+              <span className={styles.jsonStatus}>
+                <Icon name="check" size={16} />
+                Valid JSON · Draft saved
+              </span>
+            </div>
           </div>
         </section>
         <section id="connected" className={styles.connected} data-reveal>
           <div className={styles.integrationCopy}>
-            <span className={styles.eyebrow}>03 / CONNECT TO YOUR WEBSITE</span>
-            <h2>
-              Your frontend.
-              <br />
-              Your content.
-              <br />
-              <span>One connection.</span>
-            </h2>
+            <span className={styles.eyebrow}>WEBSITE INTEGRATION</span>
+            <h2>Fetch published content on your website.</h2>
             <p>
               Fetch published articles and JSON documents through the public
               API. Keep your own design, routes, and reading experience.
@@ -291,7 +287,14 @@ export default function Welcome() {
                 <span className={styles.miniLabel}>DEMO WEBSITE / JOURNAL</span>
                 <span>Latest stories</span>
               </div>
-              <h3>A new perspective</h3>
+              <Image
+                src="/images/welcome/architecture.webp"
+                width={1536}
+                height={1024}
+                sizes="(max-width: 720px) 80vw, 40vw"
+                alt=""
+              />
+              <h3>Light, stone, and open space</h3>
               <p>The published version, rendered in your own design.</p>
               <span>Articles · Tags · SEO metadata</span>
             </div>
@@ -299,60 +302,45 @@ export default function Welcome() {
         </section>
         <section id="access" className={styles.access} data-reveal>
           <div className={styles.sectionHeading}>
-            <span className={styles.eyebrow}>
-              04 / YOUR PROJECTS, UNDER CONTROL
-            </span>
+            <span className={styles.eyebrow}>PROJECTS AND STORAGE</span>
             <h2>
-              The right access.
-              <br />A place for every project.
+              Separate projects.
+              <br />
+              Controlled access.
             </h2>
             <p>
-              One application for your team. Separate content and storage
-              configuration for each project.
+              After login, choose only from projects you can access. Each
+              project has its own content, team roles, and Spaces configuration.
             </p>
           </div>
-          <div className={styles.accessGrid}>
-            <article>
-              <span className={styles.accessIcon}>
-                <Icon name="users" size={24} />
-              </span>
-              <h3>A workspace for your team</h3>
+          <div className={styles.accessDetails}>
+            <div>
+              <Icon name="users" size={26} />
+              <h3>Give your team the right access.</h3>
               <p>
-                After login, people choose only from projects they can access.
-                Admin, editor, and viewer roles keep responsibilities clear.
+                Admins manage membership, editors write and publish, and viewers
+                have read-only access.
               </p>
               <div className={styles.roleList}>
                 <span>Admin</span>
                 <span>Editor</span>
                 <span>Viewer</span>
               </div>
-            </article>
-            <article>
-              <span className={styles.accessIcon}>
-                <Icon name="lock" size={24} />
-              </span>
-              <h3>Your storage, project by project</h3>
+            </div>
+            <div>
+              <Icon name="lock" size={26} />
+              <h3>Keep storage under your control.</h3>
               <p>
-                Content lives in your DigitalOcean Spaces. Drafts and originals
-                stay private; published content has its own delivery boundary.
+                Drafts and originals stay private. Spaces credentials remain on
+                the server. No database required.
               </p>
-              <div className={styles.storageList}>
-                <span>
-                  <Icon name="check" size={14} />
-                  Server-only credentials
-                </span>
-                <span>
-                  <Icon name="check" size={14} />
-                  No database required
-                </span>
-              </div>
-            </article>
+            </div>
           </div>
         </section>
         <section className={styles.questions} data-reveal>
           <div className={styles.sectionHeading}>
-            <span className={styles.eyebrow}>A FEW PRACTICAL DETAILS</span>
-            <h2>Before you get started.</h2>
+            <span className={styles.eyebrow}>QUESTIONS</span>
+            <h2>A few practical details.</h2>
           </div>
           <div>
             {questions.map((item) => (
@@ -367,18 +355,8 @@ export default function Welcome() {
           </div>
         </section>
         <section className={styles.closing} data-reveal>
-          <div className={styles.closingGraphic} aria-hidden="true">
-            <Icon name="article" size={58} />
-          </div>
-          <span className={styles.eyebrow}>
-            FROM YOUR NEXT IDEA TO YOUR NEXT RELEASE
-          </span>
-          <h2>
-            Make room for
-            <br />
-            <span>what comes next.</span>
-          </h2>
-          <p>Manage the content. Keep control of the experience.</p>
+          <h2>Open your workspace.</h2>
+          <p>Sign in to manage your content, or read the integration guides.</p>
           <div className={styles.actions}>
             <Link className={styles.primary} href="/login">
               Log in to Postparticle <Icon name="arrow" size={18} />

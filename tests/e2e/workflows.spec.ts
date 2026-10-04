@@ -25,7 +25,7 @@ test("public welcome leads to a separate login page, supports themes and reduced
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "Create, manage, publish.",
+    "Manage your website’s content.",
   );
   await page.getByRole("combobox", { name: "Color theme" }).click();
   await page.getByRole("option", { name: "Dark", exact: true }).click();

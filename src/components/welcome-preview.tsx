@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useState } from "react";
 import { Icon } from "./ui";
 import styles from "@/app/welcome.module.css";
@@ -46,9 +47,9 @@ export function WelcomePreview() {
             <span>03</span>
           </div>
           {[
-            "A new perspective",
-            "Inside the process",
-            "Notes from the studio",
+            "Light, stone, and open space",
+            "Inside the working studio",
+            "Along the coast",
           ].map((title, i) => (
             <div
               key={title}
@@ -74,22 +75,28 @@ export function WelcomePreview() {
               Draft saved
             </span>
           </div>
-          <div className={styles.coverGraphic} aria-hidden="true">
-            <span />
-            <i />
-            <b />
-            <div>STUDIO / FIELD NOTES</div>
-          </div>
+          <Image
+            className={styles.editorCover}
+            src="/images/welcome/architecture.webp"
+            width={1536}
+            height={1024}
+            sizes="(max-width: 720px) 85vw, (max-width: 1000px) 55vw, 50vw"
+            loading="eager"
+            alt="Sunlit stone courtyard with an olive tree and blue doorway"
+          />
           <div className={styles.editorMeta}>
             <span>Demo Editorial</span>
             <span>04 October 2026</span>
           </div>
-          <h2>A new perspective</h2>
-          <p>A look at the ideas, people, and details behind the work.</p>
+          <h2>Light, stone, and open space</h2>
+          <p>
+            How a quiet courtyard uses natural light, local stone, and room to
+            breathe.
+          </p>
           <div className={styles.previewTags}>
-            <span>Design</span>
+            <span>Architecture</span>
             <span>Studio</span>
-            <span>Ideas</span>
+            <span>Field notes</span>
           </div>
           <div className={styles.seoPreview}>
             <Icon name="globe" size={16} />
