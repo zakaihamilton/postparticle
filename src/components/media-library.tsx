@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
 import type { Media } from "@/lib/types";
 import { api, Empty, Icon, Notice } from "./ui";
 import styles from "./workspace.module.css";
+import libraryStyles from "./media-library.module.css";
 interface PendingUpload {
   id: string;
   parts: { PartNumber: number; ETag: string }[];
@@ -33,8 +34,8 @@ export default function MediaLibrary({
   const [metadata, setMetadata] = useState("{}");
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
+  const [dragging, setDragging] = useState(false);
   const abort = useRef<AbortController | null>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
     let active = true;
     api<Media[]>(endpoint)
@@ -145,8 +146,34 @@ export default function MediaLibrary({
     } finally {
       setProgress(null);
       abort.current = null;
-      if (fileInput.current) fileInput.current.value = "";
     }
+  }
+  function dropFiles(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setDragging(false);
+    if (!canEdit || progress !== null || pendingUpload || busy) return;
+
+    const files = Array.from(event.dataTransfer.files);
+    if (files.length !== 1) {
+      setError("Drop one media file at a time.");
+      return;
+    }
+
+    const file = files[0];
+    const supportedTypes = new Set([
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "video/mp4",
+      "video/webm",
+    ]);
+    if (!supportedTypes.has(file.type)) {
+      setError("Drop a JPEG, PNG, WebP, GIF, MP4, or WebM file.");
+      return;
+    }
+
+    void upload(file);
   }
   async function mutate(task: () => Promise<void>, onSuccess?: () => void) {
     setError("");
@@ -175,25 +202,43 @@ export default function MediaLibrary({
           </p>
         </div>
         {canEdit && (
-          <button
-            className={styles.primary}
-            disabled={progress !== null || !!pendingUpload || busy}
-            onClick={() => fileInput.current?.click()}
+          <div
+            className={`${libraryStyles.uploadDropZone} ${dragging ? libraryStyles.dragging : ""}`}
+            role="group"
+            aria-label="Upload media"
+            aria-describedby="upload-media-instructions"
+            aria-disabled={
+              progress !== null || !!pendingUpload || busy || undefined
+            }
+            onDragEnter={(event) => {
+              event.preventDefault();
+              if (progress === null && !pendingUpload && !busy)
+                setDragging(true);
+            }}
+            onDragOver={(event) => {
+              event.preventDefault();
+              event.dataTransfer.dropEffect =
+                progress === null && !pendingUpload && !busy ? "copy" : "none";
+            }}
+            onDragLeave={(event) => {
+              if (
+                !event.currentTarget.contains(
+                  event.relatedTarget as Node | null,
+                )
+              )
+                setDragging(false);
+            }}
+            onDrop={dropFiles}
           >
-            <Icon name="upload" size={17} />
-            Upload media
-          </button>
+            <Icon name="upload" size={19} />
+            <span>
+              <strong>Drop media to upload</strong>
+              <small id="upload-media-instructions">
+                One JPEG, PNG, WebP, GIF, MP4, or WebM file
+              </small>
+            </span>
+          </div>
         )}
-        <input
-          ref={fileInput}
-          className={styles.srOnly}
-          aria-label="Upload media file"
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
-          onChange={(e) => {
-            if (e.target.files?.[0]) void upload(e.target.files[0]);
-          }}
-        />
       </div>
       <Notice error={error} message={message} />
       {pendingUpload && (

@@ -15,6 +15,8 @@ Each project Space stores:
 ```text
 content/articles/{slug}/{timestamp_uuid}.json
 content/documents/{key}/{timestamp_uuid}.json
+checkpoints/content/{kind}/{generation}/manifest.json
+checkpoints/content/{kind}/{generation}/shard-00000.json
 media/{uuid}/{timestamp_uuid}.json
 uploads/{uuid}.json
 incoming/{uuid}/asset
@@ -26,7 +28,17 @@ Every event records ID, UTC time, actor, action, and payload. Events use unique 
 
 This is designed for small editorial teams. It does not provide distributed transactions, strict stale-editor rejection, or live co-editing. Identifier uniqueness comes from using the slug/key as the record identity. Concurrent creation with the same identifier can produce two retained revisions of the same record; one becomes the draft. Renaming identifiers is excluded from this release.
 
-Listings scan immutable events with bounded parallel reads. The adapter uses legacy S3 marker pagination because Spaces documentation reports limitations with ListObjectsV2 pagination. There is no authoritative mutable index and no in-memory data dependency across Vercel instances. Large event histories increase latency and request cost; before substantial growth, introduce a reconstructible index/checkpoint strategy and measure its behavior. Failed writes are surfaced, not silently accepted.
+Listings still enumerate immutable event keys, while checkpoints reduce how many event bodies they fetch. The adapter uses legacy S3 marker pagination because Spaces documentation reports limitations with ListObjectsV2 pagination. There is no authoritative mutable index and no in-memory data dependency across Vercel instances. Large histories can still increase listing latency and request cost; measure pagination as the event log grows and consider a reconstructible key index if it becomes the bottleneck. Failed writes are surfaced, not silently accepted.
+
+Content checkpoints are versioned derived snapshots; the event objects remain authoritative. Each checkpoint generation has a manifest written after its shards. Shards are capped at 4 MiB or 1,000 records and contain each record's reduced state, last folded event cursor, and replay cutoff. The newest event timestamp for a record remains in the replay tail, so events sharing that timestamp continue to follow the existing UUID tie ordering. Readers verify shard hashes and fall back to an older valid generation or full event replay when a checkpoint is missing or invalid. If source keys change while a generation is built, the builder retries twice; if it remains unstable, it publishes no manifest. Orphaned shards from an interrupted build are ignored.
+
+Build checkpoints for a single project using its configured storage credentials:
+
+```sh
+npm run storage:checkpoint -- demo
+```
+
+Run this operator command against a quiet project after bulk imports or when the replay tail grows. It processes articles and documents and never removes source events. `npm run benchmark:content` creates a disposable local fixture of 10,000 events across 1,000 articles and reports object reads, list calls, keys enumerated, and estimated 1,000-key Spaces list pages for record listing, public article listing, and single-article lookup before and after checkpointing. It also checks the shard size limits. The local benchmark exposes the remaining full key-list scan but does not model Spaces pagination latency; use a development Space to measure that separately.
 
 Media becomes ready only after successful finalization. Multipart completion is checkpointed in its private upload ticket. Retrying finalization resumes validation and sealing; if a completion response or checkpoint was lost, the application checks for the completed staging object before proceeding. A committed asset is returned idempotently without overwriting its metadata. Cleanup can also be retried. The staging object is copied to a separate private original, then its ticket and staging key are deleted. This prevents a still-valid upload URL from modifying a finalized original. Publish copies assets to public delivery paths before writing the publication event. A failed publish can leave unused public copies; the content stays unpublished. Unpublishing removes content from the API but does not erase previously distributed media URLs or guarantee CDN recall. Never publish confidential media.
 

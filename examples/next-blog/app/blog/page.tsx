@@ -19,7 +19,7 @@ export default async function Blog({
   }
   return (
     <>
-      <h1>The journal.</h1>
+      <h1>Articles</h1>
       <BlogFilters
         key={JSON.stringify([q, tag, dateOrder, pageNumber, errors])}
         q={q}
@@ -61,7 +61,7 @@ export default async function Blog({
           </article>
         ))}
       </div>
-      {data && !data.items.length && <p>No stories match your filters.</p>}
+      {data && !data.items.length && <p>No articles match these filters.</p>}
       <nav className={styles.form} aria-label="Blog pagination">
         {data && pageNumber > 1 && (
           <Link href={pageHref(pageNumber - 1)}>← Previous</Link>

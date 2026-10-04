@@ -1,13 +1,22 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import Image from "next/image";
+import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, Brand, Icon, Notice, ThemeSwitch } from "./ui";
+import {
+  clearFieldError,
+  FieldError,
+  validateForm,
+  type FieldErrors,
+} from "./form-validation";
 import styles from "./auth.module.css";
 export default function LoginForm() {
   const router = useRouter();
+  const validationId = useId().replace(/:/g, "");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   return (
     <div className={styles.page}>
       <header>
@@ -16,24 +25,27 @@ export default function LoginForm() {
       </header>
       <main className={styles.layout}>
         <section className={styles.story}>
-          <span className={styles.eyebrow}>A SPACE TO MAKE THINGS HAPPEN</span>
+          <span className={styles.eyebrow}>THE EDITORIAL WORKSPACE</span>
           <h1>
-            Your next great
+            Make room for
             <br />
-            story starts here.
+            your next story.
           </h1>
           <p>
-            One thoughtful workspace for all the content you bring to the world.
+            Write, organize, and publish. Everything your team needs, in one
+            place.
           </p>
-          <div className={styles.art}>
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
+          <Image
+            className={styles.storyImage}
+            src="/images/welcome/studio-editorial.webp"
+            width={1536}
+            height={1024}
+            sizes="(max-width: 600px) 100vw, 50vw"
+            alt="Paper proofs and books on a sunlit publishing desk"
+          />
           <div className={styles.storyFooter}>
-            <Icon name="lock" size={16} /> A private workspace. A world of
-            possibilities.
+            <Icon name="lock" size={16} /> Your drafts stay private until you
+            publish.
           </div>
         </section>
         <section className={styles.formPanel}>
@@ -44,8 +56,19 @@ export default function LoginForm() {
             <h2>Welcome back.</h2>
             <p>Sign in to find your projects and pick up where you left off.</p>
             <form
+              noValidate
+              onChange={(event) => {
+                if (event.target instanceof HTMLInputElement)
+                  clearFieldError(setFieldErrors, event.target.name);
+              }}
               onSubmit={async (e) => {
                 e.preventDefault();
+                const validation = validateForm(e.currentTarget);
+                setFieldErrors(validation.errors);
+                if (validation.firstInvalid) {
+                  requestAnimationFrame(() => validation.firstInvalid?.focus());
+                  return;
+                }
                 setBusy(true);
                 setError("");
                 const form = new FormData(e.currentTarget);
@@ -74,7 +97,19 @@ export default function LoginForm() {
                   name="username"
                   autoComplete="username"
                   required
-                  placeholder="Your username"
+                  aria-label="Username"
+                  aria-invalid={fieldErrors.username ? true : undefined}
+                  aria-describedby={
+                    fieldErrors.username
+                      ? `${validationId}-username-error`
+                      : undefined
+                  }
+                  placeholder="Username or email address"
+                  maxLength={254}
+                />
+                <FieldError
+                  id={`${validationId}-username-error`}
+                  message={fieldErrors.username}
                 />
               </label>
               <label>
@@ -84,7 +119,18 @@ export default function LoginForm() {
                   type="password"
                   autoComplete="current-password"
                   required
+                  aria-label="Password"
+                  aria-invalid={fieldErrors.password ? true : undefined}
+                  aria-describedby={
+                    fieldErrors.password
+                      ? `${validationId}-password-error`
+                      : undefined
+                  }
                   placeholder="Your password"
+                />
+                <FieldError
+                  id={`${validationId}-password-error`}
+                  message={fieldErrors.password}
                 />
               </label>
               <Notice error={error} />
@@ -94,7 +140,8 @@ export default function LoginForm() {
               </button>
             </form>
             <div className={styles.help}>
-              Need access? Contact your project administrator.
+              Forgot your username or password? Contact your platform
+              administrator.
             </div>
             <Link href="/" className={styles.back}>
               <Icon name="arrow-left" size={14} /> Back to welcome

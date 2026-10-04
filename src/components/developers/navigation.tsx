@@ -7,15 +7,19 @@ export default function DeveloperNavigation() {
   const pathname = usePathname();
   return (
     <nav className={styles.topicNav} aria-label="Developer topics">
-      {guideLinks.map(({ href, title }, i) => (
-        <Link
-          key={href}
-          href={href}
-          aria-current={pathname === href ? "page" : undefined}
-        >
-          <span>0{i + 1}</span>
-          {title}
-        </Link>
+      {guideLinks.map(({ href, title, group }, i) => (
+        <div className={styles.topicItem} key={href}>
+          {(i === 0 || guideLinks[i - 1].group !== group) && (
+            <span className={styles.topicGroup}>{group}</span>
+          )}
+          <Link
+            href={href}
+            aria-current={pathname === href ? "page" : undefined}
+          >
+            <span>{String(i + 1).padStart(2, "0")}</span>
+            {title}
+          </Link>
+        </div>
       ))}
     </nav>
   );

@@ -10,7 +10,8 @@ import { promisify } from "node:util";
 import { cookies } from "next/headers";
 import { append, events } from "./events";
 import { controlStore, mapBounded, type Store } from "./storage";
-import { HttpError, identifier, projects, projectById } from "./config";
+import { HttpError, projects, projectById } from "./config";
+import { usernameSchema } from "./username";
 import type { Actor, Role, User } from "./types";
 const scrypt = promisify(scryptCallback);
 const cookieName =
@@ -35,7 +36,7 @@ export async function getUser(
 ): Promise<User | null> {
   const history = await events<User>(
     store,
-    `users/${identifier.parse(username)}`,
+    `users/${usernameSchema.parse(username)}`,
   );
   return history.at(-1)?.data ?? null;
 }
@@ -44,8 +45,11 @@ export async function saveUser(
   user: User,
   store = controlStore(),
 ) {
-  identifier.parse(user.username);
-  await append(store, `users/${user.username}`, actor, "user", user);
+  const username = usernameSchema.parse(user.username);
+  await append(store, `users/${username}`, actor, "user", {
+    ...user,
+    username,
+  });
 }
 export async function listUsers(store = controlStore()) {
   const keys = await store.list("users/");
@@ -59,6 +63,7 @@ export async function membership(
   projectId: string,
   store = controlStore(),
 ): Promise<Role | null> {
+  username = usernameSchema.parse(username);
   const history = await events<Role | null>(
     store,
     `memberships/${projectId}/${username}`,
@@ -73,7 +78,7 @@ export async function setMembership(
   store = controlStore(),
 ) {
   projectById(projectId);
-  identifier.parse(username);
+  username = usernameSchema.parse(username);
   await append(
     store,
     `memberships/${projectId}/${username}`,
@@ -184,4 +189,25 @@ export async function revokeUserSessions(actor: string, username: string) {
   const user = await getUser(username);
   if (!user) throw new HttpError(404, "Account not found");
   await saveUser(actor, { ...user, sessionVersion: randomUUID() });
+}
+
+export async function resetUserPassword(
+  actor: string,
+  username: string,
+  password: string,
+  store = controlStore(),
+) {
+  if (password.length < 12 || password.length > 256)
+    throw new HttpError(400, "Use a password between 12 and 256 characters");
+  const user = await getUser(username, store);
+  if (!user) throw new HttpError(404, "Account not found");
+  await saveUser(
+    actor,
+    {
+      ...user,
+      passwordHash: await hashPassword(password),
+      sessionVersion: randomUUID(),
+    },
+    store,
+  );
 }

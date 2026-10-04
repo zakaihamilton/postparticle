@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Brand, Icon, ThemeSwitch } from "@/components/ui";
 import DeveloperNavigation from "@/components/developers/navigation";
+import DeveloperSearch from "@/components/developers/search";
 import styles from "@/components/developers/developers.module.css";
 export const metadata: Metadata = {
   title: "Developer guides",
-  description: "Integrate published articles into your Next.js website.",
+  description:
+    "Integrate published Postparticle content with Next.js using the public API, with endpoint reference and troubleshooting guides.",
 };
 export default function DeveloperLayout({
   children,
@@ -29,14 +31,10 @@ export default function DeveloperLayout({
       </header>
       <div className={styles.layout}>
         <aside className={styles.sidebar}>
-          <span className={styles.eyebrow}>BUILD WITH POSTPARTICLE</span>
+          <span className={styles.eyebrow}>DEVELOPER GUIDES</span>
+          <DeveloperSearch />
           <DeveloperNavigation />
-          <p>
-            Your content.
-            <br />
-            Your website.
-            <br />A few lines to connect them.
-          </p>
+          <p>Use the public API to add published articles to a Next.js site.</p>
         </aside>
         <main id="guide-content" className={styles.main}>
           {children}
@@ -44,7 +42,7 @@ export default function DeveloperLayout({
       </div>
       <footer className={styles.footer}>
         <Brand />
-        <span>Published content, ready for your next idea.</span>
+        <span>Postparticle API · Developer guides</span>
       </footer>
     </div>
   );

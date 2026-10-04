@@ -63,8 +63,11 @@ export async function listPublicArticles(
     pageSize,
   };
 }
-export async function readPublicArticle(projectId: string, slug: string) {
-  const store = projectStore(projectId);
+export async function readPublicArticle(
+  projectId: string,
+  slug: string,
+  store = projectStore(projectId),
+) {
   const record = await getRecord("articles", slug, store);
   if (!record?.published || record.trashed)
     throw new HttpError(404, "Article not found");

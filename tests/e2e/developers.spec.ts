@@ -15,8 +15,8 @@ test("public developer guides navigate without login, render on the server, and 
     "/developers",
     "/developers/nextjs/setup",
     "/developers/nextjs/articles",
-    "/developers/nextjs/article-page",
-    "/developers/nextjs/seo",
+    "/developers/nextjs/article-pages",
+    "/developers/nextjs/metadata-and-caching",
   ];
   for (const path of paths) {
     const response = await request.get(path);

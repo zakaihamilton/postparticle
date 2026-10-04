@@ -1,12 +1,19 @@
 # Website integration
 
-The management workspace is private and excluded from indexing. Published content is publicly readable through versioned API endpoints. Render it on your website’s server so articles and SEO metadata are present in its HTML. The API itself is not the indexed blog.
+The Postparticle workspace is private. Published articles and documents are available through read-only API endpoints. Fetch them from your website’s server so article content and metadata are present in the rendered HTML. The API supplies content; it does not host a blog.
 
-## Developer pages
+## Next.js guides
 
-Public, server-rendered guides are available at `/developers`, with Next.js setup, article listings/search/tags, article routes, and SEO/freshness pages. They need no login or Spaces connection. Copyable source snippets mirror the checked, runnable `examples/next-blog` application; `npm test` verifies they stay in sync. The consuming website uses native server-side fetch; the optional typed client below remains available.
+The public guides require no login or Spaces credentials. Start at `/developers` and follow these routes in order:
 
-## Endpoints
+1. `/developers/nextjs/setup` configures the server environment and API helper. Its existing-project section includes a copyable prompt for an AI coding assistant. Supply the Postparticle URL, project ID, and website URL, then review the assistant's proposed changes.
+2. `/developers/nextjs/articles` covers recent content, filters, and pagination.
+3. `/developers/nextjs/article-pages` covers article routes, Markdown, media, and errors.
+4. `/developers/nextjs/metadata-and-caching` covers SEO metadata, sitemaps, and freshness.
+
+`/developers/api-reference` documents the public endpoints and response behavior. `/developers/troubleshooting` lists checks for common integration problems. Guide code examples are kept in sync with the runnable `examples/next-blog` application.
+
+## API endpoints
 
 ```text
 GET /api/v1/projects/{projectId}/articles
@@ -14,15 +21,30 @@ GET /api/v1/projects/{projectId}/articles/{slug}
 GET /api/v1/projects/{projectId}/documents/{key}
 ```
 
-Article listing parameters: `q` for case-insensitive title/excerpt/body search, `tag` for an exact case-insensitive tag, `order=asc|desc` for article-date ordering, `page` starting at 1, and `pageSize` from 1 to 100 (default 12). Slug ordering breaks date ties. Responses contain `{ items, total, page, pageSize }`. Dates use `YYYY-MM-DD`; event timestamps use UTC ISO strings.
+The article listing accepts these query parameters:
 
-Article responses contain title, slug, excerpt, Markdown body, author, tags, article date, SEO fields, created/updated/published timestamps, `coverUrl`, and `socialImageUrl`. When social image is unset, consumers should fall back to the cover. Internal cover/social media IDs are omitted. Document responses contain key, title, tags, and arbitrary `value` JSON. Drafts, trashed content, accounts, events, object keys, and credentials are excluded. Missing/unpublished content returns 404, invalid input returns 400, and storage/configuration failures return 503 with a generic error message.
+- `q` searches titles, excerpts, and Markdown bodies case-insensitively; maximum 200 characters.
+- `tag` matches a tag exactly, without regard to case; maximum 60 characters.
+- `order=asc|desc` sorts by article date. Slug order breaks date ties.
+- `page` starts at 1. `pageSize` accepts 1–100 and defaults to 12.
 
-Named JSON documents can contain media references in string values, such as `"media:550e8400-e29b-41d4-a716-446655440000"`. Article Markdown uses `![alt text](media:asset-id)` for images and `[caption](media:asset-id)` for video links. Publishing validates referenced assets and creates public copies; API responses replace these references with delivery URLs. Only complete, valid UUID references are resolved. Malformed reference-like strings remain literal text. Arbitrary JSON field names, including `coverMediaId` and `socialMediaId`, carry no special meaning inside document values.
+Listing responses have the shape `{ items, total, page, pageSize }`. Article dates use `YYYY-MM-DD`; event timestamps are UTC ISO strings.
+
+## Response fields and visibility
+
+Article responses include the title, slug, excerpt, Markdown body, author, tags, article date, SEO fields, created/updated/published timestamps, `coverUrl`, and `socialImageUrl`. When no social image is set, use the cover image as a fallback. The API does not expose internal media IDs.
+
+Document responses contain the key, title, tags, and arbitrary `value` JSON. Drafts, trashed content, accounts, events, object keys, and credentials are excluded. Missing or unpublished content returns 404, invalid input returns 400, and storage or configuration failures return 503 with a generic error message.
+
+## Media references
+
+JSON documents can contain media references in string values, such as `"media:550e8400-e29b-41d4-a716-446655440000"`. Article Markdown uses `![alt text](media:asset-id)` for images and `[caption](media:asset-id)` for video links.
+
+When content is published, Postparticle validates referenced assets and creates public copies. API responses replace valid references with delivery URLs. Only complete, valid UUID references are resolved; malformed reference-like strings remain literal text. JSON field names such as `coverMediaId` and `socialMediaId` have no special meaning inside document values.
 
 ## Typed client
 
-Copy `src/lib/client.ts` and its shared public types into your integration, or adapt the generic example. This repository is an application, not a published SDK package.
+Copy `src/lib/client.ts` and its shared public types into your integration, or use the native-fetch example. This repository is an application, not a published SDK package.
 
 ```ts
 const client = new PostparticleClient("https://cms.example.com", "demo");
@@ -34,18 +56,20 @@ const story = await client.article("a-little-room");
 const banner = await client.document<{ headline: string }>("homepage-banner");
 ```
 
-Public responses use `Cache-Control: no-store`; the website chooses its own server-side caching. The example uses Next.js revalidation of 60 seconds, so published changes may take that long to appear. Client router caches and external CDN caches can extend freshness. Do not use build-only fetching if articles must update without rebuilding the website.
+API responses use `Cache-Control: no-store`. Your website chooses its server-side cache policy. The example revalidates after 60 seconds, but the next request triggers revalidation; browser router and CDN caches can extend the delay. Avoid build-only fetching if content must update without rebuilding the website.
 
-## Generic Next.js example
+## Runnable Next.js example
 
-`examples/next-blog` is a separate example application using the root dependencies. It contains a welcome-page recent-article section, `/blog` with tag filtering and pagination, `/blog/[slug]`, canonical/Open Graph/Twitter metadata, safe Article JSON-LD, `sitemap.xml`, and permissive public `robots.txt`.
+`examples/next-blog` is a separate application that uses the repository’s dependencies. It includes a homepage with recent articles, `/blog` with tag filtering and pagination, `/blog/[slug]`, canonical and social metadata, Article JSON-LD, `sitemap.xml`, and a public `robots.txt`.
 
-Run Postparticle first, publish an article, then start the example:
+Start Postparticle, publish an article, and run the example from the repository root:
 
 ```sh
 POSTPARTICLE_URL=http://localhost:3000 POSTPARTICLE_PROJECT=demo WEBSITE_URL=http://localhost:3001 npm run example:dev -- --port 3001
 ```
 
-Set `POSTPARTICLE_URL` to the CRM origin, `POSTPARTICLE_PROJECT` to your project ID, and `WEBSITE_URL` to the canonical public website origin. Build with `npm run example:build`. Never pass Spaces keys to the integration. To deploy it separately, use the same dependencies and set the project root to the example, ensuring the shared client/types are copied inside that project.
+Set `POSTPARTICLE_URL` to the base URL of your Postparticle deployment, `POSTPARTICLE_PROJECT` to your project ID, and `WEBSITE_URL` to the base URL of your public website without a trailing slash. Build with `npm run example:build`.
 
-Markdown is rendered with raw HTML disabled and safe URL handling. JSON-LD escapes `<` to prevent closing the script tag. The CRM’s noindex headers do not apply to this separate website example.
+To deploy the example separately, set the project root to `examples/next-blog` and copy the shared client and types into that project. Do not pass Spaces credentials to the website.
+
+The example renders Markdown with raw HTML disabled and safe URL handling. It escapes `<` in JSON-LD so article text cannot close the script element. The workspace’s noindex headers do not apply to the separate website.

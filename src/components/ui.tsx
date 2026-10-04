@@ -1,6 +1,38 @@
 "use client";
 import { GuardedLink as Link } from "./navigation-guard";
 import { useSyncExternalStore } from "react";
+import {
+  ArrowDown,
+  ArrowDownRight,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  ArrowUpRight,
+  Asterisk,
+  Check,
+  ChevronDown,
+  Clock,
+  CodeXml,
+  FileText,
+  Globe,
+  ImageIcon,
+  LayoutGrid,
+  LinkIcon,
+  LockKeyhole,
+  LogOut,
+  Menu,
+  Monitor,
+  Moon,
+  Play,
+  Plus,
+  Search,
+  Settings,
+  Sparkles,
+  Sun,
+  Upload,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import Select from "./select";
 import styles from "./ui.module.css";
 function Wordmark() {
@@ -15,7 +47,7 @@ function Wordmark() {
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <circle cx="24" cy="7" r="2.5" fill="#c6e0ff" />
+          <circle cx="24" cy="7" r="2.5" fill="currentColor" opacity="0.7" />
         </svg>
       </span>
       <span>
@@ -75,58 +107,47 @@ function subscribeTheme(callback: () => void) {
     window.removeEventListener("postparticle-theme", callback);
   };
 }
-const paths: Record<string, string> = {
-  grid: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
-  article: "M6 3h12a2 2 0 0 1 2 2v16H4V5a2 2 0 0 1 2-2z M8 8h8 M8 12h8 M8 16h5",
-  image:
-    "M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z M3 17l6-6 4 4 3-3 5 5 M15 7h.01",
-  code: "M8 5l-6 7 6 7 M16 5l6 7-6 7 M14 3l-4 18",
-  users:
-    "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75",
-  settings:
-    "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v3 M12 19v3 M2 12h3 M19 12h3 M5 5l2 2 M17 17l2 2 M5 19l2-2 M17 7l2-2",
-  arrow: "M5 12h14 M13 6l6 6-6 6",
-  "arrow-left": "M19 12H5 M11 6l-6 6 6 6",
-  "arrow-up": "M12 19V5 M6 11l6-6 6 6",
-  "arrow-down": "M12 5v14 M6 13l6 6 6-6",
-  "arrow-up-right": "M5 19 19 5 M5 5h14v14",
-  "arrow-down-right": "M5 5l14 14 M5 19h14V5",
-  chevron: "m6 9 6 6 6-6",
-  menu: "M4 6h16 M4 12h16 M4 18h16",
-  link: "M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2 M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2",
-  play: "m8 4 12 8-12 8z",
-  sparkle: "m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z",
-  burst: "M12 2v20 M2 12h20 M5 5l14 14 M5 19 19 5",
-  monitor: "M3 3h18v14H3z M8 21h8 M12 17v4",
-  sun: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v2 M12 20v2 M2 12h2 M20 12h2 M5 5l1.5 1.5 M17.5 17.5l1.5 1.5 M5 19l1.5-1.5 M17.5 6.5l1.5-1.5",
-  moon: "M20.5 13a9 9 0 1 1-9.5-9.5 7 7 0 0 0 9.5 9.5z",
-  plus: "M12 5v14 M5 12h14",
-  search: "M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14 M15 15l6 6",
-  globe:
-    "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20 M2 12h20 M12 2c6 6 6 14 0 20-6-6-6-14 0-20",
-  upload: "M12 16V3 M7 8l5-5 5 5 M3 16v5h18v-5",
-  logout: "M9 4H3v16h6 M12 12h10 M17 7l5 5-5 5",
-  check: "M4 12l5 5L20 6",
-  clock: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20 M12 6v6l4 2",
-  lock: "M5 10h14v11H5z M8 10V6a4 4 0 0 1 8 0v4",
+const icons: Record<string, LucideIcon> = {
+  grid: LayoutGrid,
+  article: FileText,
+  image: ImageIcon,
+  code: CodeXml,
+  users: Users,
+  settings: Settings,
+  arrow: ArrowRight,
+  "arrow-left": ArrowLeft,
+  "arrow-up": ArrowUp,
+  "arrow-down": ArrowDown,
+  "arrow-up-right": ArrowUpRight,
+  "arrow-down-right": ArrowDownRight,
+  chevron: ChevronDown,
+  menu: Menu,
+  link: LinkIcon,
+  play: Play,
+  sparkle: Sparkles,
+  burst: Asterisk,
+  monitor: Monitor,
+  sun: Sun,
+  moon: Moon,
+  plus: Plus,
+  search: Search,
+  globe: Globe,
+  upload: Upload,
+  logout: LogOut,
+  check: Check,
+  clock: Clock,
+  lock: LockKeyhole,
 };
 export function Icon({ name, size = 20 }: { name: string; size?: number }) {
+  const Glyph = icons[name] ?? FileText;
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+    <Glyph
+      size={size}
+      strokeWidth={1.75}
       aria-hidden="true"
       focusable="false"
       className={styles.icon}
-    >
-      <path d={paths[name] ?? paths.article} />
-    </svg>
+    />
   );
 }
 export async function api<T>(url: string, options?: RequestInit): Promise<T> {
@@ -150,7 +171,7 @@ export function Notice({
       {error}
     </div>
   ) : message ? (
-    <div className={styles.notice} role="status">
+    <div key={message} className={styles.notice} role="status">
       {message}
     </div>
   ) : null;

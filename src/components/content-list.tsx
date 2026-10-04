@@ -294,13 +294,8 @@ export function Dashboard({
     <>
       <div className={styles.pageHeading}>
         <div>
-          <div className={styles.eyebrow}>A LITTLE SPACE FOR BIG IDEAS</div>
-          <h1>
-            Hello, {username}{" "}
-            <span className={styles.spark}>
-              <Icon name="sparkle" size={24} />
-            </span>
-          </h1>
+          <div className={styles.eyebrow}>WORKSPACE OVERVIEW</div>
+          <h1>Hello, {username}</h1>
           <p className={styles.subtitle}>
             Here’s what’s happening in your content workspace.
           </p>
@@ -322,25 +317,25 @@ export function Dashboard({
             title: "Total articles",
             value: data ? articles.length : "—",
             icon: "article",
-            sub: "Every story in one place",
+            sub: "Active articles",
           },
           {
             title: "Published",
             value: data ? published : "—",
             icon: "globe",
-            sub: "Out in the world",
+            sub: "Available through the API",
           },
           {
             title: "Drafts",
             value: data ? articles.length - published : "—",
             icon: "clock",
-            sub: "Ideas in the making",
+            sub: "Not yet published",
           },
           {
             title: "Media assets",
             value: data ? data.media.length : "—",
             icon: "image",
-            sub: "Your creative collection",
+            sub: "Images and video",
           },
         ].map((s) => (
           <div className={styles.stat} key={s.title}>
@@ -355,22 +350,19 @@ export function Dashboard({
       </div>
       <div className={styles.dashboardBanner}>
         <div>
-          <span className={styles.bannerEyebrow}>MAKE YOURSELF AT HOME</span>
-          <h2>Good content starts with a little space.</h2>
+          <span className={styles.bannerEyebrow}>YOUR PUBLISHING WORKFLOW</span>
+          <h2>Write privately. Publish when ready.</h2>
           <p>
-            Write a story, collect your assets, or bring something new to your
-            website.
+            Changes to published articles stay in a private draft until you
+            publish the next version.
           </p>
         </div>
-        <span className={styles.bannerArt} aria-hidden="true">
-          <Icon name="burst" size={100} />
-        </span>
       </div>
       <section className={styles.panel}>
         <div className={styles.panelHeading}>
           <div>
             <h2>Recent articles</h2>
-            <p>The latest ideas taking shape.</p>
+            <p>Your five most recently updated articles.</p>
           </div>
           <Link href={`/workspace/${projectId}/articles`}>
             View all articles <Icon name="arrow" size={15} />
@@ -387,9 +379,8 @@ export function Dashboard({
             projectId={projectId}
           />
         ) : (
-          <Empty title="A fresh start">
-            Your articles will appear here. There’s plenty of room for your next
-            idea.
+          <Empty title="No articles yet">
+            Create an article to start your content library.
           </Empty>
         )}
       </section>
@@ -397,8 +388,8 @@ export function Dashboard({
         <Link href={`/workspace/${projectId}/media`}>
           <Icon name="image" />
           <div>
-            <strong>Your media, together</strong>
-            <span>Build a library for your stories</span>
+            <strong>Media library</strong>
+            <span>Organize images, video, and metadata</span>
           </div>
           <Icon name="arrow" size={16} />
         </Link>
@@ -406,7 +397,7 @@ export function Dashboard({
           <Icon name="code" />
           <div>
             <strong>Connect your website</strong>
-            <span>A simple API, endless possibilities</span>
+            <span>Find your API endpoints and integration guides</span>
           </div>
           <Icon name="arrow" size={16} />
         </Link>

@@ -1,0 +1,126 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.control {
+  display: flex;
+  gap: 6px;
+}
+.control input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-alt);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 400;
+}
+.control button,
+.monthHeader button {
+  display: grid;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.control button:hover:not(:disabled),
+.monthHeader button:hover {
+  border-color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+.control button:focus-visible,
+.monthHeader button:focus-visible,
+.days button:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+.control button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.calendar {
+  position: fixed;
+  z-index: 300;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  animation: calendar-enter var(--motion-panel) var(--ease-out);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.monthHeader {
+  display: grid;
+  grid-template-columns: 38px 1fr 38px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.monthHeader h2 {
+  margin: 0;
+  font-size: 13px;
+  text-align: center;
+}
+.weekdays,
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  text-align: center;
+}
+.weekdays {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.weekdays span {
+  padding: 5px 0;
+}
+.days button {
+  display: grid;
+  min-width: 0;
+  aspect-ratio: 1;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.days button[data-in-month="true"] {
+  color: var(--text);
+}
+.days button:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.days button[data-selected="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+@keyframes calendar-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

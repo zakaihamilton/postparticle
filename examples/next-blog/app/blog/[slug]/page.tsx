@@ -56,7 +56,7 @@ export default async function ArticlePage({
   };
   return (
     <article className={styles.article}>
-      <Link href="/blog">← All stories</Link>
+      <Link href="/blog">← All articles</Link>
       <h1>{a.title}</h1>
       <div className={styles.meta}>
         <time dateTime={a.articleDate}>{a.articleDate}</time> · {a.author}

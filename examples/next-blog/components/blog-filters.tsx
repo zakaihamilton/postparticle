@@ -20,7 +20,7 @@ export default function BlogFilters({
           name="q"
           defaultValue={q}
           maxLength={200}
-          placeholder="Search stories"
+          placeholder="Enter a search term"
         />
       </label>
       <label>

@@ -1,5 +1,18 @@
 import type { Metadata } from "next";
+import { Source_Sans_3, Lora } from "next/font/google";
 import "./globals.css";
+
+const sans = Source_Sans_3({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+const editorial = Lora({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  variable: "--font-editorial",
+  display: "swap",
+});
 export const metadata: Metadata = {
   title: {
     default: "Postparticle — A home for your content",
@@ -16,7 +29,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${sans.variable} ${editorial.variable}`}
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

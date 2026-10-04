@@ -1,3 +1,4 @@
+import { usernameSchema } from "@/lib/username";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
@@ -9,10 +10,10 @@ import {
   saveUser,
   verifyPassword,
 } from "@/lib/auth";
-import { HttpError, identifier, localDriver } from "@/lib/config";
+import { HttpError, localDriver } from "@/lib/config";
 import { errorResponse, json, readJson, sameOrigin } from "@/lib/http";
+import { loginAttemptAllowed } from "@/lib/login-rate-limit";
 export const runtime = "nodejs";
-const attempts = new Map<string, { count: number; until: number }>();
 export async function POST(
   request: Request,
   context: { params: Promise<{ action: string }> },
@@ -33,18 +34,16 @@ export async function POST(
       const ip =
         request.headers.get("x-forwarded-for")?.split(",")[0] ?? "local";
       const now = Date.now();
-      for (const [key, value] of attempts)
-        if (value.until < now) attempts.delete(key);
-      const record = attempts.get(ip) ?? { count: 0, until: now + 60_000 };
-      record.count++;
-      attempts.set(ip, record);
-      if (record.count > 10)
+      if (!loginAttemptAllowed(ip, now))
         throw new HttpError(
           429,
           "Too many login attempts. Try again in a minute.",
         );
       const data = z
-        .object({ username: identifier, password: z.string().min(1).max(256) })
+        .object({
+          username: usernameSchema,
+          password: z.string().min(1).max(256),
+        })
         .parse(await readJson(request));
       await login(data.username, data.password);
       return json({ ok: true });

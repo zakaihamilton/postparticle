@@ -19,6 +19,59 @@ async function signIn(page: Page, username = "admin") {
   await page.getByRole("button", { name: "Log in", exact: true }).click();
   await expect(page).toHaveURL(/\/projects$/);
 }
+test("email usernames support account creation, resets, membership, and sign-in", async ({
+  page,
+}, info) => {
+  await signIn(page);
+  const email = `Editorial-${info.project.name}+News@Example.COM`;
+  const canonical = email.toLowerCase();
+  await page.goto("/account/platform-accounts");
+  await page.getByRole("button", { name: "Manage accounts" }).click();
+  await page.getByLabel("New username", { exact: true }).fill(email);
+  await page
+    .getByLabel("Initial password", { exact: true })
+    .fill("initial-test-password");
+  await page
+    .getByRole("button", { name: "Create account", exact: true })
+    .click();
+  await expect(
+    page.getByText("Account created. Grant project access in Members.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.getByText(canonical, { exact: true })).toBeVisible();
+  const headers = { Origin: new URL(page.url()).origin };
+  const duplicate = await page.request.post("/api/manage/users", {
+    headers,
+    data: { username: email, password: "initial-test-password" },
+  });
+  expect(duplicate.status()).toBe(409);
+  const member = await page.request.post("/api/manage/projects/demo/members", {
+    headers,
+    data: { username: email, role: "editor" },
+  });
+  expect(member.ok()).toBe(true);
+  await page.getByLabel("Username", { exact: true }).fill(email);
+  await page
+    .getByLabel("New password", { exact: true })
+    .fill("fixture-password-123");
+  await page
+    .getByRole("button", { name: "Reset password", exact: true })
+    .click();
+  await expect(
+    page.getByText("Password reset. All previous sessions were revoked.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  const revoked = await page.request.post(
+    `/api/manage/users/${encodeURIComponent(email)}/revoke`,
+    { headers },
+  );
+  expect(revoked.ok()).toBe(true);
+  await page.getByRole("button", { name: "Log out", exact: true }).click();
+  await signIn(page, email);
+  await expect(page.getByRole("link", { name: /Demo Journal/ })).toBeVisible();
+});
 test("public welcome leads to a separate login page, supports themes and reduced motion", async ({
   page,
 }, info) => {
@@ -42,7 +95,9 @@ test("public welcome leads to a separate login page, supports themes and reduced
     .locator("summary")
     .filter({ hasText: "Where does my content live?" })
     .click();
-  await expect(page.getByText(/In your DigitalOcean Spaces/)).toBeVisible();
+  await expect(
+    page.getByText(/Your content lives in S3-compatible object storage/),
+  ).toBeVisible();
   await expect
     .poll(async () => (await new AxeBuilder({ page }).analyze()).violations)
     .toEqual([]);
@@ -143,17 +198,7 @@ test("media upload and metadata plus JSON publication work", async ({
 }) => {
   await signIn(page);
   await page.goto("/workspace/demo/media");
-  const chooserPromise = page.waitForEvent("filechooser");
-  await page.getByRole("button", { name: "Upload media", exact: true }).click();
-  const chooser = await chooserPromise;
-  await chooser.setFiles({
-    name: "tiny.png",
-    mimeType: "image/png",
-    buffer: Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jVf8AAAAASUVORK5CYII=",
-      "base64",
-    ),
-  });
+  await chooseFixtureImage(page, "tiny.png");
   await expect(page.getByRole("status")).toContainText("Upload complete");
   await page
     .getByRole("button", { name: /tiny.png/ })
@@ -385,24 +430,43 @@ test("malformed media literals and arbitrary JSON fields publish through the pub
 test("unsaved editor changes block internal links until explicitly discarded", async ({
   page,
 }) => {
+  let nativeDialogCount = 0;
+  page.on("dialog", async (dialog) => {
+    nativeDialogCount++;
+    await dialog.dismiss();
+  });
   await signIn(page);
   await page.goto("/workspace/demo/articles/a-little-room");
   const title = page.getByLabel("Title", { exact: true });
   const original = await title.inputValue();
   await title.fill("Unsaved navigation draft");
-  page.once("dialog", (dialog) => dialog.dismiss());
-  await page.getByRole("link", { name: "All articles", exact: true }).click();
+  const allArticles = page.getByRole("link", {
+    name: "All articles",
+    exact: true,
+  });
+  await allArticles.click();
+  const confirmation = page.getByRole("alertdialog", {
+    name: "Unsaved changes",
+  });
+  await expect(confirmation).toBeVisible();
+  await expect(
+    confirmation.getByRole("button", { name: "Stay" }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(confirmation).toHaveCount(0);
+  await expect(allArticles).toBeFocused();
   await expect(page).toHaveURL(/articles\/a-little-room$/);
   await expect(title).toHaveValue("Unsaved navigation draft");
   const menu = page.getByRole("button", {
     name: "Toggle workspace navigation",
   });
   if (await menu.isVisible()) await menu.click();
-  page.once("dialog", (dialog) => dialog.dismiss());
   await page
     .getByRole("navigation", { name: "Workspace" })
     .getByRole("link", { name: "Articles", exact: true })
     .click();
+  await expect(confirmation).toBeVisible();
+  await confirmation.getByRole("button", { name: "Stay" }).click();
   await expect(page).toHaveURL(/articles\/a-little-room$/);
   await expect(title).toHaveValue("Unsaved navigation draft");
   if (
@@ -410,11 +474,154 @@ test("unsaved editor changes block internal links until explicitly discarded", a
     (await menu.getAttribute("aria-expanded")) === "true"
   )
     await menu.click();
-  page.once("dialog", (dialog) => dialog.accept());
-  await page.getByRole("link", { name: "All articles", exact: true }).click();
+  await allArticles.click();
+  await expect(confirmation).toBeVisible();
+  await confirmation.getByRole("button", { name: "Leave and discard" }).click();
   await expect(page).toHaveURL(/\/articles$/);
+  expect(nativeDialogCount).toBe(0);
   await page.goto("/workspace/demo/articles/a-little-room");
   await expect(title).toHaveValue(original);
+});
+
+test("logout uses the custom unsaved-changes dialog", async ({ page }) => {
+  let nativeDialogCount = 0;
+  page.on("dialog", async (dialog) => {
+    nativeDialogCount++;
+    await dialog.dismiss();
+  });
+  await signIn(page);
+  await page.goto("/workspace/demo/articles/a-little-room");
+  await page.getByLabel("Title", { exact: true }).fill("Draft before logout");
+
+  const menu = page.getByRole("button", {
+    name: "Toggle workspace navigation",
+  });
+  if (
+    (await menu.isVisible()) &&
+    (await menu.getAttribute("aria-expanded")) !== "true"
+  )
+    await menu.click();
+  await page.getByRole("button", { name: "Log out" }).click();
+  const confirmation = page.getByRole("alertdialog", {
+    name: "Unsaved changes",
+  });
+  await expect(confirmation).toBeVisible();
+  await confirmation.getByRole("button", { name: "Stay" }).click();
+  await expect(page).toHaveURL(/articles\/a-little-room$/);
+
+  await page.getByRole("button", { name: "Log out" }).click();
+  await expect(confirmation).toBeVisible();
+  await confirmation
+    .getByRole("button", { name: "Log out and discard" })
+    .click();
+  await expect(page).toHaveURL(/\/login$/);
+  expect(nativeDialogCount).toBe(0);
+});
+
+test("article dates use a custom keyboard-operable calendar", async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.goto("/workspace/demo/articles/a-little-room");
+
+  const dateInput = page.getByLabel("Article date", { exact: true });
+  const original = await dateInput.inputValue();
+  const nextDate = new Date(`${original}T00:00:00`);
+  nextDate.setDate(nextDate.getDate() + 1);
+  const expected = [
+    nextDate.getFullYear(),
+    String(nextDate.getMonth() + 1).padStart(2, "0"),
+    String(nextDate.getDate()).padStart(2, "0"),
+  ].join("-");
+  const openCalendar = page.getByRole("button", {
+    name: "Open calendar for Article date",
+  });
+
+  await expect(page.locator('input[type="date"]')).toHaveCount(0);
+  await openCalendar.press("Enter");
+  const calendar = page.getByRole("dialog", { name: "Article date calendar" });
+  await expect(calendar).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("Enter");
+  await expect(dateInput).toHaveValue(expected);
+  await expect(calendar).toHaveCount(0);
+
+  await openCalendar.press("Enter");
+  await expect(calendar).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(calendar).toHaveCount(0);
+  await expect(openCalendar).toBeFocused();
+});
+
+test("viewers cannot open the custom article date calendar", async ({
+  page,
+}) => {
+  await signIn(page, "viewer");
+  await page.goto("/workspace/demo/articles/a-little-room");
+  await expect(
+    page.getByRole("button", { name: "Open calendar for Article date" }),
+  ).toBeDisabled();
+});
+
+test("form constraints show inline errors without native validation dialogs", async ({
+  page,
+}) => {
+  let nativeDialogCount = 0;
+  let loginRequests = 0;
+  let accountMutations = 0;
+  page.on("dialog", async (dialog) => {
+    nativeDialogCount++;
+    await dialog.dismiss();
+  });
+  page.on("request", (request) => {
+    if (request.url().endsWith("/api/auth/login")) loginRequests++;
+    if (
+      request.url().includes("/api/manage/users") &&
+      request.method() !== "GET"
+    )
+      accountMutations++;
+  });
+
+  await page.goto("/login");
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(
+    page.getByText("This field is required.", { exact: true }),
+  ).toHaveCount(2);
+  await expect(page.getByLabel("Username", { exact: true })).toHaveAttribute(
+    "aria-invalid",
+    "true",
+  );
+  expect(loginRequests).toBe(0);
+
+  await signIn(page);
+  await page.goto("/account");
+  await page.getByLabel("New password", { exact: true }).fill("short");
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(
+    page.getByText("This field is required.", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Enter at least 12 characters.", { exact: true }),
+  ).toBeVisible();
+
+  await page.goto("/account/platform-accounts");
+  await page.getByRole("button", { name: "Manage accounts" }).click();
+  await page.getByLabel("New username", { exact: true }).fill("Bad user");
+  await page.getByLabel("Initial password", { exact: true }).fill("short");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(
+    page.getByText(/Use 1–80 characters: start with a lowercase letter/),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Enter at least 12 characters.", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Reset password" }).click();
+  await expect(
+    page.getByText("This field is required.", { exact: true }),
+  ).toHaveCount(2);
+
+  expect(accountMutations).toBe(0);
+  expect(nativeDialogCount).toBe(0);
 });
 
 test("saving freezes editor fields and failed saves retain the unsaved draft", async ({
@@ -477,20 +684,93 @@ test("saving freezes editor fields and failed saves retain the unsaved draft", a
   ).toBeVisible();
 });
 
+async function dropFixtureFiles(
+  page: Page,
+  files: { name: string; mimeType: string; buffer: Buffer }[],
+) {
+  const dropZone = page.getByRole("group", { name: "Upload media" });
+  await dropZone.evaluate(
+    (element, fixtures) => {
+      const transfer = new DataTransfer();
+      for (const fixture of fixtures) {
+        const binary = atob(fixture.base64);
+        const bytes = Uint8Array.from(binary, (character) =>
+          character.charCodeAt(0),
+        );
+        transfer.items.add(
+          new File([bytes], fixture.name, { type: fixture.mimeType }),
+        );
+      }
+      element.dispatchEvent(
+        new DragEvent("drop", {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer: transfer,
+        }),
+      );
+    },
+    files.map(({ name, mimeType, buffer }) => ({
+      name,
+      mimeType,
+      base64: buffer.toString("base64"),
+    })),
+  );
+}
+
 async function chooseFixtureImage(page: Page, name: string) {
-  const choosing = page.waitForEvent("filechooser");
-  await page.getByRole("button", { name: "Upload media", exact: true }).click();
-  await (
-    await choosing
-  ).setFiles({
-    name,
+  await dropFixtureFiles(page, [
+    {
+      name,
+      mimeType: "image/png",
+      buffer: Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jVf8AAAAASUVORK5CYII=",
+        "base64",
+      ),
+    },
+  ]);
+}
+
+test("media drops accept one supported file and reject unsupported or multiple files", async ({
+  page,
+}) => {
+  let uploadRequests = 0;
+  page.on("request", (request) => {
+    if (
+      request.url().endsWith("/api/manage/projects/demo/media") &&
+      request.method() === "POST"
+    )
+      uploadRequests++;
+  });
+  await signIn(page);
+  await page.goto("/workspace/demo/media");
+  await expect(page.locator('input[type="file"]')).toHaveCount(0);
+
+  await dropFixtureFiles(page, [
+    { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("text") },
+  ]);
+  await expect(
+    page.getByText("Drop a JPEG, PNG, WebP, GIF, MP4, or WebM file.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+
+  const image = {
     mimeType: "image/png",
     buffer: Buffer.from(
       "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jVf8AAAAASUVORK5CYII=",
       "base64",
     ),
-  });
-}
+  };
+  await dropFixtureFiles(page, [
+    { ...image, name: "first.png" },
+    { ...image, name: "second.png" },
+  ]);
+  await expect(
+    page.getByText("Drop one media file at a time.", { exact: true }),
+  ).toBeVisible();
+  expect(uploadRequests).toBe(0);
+});
+
 test("upload finalization can retry a lost success response without duplicating the asset", async ({
   page,
 }, info) => {
@@ -519,8 +799,8 @@ test("upload finalization can retry a lost success response without duplicating 
   ).toBeVisible();
   expect(aborts).toBe(0);
   await expect(
-    page.getByRole("button", { name: "Upload media", exact: true }),
-  ).toBeDisabled();
+    page.getByRole("group", { name: "Upload media" }),
+  ).toHaveAttribute("aria-disabled", "true");
   await page.getByRole("button", { name: "Retry finalization" }).click();
   await expect(page.getByRole("status")).toContainText("Upload complete");
   await expect(
@@ -556,8 +836,8 @@ test("a failed finalization can be explicitly discarded", async ({
     "Upload cleanup complete",
   );
   await expect(
-    page.getByRole("button", { name: "Upload media", exact: true }),
-  ).toBeEnabled();
+    page.getByRole("group", { name: "Upload media" }),
+  ).not.toHaveAttribute("aria-disabled", "true");
   expect(
     (
       await page.request.get(`/api/manage/projects/demo/media/${uploadId}`)

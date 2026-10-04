@@ -1,0 +1,37 @@
+.uploadDropZone {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(100%, 300px);
+  min-height: 72px;
+  padding: 13px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--muted);
+  transition:
+    border-color 0.18s,
+    background 0.18s,
+    color 0.18s;
+}
+.uploadDropZone strong,
+.uploadDropZone small {
+  display: block;
+}
+.uploadDropZone strong {
+  color: var(--text);
+  font-size: 14px;
+}
+.uploadDropZone small {
+  margin-top: 5px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.dragging {
+  border-color: var(--accent-ink);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+[aria-disabled="true"].uploadDropZone {
+  opacity: 0.62;
+}

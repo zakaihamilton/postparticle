@@ -3,53 +3,55 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Guide from "@/components/developers/guide";
 import CodeBlock from "@/components/developers/code-block";
+import { integrationPrompt } from "@/components/developers/integration-prompt";
 import { snippets } from "@/components/developers/snippets";
 import styles from "@/components/developers/developers.module.css";
 
 const pages = {
   setup: {
     index: 1,
-    title: "Connect your website.",
+    title: "Set up the API connection",
     intro:
-      "Three environment variables and one server-only helper connect your website to published content.",
+      "Configure a Next.js site and add a server-only helper to read published articles.",
     sections: [
-      { id: "configuration", title: "Configuration" },
+      { id: "configuration", title: "Environment variables" },
+      { id: "existing-project", title: "Integrate into an existing project" },
       { id: "helper", title: "Typed fetch helper" },
-      { id: "foundation", title: "Layout & styles" },
-      { id: "runnable-example", title: "Runnable example" },
+      { id: "foundation", title: "Layout and styles" },
+      { id: "runnable-example", title: "Run the example" },
     ],
   },
   articles: {
     index: 2,
-    title: "Give your stories a home.",
+    title: "List and filter articles",
     intro:
-      "Render recent stories on your homepage, then build a blog with search, tags, date sorting, and pagination.",
+      "Fetch published articles for a homepage or paginated blog, with optional search, tag, and date filters.",
     sections: [
-      { id: "recent", title: "Recent articles" },
-      { id: "listing", title: "Blog listing" },
-      { id: "queries", title: "API parameters" },
+      { id: "recent", title: "Homepage articles" },
+      { id: "listing", title: "Search and pagination" },
+      { id: "queries", title: "Listing API" },
     ],
   },
-  "article-page": {
+  "article-pages": {
     index: 3,
-    title: "Open the whole story.",
+    title: "Render an article page",
     intro:
-      "A server-rendered article route gives readers the content immediately and keeps Markdown rendering safe.",
+      "Load a published article by slug, render its Markdown, and handle missing content and API errors.",
     sections: [
       { id: "route", title: "Article route" },
-      { id: "markdown", title: "Markdown & media" },
-      { id: "errors", title: "Missing articles & errors" },
+      { id: "markdown", title: "Markdown and media" },
+      { id: "errors", title: "Errors and missing articles" },
     ],
   },
-  seo: {
+  "metadata-and-caching": {
     index: 4,
-    title: "Ready for readers. And search.",
+    title: "Add metadata and manage freshness",
     intro:
-      "Give each story its own canonical URL, social preview, structured data, and a place in your website’s sitemap.",
+      "Set canonical and social metadata, include every published article in the sitemap, and choose how quickly cached content updates.",
     sections: [
-      { id: "metadata", title: "Metadata & JSON-LD" },
-      { id: "sitemap", title: "Sitemap & robots" },
-      { id: "freshness", title: "Publication freshness" },
+      { id: "metadata", title: "Metadata and JSON-LD" },
+      { id: "sitemap", title: "Sitemap and robots" },
+      { id: "freshness", title: "Cache freshness" },
     ],
   },
 };
@@ -80,16 +82,16 @@ export default async function DeveloperGuide({
 }) {
   const name = topic((await params).guide);
   return (
-    <Guide {...pages[name]}>
+    <Guide {...pages[name]} group="nextjs">
       {name === "setup" && (
         <>
           <section id="configuration">
-            <h2>Configure the consuming website</h2>
+            <h2>Set environment variables</h2>
             <p>
-              Use a TypeScript Next.js App Router project. The examples use{" "}
-              <code>app/</code> and <code>lib/</code> at the project root; if
-              you use <code>src/</code>, put both folders inside it. Keep these
-              values on your website server.
+              Use a TypeScript Next.js App Router project. The examples place{" "}
+              <code>app/</code> and <code>lib/</code> at the project root. If
+              your project uses <code>src/</code>, place both folders inside it.
+              Keep these values on the website server.
             </p>
             <CodeBlock
               filename=".env.local"
@@ -98,11 +100,13 @@ export default async function DeveloperGuide({
               }
             />
             <p>
-              Use your deployed CRM origin, your project ID, and your public
-              website’s canonical origin (without a trailing slash). Replace the
-              fictional values, and configure them in your website’s Vercel
-              project for each environment. Restart locally after changing
-              environment variables.
+              Set <code>POSTPARTICLE_URL</code> to the base URL of your
+              Postparticle deployment, <code>POSTPARTICLE_PROJECT</code> to your
+              project ID, and <code>WEBSITE_URL</code> to the base URL readers
+              use for your public website, without a trailing slash. Replace the
+              example values. Configure these variables in each Vercel
+              environment, or in your hosting provider’s environment settings.
+              Restart the local server after changing <code>.env.local</code>.
             </p>
             <CodeBlock
               filename="Terminal — website dependencies"
@@ -110,45 +114,65 @@ export default async function DeveloperGuide({
             />
             <div className={styles.callout}>
               <p>
-                No Spaces credentials, access tokens, or login cookies are
-                required. Fetching published articles does not grant access to
-                drafts or management endpoints.
+                The public articles API needs no Spaces credentials, access
+                tokens, or login cookies. It does not expose drafts or
+                management endpoints.
               </p>
             </div>
           </section>
-          <section id="helper">
-            <h2>A typed native-fetch helper</h2>
+          <section id="existing-project">
+            <h2>Integrate into an existing project</h2>
             <p>
-              Create this file in your website. It returns the published API’s
-              public types, encodes project IDs and slugs, omits unset query
-              parameters, and uses a 60-second fetch revalidation interval.{" "}
-              <code>connection()</code> defers fetching to request time,
-              allowing production builds without a running CRM.
+              If you use an AI coding assistant, provide the values below and
+              ask it to inspect your repository before editing. The prompt
+              directs it to follow your framework and project conventions, keep
+              API requests on the server, and use the public endpoints described
+              in these guides.
+            </p>
+            <p>
+              Replace the three placeholders before copying. Do not include
+              credentials; the published-content API does not require them.
+            </p>
+            <CodeBlock
+              filename="AI integration prompt"
+              code={integrationPrompt}
+            />
+          </section>
+          <section id="helper">
+            <h2>Add a server-only API helper</h2>
+            <p>
+              Create <code>lib/content.ts</code> in your website. The helper
+              defines the article response shape, encodes project IDs and slugs,
+              omits unset query parameters, and sets a 60-second revalidation
+              interval. <code>connection()</code> defers the fetch until a
+              request arrives, so the production build does not require a
+              running Postparticle instance.
             </p>
             <Snippet name="helper" />
             <p>
-              The helper maps only article 404 responses to Next.js{" "}
-              <code>notFound()</code>. Network failures and other HTTP errors
-              propagate to your website’s error boundary. Types describe the API
-              contract; they do not perform runtime response validation.
+              The helper maps an article 404 response to Next.js{" "}
+              <code>notFound()</code>. Other HTTP errors and network failures
+              propagate to the website’s error boundary. The TypeScript response
+              types describe the API contract; they do not validate responses at
+              runtime.
             </p>
           </section>
           <section id="foundation">
-            <h2>Start with a layout and CSS Modules</h2>
+            <h2>Add the example layout and styles</h2>
             <p>
-              These complete files supply the styles referenced by the following
-              guides. In an existing website, merge the layout metadata and
-              reuse your own design instead of replacing its layout.
+              These files provide the styles used by the later examples. In an
+              existing website, merge the metadata into your layout and keep
+              your current design.
             </p>
             <Snippet name="layout" />
             <Snippet name="css" />
           </section>
           <section id="runnable-example">
-            <h2>Run the repository example</h2>
+            <h2>Run the example application</h2>
             <p>
-              The same files live in <code>examples/next-blog</code>. From the
-              Postparticle repository root, with the CRM running locally and an
-              article published:
+              The files are in <code>examples/next-blog</code>. Start
+              Postparticle locally and publish an article, then run this command
+              from the repository root:
             </p>
             <CodeBlock
               filename="Terminal — run the example"
@@ -157,9 +181,10 @@ export default async function DeveloperGuide({
             <p>
               Open{" "}
               <a href="http://localhost:3301/blog">the local example blog</a>.
-              Build it with <code>npm run example:build</code>. For a separate
-              Vercel project, copy the shown files into your website and install
-              its dependencies; do not copy CRM storage configuration.
+              Run <code>npm run example:build</code> to build it. To deploy the
+              example as a separate website, copy its files and install its
+              dependencies in that project. Do not copy Postparticle storage
+              configuration.
             </p>
             <p>
               See the{" "}
@@ -167,7 +192,7 @@ export default async function DeveloperGuide({
                 href="/developers/resources/integration"
                 download="integration.md"
               >
-                repository integration guide
+                integration reference
               </a>{" "}
               for the optional typed client and JSON document endpoint. This
               application does not publish an SDK package.
@@ -178,41 +203,41 @@ export default async function DeveloperGuide({
       {name === "articles" && (
         <>
           <section id="recent">
-            <h2>Recent articles on your homepage</h2>
+            <h2>Render recent articles on the homepage</h2>
             <p>
-              Start with the{" "}
+              Use the{" "}
               <Link href="/developers/nextjs/setup">
-                setup guide’s helper and styles
+                setup guide’s API helper and styles
               </Link>
-              . Fetch three published articles in a Server Component. The
-              default order is article date descending; the slug breaks ties. An
-              empty response shows an explicit empty state.
+              . This example fetches three published articles in a Server
+              Component. Results are ordered by article date, newest first, with
+              the slug breaking ties. If the API returns no articles, the page
+              shows an empty state.
             </p>
             <Snippet name="home" />
           </section>
           <section id="listing">
-            <h2>A searchable, paginated blog</h2>
+            <h2>Add search, filters, and pagination</h2>
             <p>
-              This page reads the URL’s query parameters on the server. Search
-              and tag filters combine; changing filters resets pagination.
-              Previous and next links preserve your search, tag, and date order.
-              Unset filters are omitted rather than sent as literal undefined
-              values. Server-side validation keeps malformed URLs from reaching
-              the API. Invalid filters show correction guidance instead of an
-              empty result or a server error.
+              The page reads and validates query parameters on the server before
+              calling the API. Search and tag filters can be combined. Changing
+              filters resets pagination, and previous/next links preserve the
+              current filters and date order. Unset filters are omitted from the
+              request. Invalid values show correction guidance and do not
+              trigger an API request.
             </p>
             <p>
-              Create the validation helper and filter component below before
-              adding the listing page. The keyed component resets its controls
-              when URL filters change; Clear also resets unsent edits when
-              already on the unfiltered page.
+              Add the validation helper and filter component before the listing
+              page. The filter component resets when URL values change. Its
+              Clear link also resets unsent edits when the page is already
+              unfiltered.
             </p>
             <Snippet name="filters" />
             <Snippet name="filterControls" />
             <Snippet name="listing" />
           </section>
           <section id="queries">
-            <h2>The published article listing API</h2>
+            <h2>Listing endpoint parameters</h2>
             <CodeBlock
               filename="HTTP — listing example"
               code="GET /api/v1/projects/demo/articles?q=journey&tag=journal&order=desc&page=1&pageSize=12"
@@ -220,144 +245,142 @@ export default async function DeveloperGuide({
             <ul>
               <li>
                 <code>q</code>: case-insensitive search across title, excerpt,
-                and Markdown body; up to 200 characters.
+                and Markdown body; maximum 200 characters.
               </li>
               <li>
-                <code>tag</code>: exact, case-insensitive tag matching; up to 60
-                characters.
+                <code>tag</code>: exact, case-insensitive tag matching; maximum
+                60 characters.
               </li>
               <li>
                 <code>order</code>: <code>asc</code> or <code>desc</code>, using
                 the editable article date.
               </li>
               <li>
-                <code>page</code>: 1–100000. <code>pageSize</code>: 1–100,
+                <code>page</code>: 1–100000. <code>pageSize</code>: 1–100;
                 default 12.
               </li>
             </ul>
             <p>
               The response contains <code>items</code>, <code>total</code>,{" "}
               <code>page</code>, and <code>pageSize</code>. Only published
-              articles appear. A successful empty result is different from a
-              storage failure; let failures reach the error boundary rather than
-              presenting them as an empty blog.
+              articles appear. An empty result means there are no matching
+              articles. A storage failure is an error and should reach the
+              website’s error boundary.
             </p>
           </section>
         </>
       )}
-      {name === "article-page" && (
+      {name === "article-pages" && (
         <>
           <section id="route">
-            <h2>A complete article route</h2>
+            <h2>Create a route for each article</h2>
             <p>
               Use the{" "}
               <Link href="/developers/nextjs/setup#helper">
-                server-only helper
+                server-only API helper
               </Link>{" "}
-              and styles from setup. This file renders the story and supplies
-              metadata from the same published record. Its async{" "}
-              <code>params</code> match the current App Router interface.
+              and styles from setup. Create this file at{" "}
+              <code>app/blog/[slug]/page.tsx</code>. It loads the published
+              article for the slug, renders its content, and generates metadata
+              from the article record. The async <code>params</code> match the
+              current App Router interface.
             </p>
             <Snippet name="article" />
           </section>
           <section id="markdown">
-            <h2>Safe Markdown and public media</h2>
+            <h2>Render Markdown and media safely</h2>
             <p>
               <code>react-markdown</code> renders the body with raw HTML
-              disabled through <code>skipHtml</code>, and its default URL
-              handling rejects unsafe schemes. <code>remark-gfm</code> adds
-              tables, task lists, and other GitHub-flavored Markdown features.
-              Do not add raw HTML plugins or replace safe URL handling with an
-              unrestricted transform.
+              disabled by <code>skipHtml</code>. Its default URL handling
+              rejects unsafe schemes. <code>remark-gfm</code> adds tables, task
+              lists, and other GitHub-flavored Markdown features. Keep raw HTML
+              disabled and retain safe URL handling.
             </p>
             <p>
-              Postparticle resolves valid media references into delivery URLs
-              during publishing. The API supplies <code>coverUrl</code> and{" "}
-              <code>socialImageUrl</code>; it does not return private object
-              keys. Markdown image alt text comes from the article body. The
+              When an article is published, Postparticle resolves valid media
+              references to public delivery URLs. The API supplies{" "}
+              <code>coverUrl</code> and <code>socialImageUrl</code>; it does not
+              return private object keys. Add alt text to Markdown images. The
               example uses the article title as cover alt text. Video references
-              render as links; build your own player if desired.
+              render as links; add a player if your site needs one.
             </p>
           </section>
           <section id="errors">
-            <h2>Missing stories and storage errors</h2>
+            <h2>Handle missing articles and API errors</h2>
             <p>
-              The helper returns a Next.js 404 when the article is missing or
-              unpublished. HTTP 400, HTTP 503, and network failures propagate
-              instead of masquerading as a missing story. Add your website’s{" "}
-              <code>app/error.tsx</code> for recoverable error messaging.
+              The helper calls Next.js <code>notFound()</code> when an article
+              is missing or unpublished. HTTP 400 and 503 responses and network
+              failures propagate to the error boundary. Add{" "}
+              <code>app/error.tsx</code> to show a recovery message.
             </p>
             <p>
-              Published stories remain unchanged while editors save new drafts.
-              Your website only sees those edits after an explicit republish,
-              subject to its cache settings.
+              Saving a draft does not change the published article. The website
+              receives edits only after an explicit publish, subject to its
+              cache settings.
             </p>
           </section>
         </>
       )}
-      {name === "seo" && (
+      {name === "metadata-and-caching" && (
         <>
           <section id="metadata">
-            <h2>Canonical URLs, social previews, and Article JSON-LD</h2>
+            <h2>Set article metadata and JSON-LD</h2>
             <p>
               The{" "}
-              <Link href="/developers/nextjs/article-page#route">
-                complete article route
+              <Link href="/developers/nextjs/article-pages#route">
+                article route
               </Link>{" "}
-              already includes <code>generateMetadata</code> and JSON-LD. SEO
-              title and description fall back to the article title and excerpt;
-              the social image falls back to its cover. <code>WEBSITE_URL</code>{" "}
-              points to your public website, not the CRM.
+              includes <code>generateMetadata</code> and JSON-LD. The SEO title
+              and description fall back to the article title and excerpt. The
+              social image falls back to the cover. <code>WEBSITE_URL</code>{" "}
+              must be your public website origin.
             </p>
             <p>
-              The implementation includes canonical, Open Graph, and Twitter
-              metadata, along with author and publication/modification
-              timestamps. It escapes <code>&lt;</code> in JSON-LD before
-              inserting the script, preventing article text from closing the
-              script tag.
+              The example sets canonical, Open Graph, and Twitter metadata, plus
+              author and publication/modification timestamps. It escapes{" "}
+              <code>&lt;</code> in JSON-LD so article text cannot close the
+              script element.
             </p>
             <p>
-              Content and metadata are rendered on the server, so the initial
-              HTML contains the article. Do not move fetching into a client-only
-              effect if you want this behavior.
+              The server renders the article and its metadata into the initial
+              HTML. Keep the fetch on the server to preserve this behavior.
             </p>
           </section>
           <section id="sitemap">
-            <h2>Include every published article</h2>
+            <h2>Include published articles in the sitemap</h2>
             <p>
-              This sitemap traverses all API pages, fetching up to 100 stories
-              per request. Using only the first page would omit older articles.
+              The sitemap requests up to 100 articles per API page and continues
+              until it has traversed the result set. Fetching only the first
+              page would omit older articles.
             </p>
             <Snippet name="sitemap" />
             <p>
-              Enable indexing on the consuming website with its own robots file.
-              The CRM and these developer guides retain their noindex policy; do
-              not copy the CRM’s noindex headers into your public website.
+              The example’s robots file allows indexing on the website. The
+              Postparticle workspace and developer guides remain noindex; do not
+              copy their noindex headers to your public website.
             </p>
             <Snippet name="robots" />
           </section>
           <section id="freshness">
-            <h2>Understand publication freshness</h2>
+            <h2>Choose a cache policy</h2>
             <p>
-              The API sends <code>Cache-Control: no-store</code>. Your website
-              deliberately chooses its own server-side fetch cache with{" "}
+              The API sends <code>Cache-Control: no-store</code>. The example
+              sets its server-side fetch cache with{" "}
               <code>next: &#123; revalidate: 60 &#125;</code>. After publishing
-              or unpublishing, a cached page may still show its previous content
-              until the cache refreshes. Revalidation can happen on a subsequent
-              request; 60 seconds is an interval, not a strict delivery
-              guarantee.
+              or unpublishing, a cached page can continue to show the previous
+              content until the cache refreshes. Revalidation occurs on a later
+              request; 60 seconds is an interval, not a delivery guarantee.
             </p>
             <p>
-              Browser router caches and any additional CDN cache can extend that
-              delay. Use <code>&#123; cache: &quot;no-store&quot; &#125;</code>{" "}
-              instead of <code>next.revalidate</code> if each server request
-              must fetch current content. Do not combine those options. Avoid
-              build-only fetching when content must change without redeployment.
+              Browser router caches and CDN caches can extend the delay. Use{" "}
+              <code>&#123; cache: &quot;no-store&quot; &#125;</code> instead of{" "}
+              <code>next.revalidate</code> if each server request must fetch
+              current content. Do not combine the options. Avoid build-only
+              fetching if content must update without a redeployment.
             </p>
             <p>
-              Unpublishing removes API visibility, but previously cached article
-              content and distributed media URLs may remain available. Choose
-              caching behavior appropriate for your website.
+              Unpublishing removes the article from the API. Previously cached
+              pages and public media URLs may remain available.
             </p>
           </section>
         </>

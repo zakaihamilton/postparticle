@@ -16,6 +16,7 @@ import Markdown from "./markdown";
 import { Status } from "./content-list";
 import styles from "./workspace.module.css";
 import Select from "./select";
+import DatePicker from "./date-picker";
 const blankArticle = (): Article => ({
   title: "",
   slug: "",
@@ -102,13 +103,6 @@ export default function Editor({
       active = false;
     };
   }, [endpoint, id, isNew, projectId]);
-  useEffect(() => {
-    const handler = (event: BeforeUnloadEvent) => {
-      if (dirty) event.preventDefault();
-    };
-    window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler);
-  }, [dirty]);
   function update(field: string, value: unknown) {
     if (inFlight.current) return;
     setContent((old) => ({ ...old, [field]: value }));
@@ -479,15 +473,13 @@ export default function Editor({
                       placeholder="Author name"
                     />
                   </label>
-                  <label>
-                    Article date
-                    <input
-                      type="date"
-                      readOnly={readOnly}
-                      value={article.articleDate}
-                      onChange={(e) => update("articleDate", e.target.value)}
-                    />
-                  </label>
+                  <DatePicker
+                    key={readOnly ? "readonly" : "editable"}
+                    label="Article date"
+                    value={article.articleDate}
+                    onChange={(value) => update("articleDate", value)}
+                    readOnly={readOnly}
+                  />
                 </>
               )}
               <label>

@@ -1,6 +1,6 @@
 # Postparticle
 
-A calm, open-source workspace for articles, media, and dynamic JSON content. Built with Next.js, React, TypeScript, CSS Modules, and DigitalOcean Spaces. No database.
+A calm, open-source workspace for articles, media, and dynamic JSON content. Built with Next.js, React, TypeScript, CSS Modules, and S3-compatible object storage. No database.
 
 Public Next.js integration guides are available at `/developers`, linked from the welcome page and Settings & API.
 
@@ -25,6 +25,19 @@ npm run dev
 Bootstrap prompts for a password without echoing it. Choose at least 12 characters. It also accepts a password on stdin for automation; avoid placing secrets in command arguments or shell history. Bootstrap refuses to run once a platform administrator exists. Open [localhost:3000](http://localhost:3000).
 
 For development without Spaces, set `STORAGE_DRIVER=local` in `.env.local`. This explicitly uses ignored `.local-storage/` files. It is a development adapter, not a database or supported deployment backend. It has a 32 MiB upload limit and single uploads only. Local storage is blocked on Vercel. Do not deploy fixture passwords or local test storage.
+
+## Account names and recovery
+
+Accounts can use a traditional username or an email address. Email usernames are trimmed and stored in lowercase; sign-in is case-insensitive for email addresses. Existing usernames continue to work. Email usernames are identifiers, not a verified email or an email-delivery service.
+
+If you forget your username or password, a platform administrator can reset your password from **Platform accounts**. If you cannot sign in as an administrator, use the operator command with access to the configured storage:
+
+```sh
+npm run accounts -- list
+npm run accounts -- reset admin
+```
+
+Replace `admin` with the username or email shown by `list`. The reset command prompts privately for a new password and confirmation, then revokes existing sessions. Passwords are hashed and cannot be recovered. These commands use `.env.local`, just like bootstrap, and preserve project permissions and account status.
 
 ## Features
 

@@ -2,33 +2,37 @@
   text-decoration: none;
   color: var(--text);
   display: inline-flex;
+  transition: opacity 0.16s ease;
+}
+.brand:hover {
+  opacity: 0.78;
 }
 .wordmark {
   display: inline-flex;
   align-items: center;
   gap: 10px;
   font-size: 24px;
-  font-weight: 750;
-  letter-spacing: -1.2px;
+  font-weight: 650;
+  letter-spacing: -1px;
 }
 .highlight {
-  color: var(--accent);
+  color: var(--text);
 }
 .logoGlyph {
   width: 31px;
   height: 33px;
-  border-radius: 8px;
   background: var(--accent);
-  color: white;
   display: inline-flex;
   flex-shrink: 0;
+  border-radius: 5px;
+  color: var(--on-accent);
 }
 .themeControl {
   min-width: 110px;
   width: 110px;
 }
 .themeControl > button {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--muted);
   padding: 8px 12px;
   gap: 10px;
@@ -45,11 +49,14 @@
   background: var(--danger-bg);
   color: var(--danger);
   border: 1px solid var(--danger);
+  border-radius: 4px;
 }
 .notice {
   background: var(--accent-soft);
-  color: var(--accent);
   border: 1px solid var(--border);
+  color: var(--accent-ink);
+  border-radius: 4px;
+  animation: feedback var(--motion-panel) var(--ease-out);
 }
 .empty {
   padding: 64px 20px;
@@ -63,18 +70,28 @@
 .empty p {
   max-width: 400px;
   margin: auto;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.7;
 }
 .emptyIcon {
   display: inline-flex;
   padding: 15px;
-  border-radius: 16px;
-  background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-ink);
+  border-radius: 6px;
+  background: var(--surface-alt);
 }
 
 .icon {
   flex-shrink: 0;
   vertical-align: middle;
+}
+@keyframes feedback {
+  from {
+    opacity: 0.5;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

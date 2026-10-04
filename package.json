@@ -17,9 +17,12 @@
     "health": "repnix check",
     "bootstrap": "tsx --conditions=react-server --env-file=.env.local scripts/bootstrap.ts",
     "storage:verify": "tsx --conditions=react-server --env-file=.env.local scripts/verify-storage.ts",
+    "storage:checkpoint": "tsx --conditions=react-server --env-file=.env.local scripts/rebuild-content-checkpoints.ts",
+    "benchmark:content": "tsx --conditions=react-server scripts/benchmark-content-checkpoints.ts",
     "example:dev": "next dev examples/next-blog",
     "example:build": "next build examples/next-blog",
-    "example:start": "next start examples/next-blog"
+    "example:start": "next start examples/next-blog",
+    "accounts": "tsx --conditions=react-server --env-file=.env.local scripts/accounts.ts"
   },
   "engines": {
     "node": ">=22.20.0"
@@ -27,6 +30,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1146.0",
     "@aws-sdk/s3-request-presigner": "^3.1146.0",
+    "lucide-react": "^1.52.0",
     "next": "^16.3.8",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

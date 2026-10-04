@@ -77,12 +77,12 @@ export function WelcomePreview() {
           </div>
           <Image
             className={styles.editorCover}
-            src="/images/welcome/architecture.webp"
+            src="/images/welcome/architecture-editorial.webp"
             width={1536}
             height={1024}
             sizes="(max-width: 720px) 85vw, (max-width: 1000px) 55vw, 50vw"
             loading="eager"
-            alt="Sunlit stone courtyard with an olive tree and blue doorway"
+            alt="Olive tree and afternoon shadows in a limestone courtyard"
           />
           <div className={styles.editorMeta}>
             <span>Demo Editorial</span>

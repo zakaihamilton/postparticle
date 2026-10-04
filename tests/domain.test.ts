@@ -18,7 +18,10 @@ import {
   authorize,
   createSession,
   getUser,
+  listUsers,
   hashPassword,
+  membership,
+  resetUserPassword,
   saveUser,
   sessionUser,
   setMembership,
@@ -217,6 +220,57 @@ describe("publishing and revisions", () => {
   });
 });
 describe("accounts, sessions, and isolation", () => {
+  it("loads email accounts and memberships using normalized names", async () => {
+    const emailUser = {
+      username: "Editor+News@Example.COM",
+      passwordHash: await hashPassword("test-password-long"),
+      platformAdmin: false,
+      disabled: false,
+      sessionVersion: randomUUID(),
+    };
+    await saveUser("admin", emailUser, control);
+    await setMembership("admin", emailUser.username, "demo", "editor", control);
+    expect((await listUsers(control))[0].username).toBe(
+      "editor+news@example.com",
+    );
+    expect((await getUser("EDITOR+NEWS@EXAMPLE.COM", control))?.username).toBe(
+      "editor+news@example.com",
+    );
+    expect(await membership("EDITOR+NEWS@EXAMPLE.COM", "demo", control)).toBe(
+      "editor",
+    );
+    const token = await createSession(emailUser, control);
+    expect(await sessionUser(token, control)).toMatchObject({
+      username: "editor+news@example.com",
+    });
+    await resetUserPassword(
+      "operator-recovery",
+      emailUser.username,
+      "new-password-long",
+      control,
+    );
+    expect(await sessionUser(token, control)).toBeNull();
+    const updated = (await getUser(emailUser.username, control))!;
+    expect(
+      await verifyPassword("new-password-long", updated.passwordHash),
+    ).toBe(true);
+    expect(
+      await verifyPassword("test-password-long", updated.passwordHash),
+    ).toBe(false);
+    expect(await membership(emailUser.username, "demo", control)).toBe(
+      "editor",
+    );
+    expect(updated.platformAdmin).toBe(false);
+    expect(updated.disabled).toBe(false);
+    await expect(
+      resetUserPassword(
+        "operator-recovery",
+        emailUser.username,
+        "short",
+        control,
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+  });
   async function user() {
     return {
       username: "editor",

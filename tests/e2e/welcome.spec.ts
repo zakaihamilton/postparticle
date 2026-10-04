@@ -67,7 +67,7 @@ test("welcome animations finish, publishing is repeatable, and both themes remai
   ).toBeGreaterThanOrEqual(44);
   await page.getByText("Where does my content live?", { exact: true }).click();
   await expect(page.locator("details[open]")).toContainText(
-    "DigitalOcean Spaces",
+    "S3-compatible object storage",
   );
   await page.getByText("Where does my content live?", { exact: true }).click();
   await page.emulateMedia({ reducedMotion: "reduce" });

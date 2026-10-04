@@ -11,7 +11,7 @@ import { api, Brand, Icon, Notice, ThemeSwitch } from "./ui";
 import { ContentList, Dashboard } from "./content-list";
 import Editor from "./editor";
 import MediaLibrary from "./media-library";
-import { AccountSettings, Members, IntegrationSettings } from "./settings";
+import { Members, IntegrationSettings } from "./settings";
 import styles from "./workspace.module.css";
 const navigation = [
   { id: "", label: "Overview", icon: "grid" },
@@ -110,7 +110,7 @@ function WorkspaceContent({
               aria-label="Log out"
               className={styles.iconButton}
               onClick={async () => {
-                if (!confirmNavigation()) return;
+                if (!(await confirmNavigation("Log out and discard"))) return;
                 try {
                   await api("/api/auth/logout", { method: "POST" });
                   router.push("/login");
@@ -177,18 +177,11 @@ function WorkspaceContent({
             <MediaLibrary projectId={project.id} canEdit={canEdit} />
           )}
           {tab === "members" && <Members projectId={project.id} />}
-          {tab === "settings" && (
-            <>
-              <IntegrationSettings projectId={project.id} />
-              <AccountSettings platformAdmin={actor.platformAdmin} />
-            </>
-          )}
+          {tab === "settings" && <IntegrationSettings projectId={project.id} />}
         </main>
         <footer className={styles.workspaceFooter}>
-          <span>Made for your next great idea.</span>
-          <span>
-            postparticle <Icon name="sparkle" size={13} />
-          </span>
+          <span>Your content, thoughtfully managed.</span>
+          <span>postparticle</span>
         </footer>
       </div>
     </div>

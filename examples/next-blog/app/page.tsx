@@ -5,15 +5,17 @@ export default async function Welcome() {
   const { items } = await getArticles({ pageSize: 3 });
   return (
     <>
-      <div className={styles.eyebrow}>A PLACE FOR IDEAS</div>
+      <div className={styles.eyebrow}>DEMO JOURNAL</div>
       <h1>
-        Notes from
-        <br />a curious world.
+        Latest
+        <br />
+        articles
       </h1>
       <p className={styles.intro}>
-        A generic website welcome page, powered by content from Postparticle.
+        A sample website that renders published articles from the Postparticle
+        API.
       </p>
-      <h2>Latest stories</h2>
+      <h2>Recent articles</h2>
       <div className={styles.cards}>
         {items.map((a) => (
           <article key={a.slug}>
@@ -23,12 +25,12 @@ export default async function Welcome() {
               <Link href={`/blog/${a.slug}`}>{a.title}</Link>
             </h3>
             <p>{a.excerpt}</p>
-            <Link href={`/blog/${a.slug}`}>Read story →</Link>
+            <Link href={`/blog/${a.slug}`}>Read article</Link>
           </article>
         ))}
       </div>
-      {!items.length && <p>No stories have been published yet.</p>}
-      <Link href="/blog">All stories →</Link>
+      {!items.length && <p>No articles have been published yet.</p>}
+      <Link href="/blog">All articles</Link>
     </>
   );
 }

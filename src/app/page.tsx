@@ -7,7 +7,7 @@ import styles from "./welcome.module.css";
 const questions = [
   {
     q: "Where does my content live?",
-    a: "In your DigitalOcean Spaces. Each project has its own storage configuration. Articles, media, and metadata stay in object storage, with no database to manage.",
+    a: "Your content lives in S3-compatible object storage. Each project has its own storage configuration, and articles, media, and metadata live there, with no database to manage.",
   },
   {
     q: "Can I work across several projects?",
@@ -28,7 +28,6 @@ export default function Welcome() {
       <header className={styles.header}>
         <Brand />
         <nav aria-label="Welcome navigation">
-          <Link href="#product">Product</Link>
           <Link href="#the-workflow">How it works</Link>
           <Link href="/developers">Developers</Link>
           <ThemeSwitch />
@@ -39,56 +38,56 @@ export default function Welcome() {
       </header>
       <main>
         <section className={styles.hero}>
-          <div className={styles.heroGrid} aria-hidden="true" />
-          <div className={styles.heroCopy}>
-            <div className={styles.eyebrow}>
-              <span className={styles.accentDot} />
-              POSTPARTICLE / CONTENT MANAGEMENT
+          <div className={styles.heroLayout}>
+            <div className={styles.heroCopy}>
+              <div className={styles.eyebrow}>
+                <span className={styles.accentDot} />A HOME FOR YOUR CONTENT
+              </div>
+              <h1>
+                Manage your website’s{" "}
+                <span className={styles.headlineAccent}>content.</span>
+              </h1>
+              <p>
+                A quiet workspace for articles, media, and the details that
+                matter. Write privately. Publish when you’re ready.
+              </p>
+              <div className={styles.actions}>
+                <Link className={styles.primary} href="/login">
+                  Log in to your workspace <Icon name="arrow" size={18} />
+                </Link>
+                <Link className={styles.secondary} href="#the-workflow">
+                  Explore the workflow <Icon name="arrow-down" size={16} />
+                </Link>
+              </div>
+              <div className={styles.heroFacts}>
+                <span>
+                  <Icon name="code" size={14} />
+                  Open source
+                </span>
+                <span>
+                  <Icon name="lock" size={14} />
+                  Private drafts
+                </span>
+                <span>
+                  <Icon name="globe" size={14} />
+                  Published-content API
+                </span>
+              </div>
             </div>
-            <h1>
-              Manage your website’s{" "}
-              <span className={styles.headlineAccent}>content.</span>
-            </h1>
-            <p>
-              Write articles, organize media, and publish JSON content from one
-              workspace. Everything is stored in your DigitalOcean Spaces.
-            </p>
-            <div className={styles.actions}>
-              <Link className={styles.primary} href="/login">
-                Log in to your workspace <Icon name="arrow" size={18} />
-              </Link>
-              <Link className={styles.secondary} href="#the-workflow">
-                Explore the workflow <Icon name="arrow-down" size={16} />
-              </Link>
-            </div>
-            <div className={styles.heroFacts}>
-              <span>
-                <Icon name="code" size={14} />
-                Open source
-              </span>
-              <span>
-                <Icon name="lock" size={14} />
-                Private drafts
-              </span>
-              <span>
-                <Icon name="globe" size={14} />
-                Published-content API
-              </span>
-            </div>
-          </div>
-        </section>
-        <section id="product" className={styles.product} data-reveal>
-          <div className={styles.productCaption}>
-            <span>YOUR PUBLISHING WORKSPACE</span>
-            <span>
-              <Icon name="arrow-down" size={14} />
-              Try the publishing preview
-            </span>
-          </div>
-          <WelcomePreview />
-          <div className={styles.productNote}>
-            Fictional content. This demonstration does not save or publish real
-            articles.
+            <section id="product" className={styles.product} data-reveal>
+              <div className={styles.productCaption}>
+                <span>YOUR PUBLISHING WORKSPACE</span>
+                <span>
+                  <Icon name="arrow-down" size={14} />
+                  Try the publishing preview
+                </span>
+              </div>
+              <WelcomePreview />
+              <div className={styles.productNote}>
+                Fictional content. This demonstration does not save or publish
+                real articles.
+              </div>
+            </section>
           </div>
         </section>
         <section id="the-workflow" className={styles.workflow} data-reveal>
@@ -151,11 +150,11 @@ export default function Welcome() {
             <div className={styles.editorialGallery}>
               <figure className={styles.featurePhoto}>
                 <Image
-                  src="/images/welcome/architecture.webp"
+                  src="/images/welcome/architecture-editorial.webp"
                   width={1536}
                   height={1024}
                   sizes="(max-width: 720px) 90vw, 50vw"
-                  alt="Sunlit stone courtyard with an olive tree and blue doorway"
+                  alt="Olive tree and afternoon shadows in a limestone courtyard"
                 />
                 <figcaption>
                   <span>ARTICLE COVER</span>
@@ -165,17 +164,17 @@ export default function Welcome() {
               <div className={styles.photoPair}>
                 <figure>
                   <Image
-                    src="/images/welcome/studio.webp"
+                    src="/images/welcome/studio-editorial.webp"
                     width={1536}
                     height={1024}
                     sizes="(max-width: 720px) 44vw, 25vw"
-                    alt="Working studio with materials and tools on a wooden table"
+                    alt="Paper proofs, linen-bound books, and pencils on a sunlit editor’s desk"
                   />
                   <figcaption>studio-notes.jpg</figcaption>
                 </figure>
                 <figure>
                   <Image
-                    src="/images/welcome/coast.webp"
+                    src="/images/welcome/coast-editorial.webp"
                     width={1536}
                     height={1024}
                     sizes="(max-width: 720px) 44vw, 25vw"
@@ -288,7 +287,7 @@ export default function Welcome() {
                 <span>Latest stories</span>
               </div>
               <Image
-                src="/images/welcome/architecture.webp"
+                src="/images/welcome/architecture-editorial.webp"
                 width={1536}
                 height={1024}
                 sizes="(max-width: 720px) 80vw, 40vw"

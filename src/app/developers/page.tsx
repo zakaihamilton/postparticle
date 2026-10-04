@@ -3,91 +3,139 @@ import Guide from "@/components/developers/guide";
 import { guideLinks } from "@/components/developers/topics";
 import { Icon } from "@/components/ui";
 import styles from "@/components/developers/developers.module.css";
+
+const nextjsGuides = [
+  {
+    href: guideLinks[1].href,
+    title: guideLinks[1].title,
+    description:
+      "Configure server environment variables and add a typed, server-only API helper.",
+    icon: "code",
+  },
+  {
+    href: guideLinks[2].href,
+    title: guideLinks[2].title,
+    description:
+      "Render recent content and add validated search, tag filters, sorting, and pagination.",
+    icon: "article",
+  },
+  {
+    href: guideLinks[3].href,
+    title: guideLinks[3].title,
+    description:
+      "Load a published article by slug, render Markdown and media, and handle errors.",
+    icon: "image",
+  },
+  {
+    href: guideLinks[4].href,
+    title: guideLinks[4].title,
+    description:
+      "Add canonical and social metadata, a sitemap, and a cache policy.",
+    icon: "globe",
+  },
+] as const;
+
 export default function Developers() {
   return (
     <Guide
       index={0}
-      title="Your articles. Your Next.js website."
-      intro="Connect Postparticle to your website with server-rendered pages. Keep your design, and let your editorial team manage what gets published."
+      title="Integrate published articles with Next.js"
+      intro="Use the public Postparticle API to render published articles in a TypeScript Next.js App Router site. The guides cover setup, listings, article pages, metadata, caching, API behavior, and common integration problems."
       sections={[
-        { id: "start", title: "Before you start" },
-        { id: "guides", title: "Integration guides" },
-        { id: "resources", title: "Repository resources" },
+        { id: "start", title: "Prerequisites" },
+        { id: "guides", title: "Next.js guide sequence" },
+        { id: "references", title: "API and troubleshooting" },
+        { id: "resources", title: "AI prompt and example" },
       ]}
     >
       <section id="start">
-        <h2>Before you start</h2>
+        <h2>Prerequisites</h2>
         <p>
-          You need a Next.js App Router application with TypeScript, a deployed
-          Postparticle origin, and a project with at least one published
-          article. The examples use a fictional project named <code>demo</code>.
+          You need a TypeScript Next.js App Router project, the base URL of a
+          running Postparticle deployment, a project ID, and at least one
+          published article. The examples use <code>demo</code> as the project
+          ID. Requests run on your website server; no workspace login or Spaces
+          credentials are required.
         </p>
         <ol>
           <li>
-            Connect your website with three environment variables and a
-            server-only fetch helper.
+            Set <code>POSTPARTICLE_URL</code>, <code>POSTPARTICLE_PROJECT</code>
+            , and <code>WEBSITE_URL</code> as server-side environment variables.
           </li>
           <li>
-            Render recent articles, lists, and individual stories on the server.
+            Follow the setup guide to add a server-only helper, then render the
+            results in Server Components or another server-rendered route.
           </li>
           <li>
-            Add search metadata and a sitemap, then choose how often your
-            website refreshes.
+            Add article routes, metadata, sitemap entries, and a cache policy
+            that fits the freshness requirements of your site.
           </li>
         </ol>
-        <div className={styles.callout}>
-          <p>
-            Published content is public. These guides require no account, Spaces
-            keys, or login cookies. Drafts remain inside your private workspace.
-          </p>
-        </div>
       </section>
       <section id="guides">
-        <h2>Build it, one page at a time</h2>
+        <h2>Next.js guide sequence</h2>
+        <p>
+          Start with setup, then follow the guides in order. Each guide links to
+          the next step and includes copyable examples from the runnable demo.
+        </p>
         <div className={styles.cards}>
-          {guideLinks.slice(1).map((guide, i) => (
+          {nextjsGuides.map((guide) => (
             <Link className={styles.card} key={guide.href} href={guide.href}>
               <span>
-                <Icon name={["code", "article", "image", "globe"][i]} />
+                <Icon name={guide.icon} />
                 {guide.title}
                 <Icon name="arrow-up-right" size={16} />
               </span>
-              <p>
-                {
-                  [
-                    "Configuration, dependencies, and typed native fetch.",
-                    "Homepage stories, search, tags, sorting, and pagination.",
-                    "A complete article route with safe Markdown and error handling.",
-                    "Canonical URLs, social previews, JSON-LD, and sitemap generation.",
-                  ][i]
-                }
-              </p>
+              <p>{guide.description}</p>
             </Link>
           ))}
         </div>
       </section>
-      <section id="resources">
-        <h2>Keep the runnable example close</h2>
+      <section id="references">
+        <h2>API and troubleshooting</h2>
         <p>
-          Every TypeScript snippet in these guides comes from{" "}
-          <code>examples/next-blog</code> in the repository and is checked by
-          the project’s type checks. The complete example includes CSS Modules
-          and a public robots file.
+          Use the API reference to check endpoints, query limits, response
+          fields, media behavior, and error status codes. Troubleshooting lists
+          checks for connection failures, 404 and 400 responses, stale content,
+          and missing media.
+        </p>
+        <p>
+          <Link href={guideLinks[5].href}>Open the API reference</Link> or{" "}
+          <Link href={guideLinks[6].href}>troubleshoot an integration</Link>.
+        </p>
+      </section>
+      <section id="resources">
+        <h2>AI prompt, runnable example, and integration reference</h2>
+        <p>
+          To adapt the integration to an existing project, copy the prompt in
+          the setup guide. It asks an AI coding assistant to inspect the
+          repository, follow its conventions, and keep API requests on the
+          server. Replace the Postparticle URL, project ID, and public website
+          URL before copying.
+        </p>
+        <p>
+          <Link href="/developers/nextjs/setup#existing-project">
+            View the copyable integration prompt
+          </Link>
+          . The examples in <code>examples/next-blog</code> provide a separate
+          application for trying the API. The example includes CSS Modules and a
+          public robots file; an existing site can keep its current styling.
         </p>
         <p>
           <Link href="/developers/nextjs/setup#runnable-example">
-            Run the generic blog example
+            Run the Next.js example
           </Link>{" "}
-          or{" "}
+          or download the{" "}
           <a href="/developers/resources/integration" download="integration.md">
-            download the repository integration guide
-          </a>{" "}
-          (<code>docs/integration.md</code>).
+            integration reference
+          </a>
+          . The downloadable Markdown is a separate resource and is not included
+          in guide search.
         </p>
         <p>
           The optional typed client lives in <code>src/lib/client.ts</code>.
-          Copy it with its public types if you prefer a client abstraction;
-          Postparticle is an application, not a published SDK package.
+          Copy it with its public types if you want a client abstraction. This
+          repository is an application and does not publish an SDK package.
         </p>
       </section>
     </Guide>

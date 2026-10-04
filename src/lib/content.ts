@@ -1,17 +1,11 @@
 import "server-only";
 import { z } from "zod";
 import { append, events } from "./events";
+import { readContentRecord, readContentRecords } from "./content-state";
 import { HttpError, identifier } from "./config";
 import { replaceMediaReferences } from "./media-references";
 import type { Store } from "./storage";
-import type {
-  Article,
-  Content,
-  Event,
-  JsonDocument,
-  Kind,
-  RecordState,
-} from "./types";
+import type { Article, Content, JsonDocument, Kind } from "./types";
 const tags = z
   .array(z.string().trim().min(1).max(60))
   .max(30)
@@ -47,77 +41,12 @@ function parseContent(kind: Kind, input: unknown): Content {
     ? articleSchema.parse(input)
     : documentSchema.parse(input);
 }
-function reduceContent<T extends Content>(
-  id: string,
-  history: Event<T>[],
-): RecordState<T> | null {
-  let draft: T | null = null;
-  let published: T | null = null;
-  let trashed = false;
-  let createdAt = "";
-  let updatedAt = "";
-  let publishedAt: string | null = null;
-  let revision = "";
-  for (const event of [...history].sort((a, b) =>
-    a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
-  )) {
-    if (event.action === "save") {
-      draft = event.data;
-      createdAt ||= event.at;
-      updatedAt = event.at;
-      revision = event.id;
-    }
-    if (event.action === "publish") {
-      published = event.data;
-      publishedAt = event.at;
-    }
-    if (event.action === "unpublish") {
-      published = null;
-      publishedAt = null;
-    }
-    if (event.action === "trash") {
-      trashed = true;
-      published = null;
-      publishedAt = null;
-    }
-    if (event.action === "restore") trashed = false;
-  }
-  if (!draft) return null;
-  return {
-    id,
-    draft,
-    published,
-    trashed,
-    createdAt,
-    updatedAt,
-    publishedAt,
-    revision,
-  };
-}
 export async function getRecord(kind: Kind, id: string, store: Store) {
   identifier.parse(id);
-  return reduceContent(
-    id,
-    await events<Content>(store, `content/${kind}/${id}`),
-  );
+  return readContentRecord(kind, id, store);
 }
 export async function records(kind: Kind, store: Store) {
-  const history = await events<Content>(store, `content/${kind}`);
-  const groups = new Map<string, Event<Content>[]>();
-  // IDs are part of each content payload, so no shared mutable index is needed.
-  for (const event of history) {
-    const id =
-      kind === "articles"
-        ? (event.data as Article).slug
-        : (event.data as JsonDocument).key;
-    const group = groups.get(id) ?? [];
-    group.push(event);
-    groups.set(id, group);
-  }
-  return [...groups].flatMap(([id, group]) => {
-    const state = reduceContent(id, group);
-    return state ? [state] : [];
-  });
+  return readContentRecords(kind, store);
 }
 export async function saveContent(
   kind: Kind,
