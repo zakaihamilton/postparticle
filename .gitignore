@@ -18,3 +18,4 @@ test-results/
 *.tsbuildinfo
 .DS_Store
 .local-storage/
+.vercel

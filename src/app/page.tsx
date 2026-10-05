@@ -28,7 +28,7 @@ export default function Welcome() {
       <header className={styles.header}>
         <Brand />
         <nav aria-label="Welcome navigation">
-          <Link href="#the-workflow">How it works</Link>
+          <a href="#the-workflow">How it works</a>
           <Link href="/developers">Developers</Link>
           <ThemeSwitch />
           <Link href="/login" className={styles.headerLogin}>
@@ -55,9 +55,9 @@ export default function Welcome() {
                 <Link className={styles.primary} href="/login">
                   Log in to your workspace <Icon name="arrow" size={18} />
                 </Link>
-                <Link className={styles.secondary} href="#the-workflow">
+                <a className={styles.secondary} href="#the-workflow">
                   Explore the workflow <Icon name="arrow-down" size={16} />
-                </Link>
+                </a>
               </div>
               <div className={styles.heroFacts}>
                 <span>
