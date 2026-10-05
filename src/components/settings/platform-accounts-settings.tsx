@@ -1,36 +1,65 @@
 "use client";
-import { useId, useState } from "react";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { api, Notice } from "../ui";
-import {
-  clearFieldError,
-  FieldError,
-  validateForm,
-  type FieldErrors,
-} from "../form-validation";
 import styles from "../workspace.module.css";
-export function PlatformAccountsSettings() {
-  const createValidationId = useId().replace(/:/g, "");
-  const resetValidationId = useId().replace(/:/g, "");
+import { PlatformAccountProjectAccess } from "./platform-account-project-access";
+
+type PlatformUser = {
+  username: string;
+  platformAdmin: boolean;
+  disabled: boolean;
+};
+
+export function PlatformAccountsSettings({
+  currentUsername,
+}: {
+  currentUsername: string;
+}) {
+  const [users, setUsers] = useState<PlatformUser[]>([]);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [createFieldErrors, setCreateFieldErrors] = useState<FieldErrors>({});
-  const [resetFieldErrors, setResetFieldErrors] = useState<FieldErrors>({});
-  const [users, setUsers] = useState<
-    { username: string; platformAdmin: boolean; disabled: boolean }[]
-  >([]);
-  const [showUsers, setShowUsers] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [busyUsername, setBusyUsername] = useState("");
+  const [expandedUsername, setExpandedUsername] = useState("");
 
-  async function run(task: () => Promise<void>) {
+  useEffect(() => {
+    let active = true;
+    api<PlatformUser[]>("/api/manage/users")
+      .then((accounts) => {
+        if (active) setUsers(accounts);
+      })
+      .catch((e) => {
+        if (active) setError((e as Error).message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  function refreshUsers() {
+    setError("");
+    setLoading(true);
+    api<PlatformUser[]>("/api/manage/users")
+      .then(setUsers)
+      .catch((e) => setError((e as Error).message))
+      .finally(() => setLoading(false));
+  }
+
+  async function run(username: string, task: () => Promise<void>) {
     setError("");
     setMessage("");
-    setBusy(true);
+    setBusyUsername(username);
     try {
       await task();
     } catch (e) {
       setError((e as Error).message);
     } finally {
-      setBusy(false);
+      setBusyUsername("");
     }
   }
 
@@ -39,245 +68,157 @@ export function PlatformAccountsSettings() {
       <div className={styles.pageHeading}>
         <div>
           <div className={styles.eyebrow}>PLATFORM ADMINISTRATION</div>
-          <h1>Platform accounts</h1>
+          <h1>Users</h1>
           <p className={styles.subtitle}>
-            Create accounts and manage access to the platform.
+            Manage account status and project access.
           </p>
         </div>
+        <Link
+          className={styles.primary}
+          href="/account/platform-accounts/create"
+        >
+          Create account
+        </Link>
       </div>
       <Notice error={error} message={message} />
       <section className={styles.panel}>
         <div className={styles.panelHeading}>
-          <h2>Platform accounts</h2>
+          <div>
+            <h2>Platform users</h2>
+            <p>
+              {users.length} {users.length === 1 ? "account" : "accounts"}
+            </p>
+          </div>
           <button
             className={styles.ghost}
-            onClick={() =>
-              run(async () => {
-                setUsers(await api("/api/manage/users"));
-                setShowUsers(!showUsers);
-              })
-            }
+            disabled={loading || !!busyUsername}
+            onClick={refreshUsers}
           >
-            {showUsers ? "Hide accounts" : "Manage accounts"}
+            Refresh
           </button>
         </div>
-        {showUsers && (
-          <>
-            <form
-              noValidate
-              className={styles.formSection}
-              onChange={(event) => {
-                if (event.target instanceof HTMLInputElement)
-                  clearFieldError(setCreateFieldErrors, event.target.name);
-              }}
-              onSubmit={(e) => {
-                e.preventDefault();
-                const form = e.currentTarget;
-                const validation = validateForm(form);
-                setCreateFieldErrors(validation.errors);
-                if (validation.firstInvalid) {
-                  requestAnimationFrame(() => validation.firstInvalid?.focus());
-                  return;
-                }
-                const data = new FormData(form);
-                void run(async () => {
-                  await api("/api/manage/users", {
-                    method: "POST",
-                    body: JSON.stringify({
-                      username: data.get("username"),
-                      password: data.get("password"),
-                    }),
-                  });
-                  setUsers(await api("/api/manage/users"));
-                  form.reset();
-                  setMessage(
-                    "Account created. Grant project access in Members.",
-                  );
-                });
-              }}
-            >
-              <div className={styles.twoColumns}>
-                <label>
-                  New username
-                  <input
-                    name="username"
-                    required
-                    placeholder="Username or email address"
-                    maxLength={254}
-                    autoComplete="off"
-                    aria-label="New username"
-                    aria-invalid={createFieldErrors.username ? true : undefined}
-                    aria-describedby={
-                      createFieldErrors.username
-                        ? `${createValidationId}-username-error`
-                        : undefined
-                    }
-                  />
-                  <FieldError
-                    id={`${createValidationId}-username-error`}
-                    message={createFieldErrors.username}
-                  />
-                </label>
-                <label>
-                  Initial password
-                  <input
-                    type="password"
-                    name="password"
-                    minLength={12}
-                    required
-                    autoComplete="new-password"
-                    aria-label="Initial password"
-                    aria-invalid={createFieldErrors.password ? true : undefined}
-                    aria-describedby={
-                      createFieldErrors.password
-                        ? `${createValidationId}-password-error`
-                        : undefined
-                    }
-                  />
-                  <FieldError
-                    id={`${createValidationId}-password-error`}
-                    message={createFieldErrors.password}
-                  />
-                </label>
-              </div>
-              <button className={styles.primary} disabled={busy}>
-                Create account
-              </button>
-            </form>
-            <div className={styles.history}>
-              {users.map((u) => (
-                <div key={u.username}>
-                  <span>
-                    <strong>{u.username}</strong>
-                    <small>
-                      {u.platformAdmin
-                        ? "Platform administrator"
-                        : u.disabled
-                          ? "Disabled"
-                          : "Active"}
-                    </small>
-                  </span>
-                  <div className={styles.buttonGroup}>
-                    <button
-                      className={styles.secondary}
-                      disabled={busy}
-                      onClick={() =>
-                        run(async () => {
-                          await api(
-                            `/api/manage/users/${encodeURIComponent(u.username)}/revoke`,
-                            {
-                              method: "POST",
-                            },
-                          );
-                          setMessage("All sessions revoked.");
-                        })
-                      }
-                    >
-                      Revoke sessions
-                    </button>
-                    {!u.platformAdmin && (
+        {loading ? (
+          <p className={styles.tableFooter}>Loading accounts…</p>
+        ) : error && !users.length ? (
+          <p className={styles.tableFooter}>
+            The account list could not be loaded.
+          </p>
+        ) : users.length ? (
+          <div className={styles.accountList}>
+            {users.map((user) => {
+              const isSelf = user.username === currentUsername;
+              return (
+                <article className={styles.accountUser} key={user.username}>
+                  <div className={styles.accountUserTop}>
+                    <div className={styles.accountUserIdentity}>
+                      <strong>{user.username}</strong>
+                      <small>
+                        {user.platformAdmin
+                          ? "Platform administrator"
+                          : user.disabled
+                            ? "Disabled"
+                            : "Active"}
+                      </small>
+                      {user.platformAdmin && (
+                        <small>Admin access to every project</small>
+                      )}
+                    </div>
+                    <div className={styles.accountUserActions}>
+                      {!user.platformAdmin && (
+                        <button
+                          className={styles.secondary}
+                          aria-expanded={expandedUsername === user.username}
+                          onClick={() =>
+                            setExpandedUsername((current) =>
+                              current === user.username ? "" : user.username,
+                            )
+                          }
+                        >
+                          {expandedUsername === user.username
+                            ? "Close project access"
+                            : "Manage project access"}
+                        </button>
+                      )}
+                      {isSelf ? (
+                        <Link className={styles.secondary} href="/account">
+                          Your password settings
+                        </Link>
+                      ) : (
+                        <Link
+                          className={styles.secondary}
+                          href={
+                            "/account/platform-accounts/reset-password?username=" +
+                            encodeURIComponent(user.username)
+                          }
+                        >
+                          Reset password
+                        </Link>
+                      )}
                       <button
                         className={styles.secondary}
-                        disabled={busy}
+                        disabled={!!busyUsername}
                         onClick={() =>
-                          run(async () => {
+                          run(user.username, async () => {
                             await api(
-                              `/api/manage/users/${encodeURIComponent(u.username)}`,
-                              {
-                                method: "PATCH",
-                                body: JSON.stringify({ disabled: !u.disabled }),
-                              },
+                              "/api/manage/users/" +
+                                encodeURIComponent(user.username) +
+                                "/revoke",
+                              { method: "POST" },
                             );
-                            setUsers(await api("/api/manage/users"));
+                            setMessage(
+                              "Revoked all sessions for " + user.username + ".",
+                            );
                           })
                         }
                       >
-                        {u.disabled ? "Enable" : "Disable"}
+                        Revoke sessions
                       </button>
-                    )}
+                      {!user.platformAdmin && (
+                        <button
+                          className={styles.secondary}
+                          disabled={!!busyUsername}
+                          onClick={() =>
+                            run(user.username, async () => {
+                              await api(
+                                "/api/manage/users/" +
+                                  encodeURIComponent(user.username),
+                                {
+                                  method: "PATCH",
+                                  body: JSON.stringify({
+                                    disabled: !user.disabled,
+                                  }),
+                                },
+                              );
+                              setUsers((current) =>
+                                current.map((account) =>
+                                  account.username === user.username
+                                    ? { ...account, disabled: !user.disabled }
+                                    : account,
+                                ),
+                              );
+                              setMessage(
+                                user.disabled
+                                  ? "Enabled " + user.username + "."
+                                  : "Disabled " + user.username + ".",
+                              );
+                            })
+                          }
+                        >
+                          {user.disabled ? "Enable" : "Disable"}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-            <form
-              noValidate
-              className={styles.formSection}
-              onChange={(event) => {
-                if (event.target instanceof HTMLInputElement)
-                  clearFieldError(setResetFieldErrors, event.target.name);
-              }}
-              onSubmit={(e) => {
-                e.preventDefault();
-                const form = e.currentTarget;
-                const validation = validateForm(form);
-                setResetFieldErrors(validation.errors);
-                if (validation.firstInvalid) {
-                  requestAnimationFrame(() => validation.firstInvalid?.focus());
-                  return;
-                }
-                const data = new FormData(form);
-                void run(async () => {
-                  await api(
-                    `/api/manage/users/${encodeURIComponent(String(data.get("username")))}`,
-                    {
-                      method: "PATCH",
-                      body: JSON.stringify({ password: data.get("password") }),
-                    },
-                  );
-                  form.reset();
-                  setMessage(
-                    "Password reset. All previous sessions were revoked.",
-                  );
-                });
-              }}
-            >
-              <h3>Reset an account password</h3>
-              <div className={styles.twoColumns}>
-                <label>
-                  Username
-                  <input
-                    name="username"
-                    required
-                    aria-label="Username"
-                    aria-invalid={resetFieldErrors.username ? true : undefined}
-                    aria-describedby={
-                      resetFieldErrors.username
-                        ? `${resetValidationId}-username-error`
-                        : undefined
-                    }
-                  />
-                  <FieldError
-                    id={`${resetValidationId}-username-error`}
-                    message={resetFieldErrors.username}
-                  />
-                </label>
-                <label>
-                  New password
-                  <input
-                    name="password"
-                    type="password"
-                    minLength={12}
-                    autoComplete="new-password"
-                    required
-                    aria-label="New password"
-                    aria-invalid={resetFieldErrors.password ? true : undefined}
-                    aria-describedby={
-                      resetFieldErrors.password
-                        ? `${resetValidationId}-password-error`
-                        : undefined
-                    }
-                  />
-                  <FieldError
-                    id={`${resetValidationId}-password-error`}
-                    message={resetFieldErrors.password}
-                  />
-                </label>
-              </div>
-              <button className={styles.secondary} disabled={busy}>
-                Reset password
-              </button>
-            </form>
-          </>
+                  {expandedUsername === user.username &&
+                    !user.platformAdmin && (
+                      <PlatformAccountProjectAccess username={user.username} />
+                    )}
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <p className={styles.tableFooter}>No accounts found.</p>
         )}
       </section>
     </>

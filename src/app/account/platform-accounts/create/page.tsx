@@ -1,16 +1,16 @@
 import { redirect } from "next/navigation";
 import { currentActor } from "@/lib/auth";
 import { AccountArea } from "@/components/account-area";
-import { PlatformAccountsSettings } from "@/components/settings";
+import { CreatePlatformAccountSettings } from "@/components/settings";
 
-export default async function PlatformAccountsPage() {
+export default async function CreatePlatformAccountPage() {
   const actor = await currentActor();
   if (!actor) redirect("/login");
   if (!actor.platformAdmin) redirect("/account");
 
   return (
     <AccountArea actor={actor} activeSection="platform-accounts">
-      <PlatformAccountsSettings currentUsername={actor.username} />
+      <CreatePlatformAccountSettings />
     </AccountArea>
   );
 }

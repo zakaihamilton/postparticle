@@ -848,6 +848,95 @@ a.secondary:hover {
   color: var(--muted);
   margin-top: 7px;
 }
+.accountList {
+  padding: 0 23px;
+}
+.accountUser {
+  padding: 19px 0;
+  border-bottom: 1px solid var(--border);
+}
+.accountUser:last-child {
+  border-bottom: 0;
+}
+.accountUserTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+.accountUserIdentity {
+  min-width: 175px;
+  overflow-wrap: anywhere;
+}
+.accountUserIdentity strong {
+  font-size: 14px;
+}
+.accountUserIdentity small {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 7px;
+}
+.accountUserActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.accountProjectAccess {
+  margin-top: 17px;
+  padding: 17px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-alt);
+}
+.accountProjectAccess h3 {
+  margin: 0 0 7px;
+  font-size: 15px;
+}
+.accountProjectAccess > p {
+  margin: 0 0 13px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.accountProjectAccess > p:last-child {
+  margin-bottom: 0;
+}
+.projectAccessList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.projectAccessItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+.projectAccessItem > div:first-child {
+  min-width: 0;
+}
+.projectAccessItem strong {
+  display: block;
+  font-size: 13px;
+}
+.projectAccessItem small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.projectAccessItem > div:last-child {
+  flex: 0 0 170px;
+}
 .codeBlock:focus-visible {
   outline: 2px solid var(--accent-ink);
   outline-offset: 3px;
@@ -1283,6 +1372,21 @@ a.secondary:hover {
   }
   .history > div {
     flex-wrap: wrap;
+  }
+  .accountList {
+    padding: 0 19px;
+  }
+  .accountUserTop {
+    flex-direction: column;
+  }
+  .accountUserActions {
+    justify-content: flex-start;
+  }
+  .projectAccessList {
+    grid-template-columns: 1fr;
+  }
+  .projectAccessItem > div:last-child {
+    flex-basis: 145px;
   }
   .tableFooter {
     line-height: 1.7;
