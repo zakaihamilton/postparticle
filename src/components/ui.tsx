@@ -150,13 +150,23 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
     />
   );
 }
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
 export async function api<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     ...options,
     headers: { "Content-Type": "application/json", ...options?.headers },
   });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error || "Request failed");
+  if (!response.ok)
+    throw new ApiError(response.status, data.error || "Request failed");
   return data as T;
 }
 export function Notice({

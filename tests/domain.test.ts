@@ -362,6 +362,12 @@ describe("media lifecycle", () => {
       size: input.size,
       contentType: input.contentType,
     });
+    vi.spyOn(store, "readPrefix").mockResolvedValue(
+      Buffer.from([
+        0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d,
+        0x00, 0x00, 0x02, 0x00,
+      ]),
+    );
     vi.spyOn(store, "copyPrivate").mockResolvedValue();
     await finishUpload(
       "a",
@@ -376,13 +382,20 @@ describe("media lifecycle", () => {
     expect(await store.get(`uploads/${interrupted.id}.json`)).toBeNull();
   });
   it("seals private uploads, publishes copies and blocks referenced deletion", async () => {
+    const pngSignature = Uint8Array.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
     const upload = await startUpload(
       "editor",
-      { filename: "demo.png", contentType: "image/png", size: 3 },
+      {
+        filename: "demo.png",
+        contentType: "image/png",
+        size: pngSignature.length,
+      },
       store,
       "demo",
     );
-    await writeLocalUpload(upload.id, new Uint8Array([1, 2, 3]), store);
+    await writeLocalUpload(upload.id, pngSignature, store);
     await finishUpload("editor", upload.id, [], store);
     expect((await getMedia(upload.id, store))?.ready).toBe(true);
     const draft = {
@@ -400,7 +413,9 @@ describe("media lifecycle", () => {
     expect(
       (await listPublicArticles("demo", {}, store)).items[0].coverUrl,
     ).toContain(`/public/media/${upload.id}/asset`);
-    expect((await store.head(`public/media/${upload.id}/asset`)).size).toBe(3);
+    expect((await store.head(`public/media/${upload.id}/asset`)).size).toBe(
+      pngSignature.length,
+    );
     expect(
       resolvePublicMedia({ image: `media:${upload.id}` }, store).image,
     ).toContain("/public/media/");
@@ -437,6 +452,93 @@ describe("media lifecycle", () => {
     ).rejects.toMatchObject({ status: 400 });
     await abortUpload(upload.id, store);
     expect(await store.get(`uploads/${upload.id}.json`)).toBeNull();
+  });
+  it("accepts the six supported signatures using bounded prefix reads", async () => {
+    const fixtures = [
+      ["image/jpeg", Uint8Array.from([0xff, 0xd8, 0xff, 0x00])],
+      [
+        "image/png",
+        Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      ],
+      ["image/webp", new TextEncoder().encode("RIFFxxxxWEBPVP8 ")],
+      ["image/gif", new TextEncoder().encode("GIF89a")],
+      [
+        "video/mp4",
+        Uint8Array.from([
+          0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f,
+          0x6d, 0x00, 0x00, 0x02, 0x00,
+        ]),
+      ],
+      ["video/webm", Uint8Array.from([0x1a, 0x45, 0xdf, 0xa3])],
+    ] as const;
+
+    for (const [index, [contentType, bytes]] of fixtures.entries()) {
+      const upload = await startUpload(
+        "editor",
+        {
+          filename: `fixture-${index}`,
+          contentType,
+          size: bytes.length,
+        },
+        store,
+        "demo",
+      );
+      await store.writeBytes(`incoming/${upload.id}/asset`, bytes, contentType);
+      await finishUpload("editor", upload.id, [], store);
+      expect((await getMedia(upload.id, store))?.ready).toBe(true);
+    }
+  });
+  it("rejects short or mismatched signatures and removes staged data and tickets", async () => {
+    const fixtures = [
+      {
+        contentType: "image/png",
+        storedContentType: "image/png",
+        bytes: new TextEncoder().encode("nope"),
+      },
+      {
+        contentType: "image/png",
+        storedContentType: "image/png",
+        bytes: new TextEncoder().encode("GIF89a"),
+      },
+      {
+        contentType: "image/png",
+        storedContentType: "video/mp4",
+        bytes: Uint8Array.from([
+          0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+        ]),
+      },
+      {
+        contentType: "video/mp4",
+        storedContentType: "video/mp4",
+        bytes: Uint8Array.from([
+          0x00, 0x00, 0x00, 0x08, 0x66, 0x74, 0x79, 0x70,
+        ]),
+      },
+    ] as const;
+
+    for (const [index, fixture] of fixtures.entries()) {
+      const upload = await startUpload(
+        "editor",
+        {
+          filename: `invalid-${index}.png`,
+          contentType: fixture.contentType,
+          size: fixture.bytes.length,
+        },
+        store,
+        "demo",
+      );
+      await store.writeBytes(
+        `incoming/${upload.id}/asset`,
+        fixture.bytes,
+        fixture.storedContentType,
+      );
+      await expect(
+        finishUpload("editor", upload.id, [], store),
+      ).rejects.toMatchObject({ status: 415 });
+      expect(await store.get(`uploads/${upload.id}.json`)).toBeNull();
+      expect(await store.list(`incoming/${upload.id}/`)).toEqual([]);
+      expect(await getMedia(upload.id, store)).toBeNull();
+    }
   });
   it("propagates storage errors without pretending to have saved", async () => {
     vi.spyOn(store, "put").mockRejectedValue(new Error("Unavailable"));

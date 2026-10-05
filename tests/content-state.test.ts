@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   readContentRecord,
   readContentRecords,
@@ -93,7 +93,20 @@ async function withoutCheckpoints(source: MemoryStore) {
 
 afterEach(() => {
   eventIndex = 0;
+  vi.restoreAllMocks();
 });
+
+function checkpointKeys(store: MemoryStore) {
+  return [...store.objects.keys()]
+    .filter((key) => key.startsWith("checkpoints/content/articles/"))
+    .sort();
+}
+
+function eventHistory(store: MemoryStore) {
+  return [...store.objects.entries()]
+    .filter(([key]) => key.startsWith("content/articles/"))
+    .sort(([a], [b]) => a.localeCompare(b));
+}
 
 describe("content checkpoints", () => {
   it("matches full replay after checkpoint edits and records created later", async () => {
@@ -138,6 +151,104 @@ describe("content checkpoints", () => {
     expect(await readContentRecords("articles", store.asStore())).toEqual(
       expected,
     );
+  });
+
+  it("falls back to the previous valid generation when the newest is corrupt", async () => {
+    const store = new MemoryStore();
+    addEvents(store);
+    const first = await rebuildContentCheckpoints("articles", store.asStore());
+    addEvent(store, makeEvent("alpha", 3, 4));
+    const newest = await rebuildContentCheckpoints("articles", store.asStore());
+    expect(newest.generation).not.toBe(first.generation);
+
+    const manifest = store.objects.get(
+      `checkpoints/content/articles/${newest.generation}/manifest.json`,
+    ) as { shards: { key: string }[] };
+    store.objects.set(manifest.shards[0].key, { corrupt: true });
+
+    expect(await readContentRecords("articles", store.asStore())).toEqual(
+      await withoutCheckpoints(store),
+    );
+  });
+
+  it("retains two newest valid generations and prunes stale orphans without changing event history", async () => {
+    let now = Date.UTC(2026, 0, 1);
+    vi.spyOn(Date, "now").mockImplementation(() => now++);
+    const store = new MemoryStore();
+    addEvents(store);
+    const staleOrphan =
+      "checkpoints/content/articles/1577836800000-orphan/shard-00000.json";
+    const malformedOrphan =
+      "checkpoints/content/articles/unrecognized/shard-00000.json";
+    const activeOrphan = `checkpoints/content/articles/${now}-active/shard-00000.json`;
+    store.objects.set(staleOrphan, { incomplete: true });
+    store.objects.set(malformedOrphan, { incomplete: true });
+    store.objects.set(activeOrphan, { inProgress: true });
+
+    const historyBeforeFirstBuild = eventHistory(store);
+    const first = await rebuildContentCheckpoints("articles", store.asStore());
+    expect(eventHistory(store)).toEqual(historyBeforeFirstBuild);
+    addEvent(store, makeEvent("alpha", 3, 4));
+    const historyBeforeSecondBuild = eventHistory(store);
+    const second = await rebuildContentCheckpoints("articles", store.asStore());
+    expect(eventHistory(store)).toEqual(historyBeforeSecondBuild);
+    addEvent(store, makeEvent("alpha", 4, 5));
+    const historyBeforeThirdBuild = eventHistory(store);
+    const third = await rebuildContentCheckpoints("articles", store.asStore());
+    expect(eventHistory(store)).toEqual(historyBeforeThirdBuild);
+
+    const manifests = checkpointKeys(store).filter((key) =>
+      key.endsWith("/manifest.json"),
+    );
+    expect(manifests).toHaveLength(2);
+    expect(manifests).toContain(
+      `checkpoints/content/articles/${second.generation}/manifest.json`,
+    );
+    expect(manifests).toContain(
+      `checkpoints/content/articles/${third.generation}/manifest.json`,
+    );
+    expect(store.objects.has(staleOrphan)).toBe(false);
+    expect(store.objects.has(malformedOrphan)).toBe(false);
+    expect(store.objects.has(activeOrphan)).toBe(true);
+    expect(checkpointKeys(store)).not.toContain(
+      `checkpoints/content/articles/${first.generation}/manifest.json`,
+    );
+  });
+
+  it("preserves existing checkpoints when repeated source changes prevent a build", async () => {
+    const store = new MemoryStore();
+    addEvents(store);
+    const original = await rebuildContentCheckpoints(
+      "articles",
+      store.asStore(),
+    );
+    expect(original.complete).toBe(true);
+    const checkpointSnapshot = checkpointKeys(store).map((key) => [
+      key,
+      structuredClone(store.objects.get(key)),
+    ]);
+
+    let sourceListings = 0;
+    let injected = 0;
+    store.beforeList = (_call, prefix) => {
+      if (prefix !== "content/articles/") return;
+      sourceListings++;
+      if (sourceListings % 3 === 0) {
+        injected++;
+        addEvent(store, makeEvent("racing", injected, 10 + injected));
+      }
+    };
+    const result = await rebuildContentCheckpoints("articles", store.asStore());
+    store.beforeList = null;
+
+    expect(result).toMatchObject({
+      complete: false,
+      failure: "source-changed",
+    });
+    expect(injected).toBe(3);
+    expect(
+      checkpointKeys(store).map((key) => [key, store.objects.get(key)]),
+    ).toEqual(checkpointSnapshot);
   });
 
   it("retries when a stream changes while shards are being written", async () => {

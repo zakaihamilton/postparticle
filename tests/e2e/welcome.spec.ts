@@ -69,6 +69,15 @@ test("welcome animations finish, publishing is repeatable, and both themes remai
   await expect(page.locator("details[open]")).toContainText(
     "S3-compatible object storage",
   );
+  await expect(page.locator("details[open]")).toContainText(
+    "one content Space",
+  );
+  await expect(page.locator("details[open]")).toContainText(
+    "separate key prefix",
+  );
+  await expect(page.locator("details[open]")).toContainText(
+    "Team access is managed per project",
+  );
   await page.getByText("Where does my content live?", { exact: true }).click();
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.evaluate(() => window.scrollTo(0, 0));

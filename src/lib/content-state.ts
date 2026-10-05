@@ -15,6 +15,7 @@ const checkpointVersion = 1;
 const maxShardBytes = 4 * 1024 * 1024;
 const maxShardRows = 1000;
 const checkpointRetries = 2;
+const checkpointOrphanGraceMs = 24 * 60 * 60 * 1000;
 
 interface CheckpointRow {
   id: string;
@@ -53,7 +54,11 @@ export interface CheckpointBuildResult {
   shards: number;
   retries: number;
   complete: boolean;
-  failure?: "source-changed" | "source-unavailable" | "record-too-large";
+  failure?:
+    | "source-changed"
+    | "source-unavailable"
+    | "record-too-large"
+    | "checkpoint-invalid";
 }
 
 function eventPrefix(kind: Kind) {
@@ -263,17 +268,90 @@ async function readShard(
 
 async function readCompleteGeneration(kind: Kind, store: Store) {
   for (const candidate of await checkpointManifests(kind, store)) {
-    const manifest = await readManifest(kind, store, candidate);
-    if (!manifest) continue;
-    const shards = await mapBounded(manifest.shards, (descriptor) =>
-      readShard(kind, manifest, descriptor, store),
-    );
-    if (shards.some((rows) => !rows)) continue;
-    const rows = (shards as CheckpointRow[][]).flat();
-    if (new Set(rows.map((row) => row.id)).size !== rows.length) continue;
-    return { manifest, rows: new Map(rows.map((row) => [row.id, row])) };
+    const generation = await readGeneration(kind, store, candidate);
+    if (generation) return generation;
   }
   return null;
+}
+
+async function readGeneration(
+  kind: Kind,
+  store: Store,
+  candidate: { key: string; generation: string },
+) {
+  const manifest = await readManifest(kind, store, candidate);
+  if (!manifest) return null;
+  const shards = await mapBounded(manifest.shards, (descriptor) =>
+    readShard(kind, manifest, descriptor, store),
+  );
+  if (shards.some((rows) => !rows)) return null;
+  const rows = (shards as CheckpointRow[][]).flat();
+  if (
+    rows.length !== manifest.records ||
+    new Set(rows.map((row) => row.id)).size !== rows.length
+  )
+    return null;
+  return { manifest, rows: new Map(rows.map((row) => [row.id, row])) };
+}
+
+function generationFromCheckpointKey(kind: Kind, key: string) {
+  const prefix = `${checkpointPrefix(kind)}/`;
+  if (!key.startsWith(prefix)) return null;
+  const generation = key.slice(prefix.length).split("/", 1)[0];
+  return generation || null;
+}
+
+function checkpointGenerationTime(generation: string) {
+  const match = /^(\d{13})-/.exec(generation);
+  return match ? Number(match[1]) : null;
+}
+
+async function pruneCheckpointGenerations(
+  kind: Kind,
+  store: Store,
+  currentGeneration: string,
+) {
+  const prefix = `${checkpointPrefix(kind)}/`;
+  const keys = await store.list(prefix);
+  const candidates = new Map(
+    keys
+      .map((key) => ({ key, generation: generationFromManifestKey(kind, key) }))
+      .filter(
+        (item): item is { key: string; generation: string } =>
+          !!item.generation,
+      )
+      .map((item) => [item.generation, item]),
+  );
+  const currentCandidate = {
+    key: `${prefix}${currentGeneration}/manifest.json`,
+    generation: currentGeneration,
+  };
+  candidates.set(currentGeneration, currentCandidate);
+  const ordered = [...candidates.values()].sort((a, b) =>
+    b.generation.localeCompare(a.generation),
+  );
+  const valid = new Set<string>();
+  for (const candidate of ordered) {
+    if (await readGeneration(kind, store, candidate)) {
+      valid.add(candidate.generation);
+      if (valid.size === 2) break;
+    }
+  }
+
+  const listedManifests = new Set(
+    keys
+      .map((key) => generationFromManifestKey(kind, key))
+      .filter((generation): generation is string => !!generation),
+  );
+  const orphanCutoff = Date.now() - checkpointOrphanGraceMs;
+  const obsolete = keys.filter((key) => {
+    const generation = generationFromCheckpointKey(kind, key);
+    if (!generation || valid.has(generation)) return false;
+    if (listedManifests.has(generation)) return true;
+    const createdAt = checkpointGenerationTime(generation);
+    return createdAt === null || createdAt <= orphanCutoff;
+  });
+  await Promise.all(obsolete.map((key) => store.remove(key)));
 }
 
 async function readCheckpointRow(kind: Kind, id: string, store: Store) {
@@ -556,6 +634,17 @@ export async function rebuildContentCheckpoints(
       shards: descriptors,
     };
     await store.put(`${base}/manifest.json`, manifest);
+    const candidate = { key: `${base}/manifest.json`, generation };
+    if (!(await readGeneration(kind, store, candidate)))
+      return {
+        generation: null,
+        records: 0,
+        shards: 0,
+        retries: attempt,
+        complete: false,
+        failure: "checkpoint-invalid",
+      };
+    await pruneCheckpointGenerations(kind, store, generation);
     return {
       generation,
       records: descriptors.reduce((count, shard) => count + shard.rows, 0),

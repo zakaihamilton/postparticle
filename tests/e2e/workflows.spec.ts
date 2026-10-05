@@ -813,6 +813,39 @@ test("upload finalization can retry a lost success response without duplicating 
     items.filter((item: { filename: string }) => item.filename === filename),
   ).toHaveLength(1);
 });
+test("a rejected file signature is terminal and does not offer finalization retry", async ({
+  page,
+}, info) => {
+  await signIn(page);
+  await page.goto("/workspace/demo/media");
+  let aborts = 0;
+  page.on("request", (request) => {
+    if (request.url().endsWith("/abort")) aborts++;
+  });
+  await page.route("**/media/*/complete", async (route) => {
+    await route.fulfill({
+      status: 415,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: "Uploaded file does not match its declared content type",
+      }),
+    });
+  });
+
+  await chooseFixtureImage(page, `rejected-${info.project.name}.png`);
+  await expect(
+    page.getByText("Uploaded file does not match its declared content type", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Retry finalization" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("group", { name: "Upload media" }),
+  ).not.toHaveAttribute("aria-disabled", "true");
+  await expect.poll(() => aborts).toBe(1);
+});
 test("a failed finalization can be explicitly discarded", async ({
   page,
 }, info) => {

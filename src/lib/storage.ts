@@ -15,6 +15,7 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
   mkdir,
+  open,
   readFile,
   writeFile,
   rename,
@@ -23,12 +24,7 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import {
-  HttpError,
-  localDriver,
-  projectById,
-  requiredEnv,
-} from "./config";
+import { HttpError, localDriver, projectById, requiredEnv } from "./config";
 
 export interface Store {
   get<T>(key: string): Promise<T | null>;
@@ -36,6 +32,7 @@ export interface Store {
   list(prefix: string): Promise<string[]>;
   remove(key: string): Promise<void>;
   bytes(key: string): Promise<Uint8Array>;
+  readPrefix(key: string, length: number): Promise<Uint8Array>;
   writeBytes(key: string, data: Uint8Array, contentType: string): Promise<void>;
   head(key: string): Promise<{ size: number; contentType: string }>;
   copyPublic(from: string, to: string, contentType: string): Promise<void>;
@@ -150,6 +147,17 @@ export class SpacesStore implements Store {
       new GetObjectCommand(this.input(key)),
     );
     return result.Body!.transformToByteArray();
+  }
+  async readPrefix(key: string, length: number) {
+    if (!Number.isInteger(length) || length < 1 || length > 64 * 1024)
+      throw new Error("Invalid storage prefix length");
+    const result = await this.client.send(
+      new GetObjectCommand({
+        ...this.input(key),
+        Range: `bytes=0-${length - 1}`,
+      }),
+    );
+    return (await result.Body!.transformToByteArray()).subarray(0, length);
   }
   async writeBytes(key: string, data: Uint8Array, contentType: string) {
     await this.client.send(
@@ -328,6 +336,18 @@ export class LocalStore implements Store {
   async bytes(key: string) {
     return readFile(this.file(key));
   }
+  async readPrefix(key: string, length: number) {
+    if (!Number.isInteger(length) || length < 1 || length > 64 * 1024)
+      throw new Error("Invalid storage prefix length");
+    const file = await open(this.file(key), "r");
+    try {
+      const prefix = Buffer.alloc(length);
+      const { bytesRead } = await file.read(prefix, 0, length, 0);
+      return prefix.subarray(0, bytesRead);
+    } finally {
+      await file.close();
+    }
+  }
   async writeBytes(key: string, data: Uint8Array, contentType: string) {
     const file = this.file(key);
     await mkdir(path.dirname(file), { recursive: true });
@@ -449,6 +469,10 @@ class NamespacedStore implements Store {
 
   async bytes(key: string) {
     return this.store.bytes(this.key(key));
+  }
+
+  async readPrefix(key: string, length: number) {
+    return this.store.readPrefix(this.key(key), length);
   }
 
   async writeBytes(key: string, data: Uint8Array, contentType: string) {

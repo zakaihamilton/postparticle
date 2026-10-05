@@ -63,6 +63,16 @@ describe("Spaces adapter", () => {
     await expect(store.get("account/a.json")).rejects.toThrow("network");
     expect(send.mock.calls[1][0]).toBeInstanceOf(GetObjectCommand);
   });
+  it("reads only a requested object prefix with an S3 range request", async () => {
+    const { store, send } = fake();
+    const bytes = Uint8Array.from([0x89, 0x50, 0x4e, 0x47]);
+    send.mockResolvedValueOnce({
+      Body: { transformToByteArray: async () => bytes },
+    });
+    expect(await store.readPrefix("incoming/asset", 8)).toEqual(bytes);
+    expect(send.mock.calls[0][0]).toBeInstanceOf(GetObjectCommand);
+    expect(send.mock.calls[0][0].input.Range).toBe("bytes=0-7");
+  });
   it("copies private and public assets with explicit ACLs", async () => {
     const { store, send } = fake();
     send.mockResolvedValue({});

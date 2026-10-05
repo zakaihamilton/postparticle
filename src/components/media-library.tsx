@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import type { Media } from "@/lib/types";
-import { api, Empty, Icon, Notice } from "./ui";
+import { ApiError, api, Empty, Icon, Notice } from "./ui";
 import styles from "./workspace.module.css";
 import libraryStyles from "./media-library.module.css";
 interface PendingUpload {
@@ -125,7 +125,8 @@ export default function MediaLibrary({
       );
     } catch (e) {
       const cancelled = controller.signal.aborted;
-      if (uploadId && uploaded && !cancelled) {
+      const rejectedContentType = e instanceof ApiError && e.status === 415;
+      if (uploadId && uploaded && !cancelled && !rejectedContentType) {
         setPendingUpload({ id: uploadId, parts });
         setError(
           `${(e as Error).message} Your upload is retained; retry finalization below.`,

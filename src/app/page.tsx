@@ -7,7 +7,7 @@ import styles from "./welcome.module.css";
 const questions = [
   {
     q: "Where does my content live?",
-    a: "Your content lives in S3-compatible object storage. Each project has its own storage configuration, and articles, media, and metadata live there, with no database to manage.",
+    a: "Your content lives in S3-compatible object storage. Projects share one content Space, with each project's articles, media, and metadata stored under a separate key prefix. Team access is managed per project. No database to manage.",
   },
   {
     q: "Can I work across several projects?",
@@ -309,7 +309,8 @@ export default function Welcome() {
             </h2>
             <p>
               After login, choose only from projects you can access. Each
-              project has its own content, team roles, and Spaces configuration.
+              project has its own content and team roles. Project data is stored
+              under a separate prefix in the shared content Space.
             </p>
           </div>
           <div className={styles.accessDetails}>

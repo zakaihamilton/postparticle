@@ -39,7 +39,14 @@ async function multipart() {
         throw Object.assign(new Error("Already completed"), {
           name: "NoSuchUpload",
         });
-      await store.writeBytes(key, new Uint8Array([1, 2, 3]), input.contentType);
+      await store.writeBytes(
+        key,
+        Uint8Array.from([
+          0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f,
+          0x6d, 0x00, 0x00, 0x02, 0x00,
+        ]),
+        input.contentType,
+      );
       completed = true;
     });
   const head = store.head.bind(store);

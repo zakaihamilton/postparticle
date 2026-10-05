@@ -17,6 +17,7 @@ const allowed = [
   "video/mp4",
   "video/webm",
 ] as const;
+const signatureLength = 16;
 const uploadSchema = z.object({
   filename: z.string().min(1).max(200),
   contentType: z.enum(allowed),
@@ -149,14 +150,19 @@ export async function finishUpload(
     await store.put(ticket(id), { ...upload, completed: true });
   }
   const head = await store.head(incoming(id));
+  if (head.size !== upload.media.size) {
+    await cleanupUpload(id, store);
+    throw new HttpError(400, "Uploaded file does not match its declared size");
+  }
+  const prefix = await store.readPrefix(incoming(id), signatureLength);
   if (
-    head.size !== upload.media.size ||
-    head.contentType !== upload.media.contentType
+    head.contentType !== upload.media.contentType ||
+    !hasDeclaredSignature(upload.media.contentType, prefix)
   ) {
-    await store.remove(incoming(id));
+    await cleanupUpload(id, store);
     throw new HttpError(
-      400,
-      "Uploaded file does not match its declared type or size",
+      415,
+      "Uploaded file does not match its declared content type",
     );
   }
   // Seal the upload under a different key; still-valid upload URLs cannot modify the original.
@@ -175,6 +181,50 @@ function isMissingUpload(error: unknown) {
   return (
     error instanceof Object && "name" in error && error.name === "NoSuchUpload"
   );
+}
+function asciiAt(bytes: Uint8Array, offset: number, value: string) {
+  if (bytes.length < offset + value.length) return false;
+  return [...value].every(
+    (character, index) => bytes[offset + index] === character.charCodeAt(0),
+  );
+}
+function hasDeclaredSignature(contentType: string, bytes: Uint8Array) {
+  switch (contentType) {
+    case "image/jpeg":
+      return (
+        bytes.length >= 3 &&
+        bytes[0] === 0xff &&
+        bytes[1] === 0xd8 &&
+        bytes[2] === 0xff
+      );
+    case "image/png":
+      return (
+        bytes.length >= 8 &&
+        [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every(
+          (byte, index) => bytes[index] === byte,
+        )
+      );
+    case "image/webp":
+      return (
+        bytes.length >= 12 &&
+        asciiAt(bytes, 0, "RIFF") &&
+        asciiAt(bytes, 8, "WEBP")
+      );
+    case "image/gif":
+      return asciiAt(bytes, 0, "GIF87a") || asciiAt(bytes, 0, "GIF89a");
+    case "video/mp4":
+      return bytes.length >= 12 && asciiAt(bytes, 4, "ftyp");
+    case "video/webm":
+      return (
+        bytes.length >= 4 &&
+        bytes[0] === 0x1a &&
+        bytes[1] === 0x45 &&
+        bytes[2] === 0xdf &&
+        bytes[3] === 0xa3
+      );
+    default:
+      return false;
+  }
 }
 export async function abortUpload(id: string, store: Store) {
   const upload = await store.get<Upload>(ticket(id));
