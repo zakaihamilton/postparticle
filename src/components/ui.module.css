@@ -16,7 +16,7 @@
   letter-spacing: -1px;
 }
 .highlight {
-  color: var(--text);
+  color: var(--accent-ink);
 }
 .logoGlyph {
   width: 31px;
