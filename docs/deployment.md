@@ -13,7 +13,8 @@ Edit `projects.json` with non-secret entries:
   {
     "id": "demo",
     "name": "Demo Journal",
-    "description": "Stories, ideas, and everything in between."
+    "description": "Stories, ideas, and everything in between.",
+    "production": false
   },
   {
     "id": "sentry8",
@@ -23,7 +24,7 @@ Edit `projects.json` with non-secret entries:
 ]
 ```
 
-IDs use lowercase letters, numbers, hyphens, or underscores; start with a letter or number. `new` is reserved by the editor routing and must not be used as an article slug or document key. Adding a project requires a new registry entry and redeployment, but no project-specific storage variables. Secrets never belong in this registry.
+Set `production` to `false` to keep a project in local development and preview deployments while excluding it from production. Demo Journal is a sample project and is excluded from the production registry. IDs use lowercase letters, numbers, hyphens, or underscores; start with a letter or number. `new` is reserved by the editor routing and must not be used as an article slug or document key. Adding a project requires a new registry entry and redeployment, but no project-specific storage variables. Secrets never belong in this registry.
 
 Set the corresponding values from `.env.example` in `.env.local` and Vercel’s environment settings. `CONTROL_SPACES_*` configures shared authentication; `CONTENT_SPACES_*` configures the shared content bucket. The endpoint is the **origin**, for example `https://nyc3.digitaloceanspaces.com`. Never sign uploads against the CDN. Optional `CONTENT_MEDIA_BASE_URL` is the complete shared-bucket CDN/custom-domain URL and must use HTTPS. The application automatically falls back to the bucket origin URL. The content bucket key can access every project's prefix; Postparticle enforces project access in the application. The separate control bucket keeps account and session objects apart.
 

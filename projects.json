@@ -2,7 +2,8 @@
   {
     "id": "demo",
     "name": "Demo Journal",
-    "description": "Stories, ideas, and everything in between."
+    "description": "Stories, ideas, and everything in between.",
+    "production": false
   },
   {
     "id": "sentry8",

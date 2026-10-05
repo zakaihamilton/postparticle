@@ -7,8 +7,15 @@ const projectSchema = z.object({
   id: identifier,
   name: z.string().min(1),
   description: z.string(),
+  production: z.boolean().optional(),
 });
-export const projects: Project[] = z.array(projectSchema).parse(registry);
+const registryProjects = z.array(projectSchema).parse(registry);
+export const projects: Project[] = registryProjects
+  .filter(
+    ({ production }) =>
+      process.env.VERCEL_ENV !== "production" || production !== false,
+  )
+  .map(({ id, name, description }) => ({ id, name, description }));
 if (new Set(projects.map((p) => p.id)).size !== projects.length)
   throw new Error("Duplicate project IDs");
 export function projectById(id: string): Project {
