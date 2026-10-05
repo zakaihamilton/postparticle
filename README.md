@@ -15,7 +15,7 @@ npm ci
 cp .env.example .env.local
 ```
 
-Configure your Spaces credentials, then create the initial platform administrator:
+For local development, configure your Spaces credentials, then create the initial platform administrator:
 
 ```sh
 npm run bootstrap -- admin
@@ -23,6 +23,8 @@ npm run dev
 ```
 
 Bootstrap prompts for a password without echoing it. Choose at least 12 characters. It also accepts a password on stdin for automation; avoid placing secrets in command arguments or shell history. Bootstrap refuses to run once a platform administrator exists. Open [localhost:3000](http://localhost:3000).
+
+For the first Vercel Production administrator, use the temporary-token endpoint described in [Spaces and Vercel setup](docs/deployment.md). It writes through the deployed app’s control Space credentials, so you do not need to copy those keys to your computer.
 
 For development without Spaces, set `STORAGE_DRIVER=local` in `.env.local`. This explicitly uses ignored `.local-storage/` files. It is a development adapter, not a database or supported deployment backend. It has a 32 MiB upload limit and single uploads only. Local storage is blocked on Vercel. Do not deploy fixture passwords or local test storage.
 
