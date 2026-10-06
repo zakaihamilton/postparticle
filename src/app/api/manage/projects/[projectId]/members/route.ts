@@ -15,11 +15,15 @@ export const GET = manageHandler(async (request: Request, context: Context) => {
   );
   return json(
     await Promise.all(
-      (await listUsers()).map(async ({ username, disabled }) => ({
-        username,
-        disabled,
-        role: await membership(username, projectId),
-      })),
+      (await listUsers()).map(
+        async ({ username, disabled, platformAdmin }) => ({
+          username,
+          disabled,
+          role: platformAdmin
+            ? ("admin" as const)
+            : await membership(username, projectId),
+        }),
+      ),
     ),
   );
 });

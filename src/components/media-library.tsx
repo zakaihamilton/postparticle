@@ -314,7 +314,7 @@ export default function MediaLibrary({
             onChange={(e) => setQ(e.target.value)}
           />
         </label>
-        <span>Images & videos · up to 1 GiB</span>
+        <span>Up to 32 MiB locally · 1 GiB on Spaces</span>
       </div>
       {loading ? (
         <div className={styles.loading}>Loading your library…</div>

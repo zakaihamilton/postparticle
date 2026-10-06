@@ -22,9 +22,10 @@ export class PostparticleClient {
     } = {},
     init?: RequestInit,
   ) {
-    const params = new URLSearchParams(
-      Object.entries(query).map(([k, v]) => [k, String(v)]),
-    );
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined) params.set(key, String(value));
+    }
     return this.get<ArticlePage>(`articles?${params}`, init);
   }
   article(slug: string, init?: RequestInit) {

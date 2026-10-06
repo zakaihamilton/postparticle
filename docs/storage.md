@@ -7,8 +7,14 @@ The control Space stores private objects:
 ```text
 users/{username}/{timestamp_uuid}.json
 memberships/{projectId}/{username}/{timestamp_uuid}.json
+bootstrap/platform-admins/{timestamp_uuid}.json
 sessions/{sha256_token}.json
 ```
+
+The first bootstrap administrator is selected by the earliest immutable claim
+event. This lets concurrent initial setup requests converge on one effective
+platform administrator without relying on a distributed transaction. Platform
+administrators have implicit admin access to every configured project.
 
 The shared content Space stores each project's objects under its own prefix:
 

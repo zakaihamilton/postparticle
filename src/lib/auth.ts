@@ -34,11 +34,28 @@ export async function getUser(
   username: string,
   store = controlStore(),
 ): Promise<User | null> {
-  const history = await events<User>(
-    store,
-    `users/${usernameSchema.parse(username)}`,
-  );
+  const normalizedUsername = usernameSchema.parse(username);
+  const user = await rawUser(normalizedUsername, store);
+  if (!user || !user.platformAdmin) return user ?? null;
+
+  // Bootstrap claims are immutable so simultaneous initializations converge on
+  // one effective platform administrator without a storage transaction.
+  const initialAdmin = (
+    await events<{ username: string }>(store, "bootstrap/platform-admins")
+  ).find((event) => event.action === "claim")?.data.username;
+  return initialAdmin
+    ? { ...user, platformAdmin: user.username === initialAdmin }
+    : user;
+}
+
+async function rawUser(username: string, store: Store): Promise<User | null> {
+  const history = await events<User>(store, `users/${username}`);
   return history.at(-1)?.data ?? null;
+}
+
+async function userNames(store: Store) {
+  const keys = await store.list("users/");
+  return [...new Set(keys.map((key) => key.split("/")[1]))];
 }
 export async function saveUser(
   actor: string,
@@ -52,8 +69,7 @@ export async function saveUser(
   });
 }
 export async function listUsers(store = controlStore()) {
-  const keys = await store.list("users/");
-  const names = [...new Set(keys.map((k) => k.split("/")[1]))];
+  const names = await userNames(store);
   return (await mapBounded(names, (n) => getUser(n, store))).filter(
     (v): v is User => !!v,
   );

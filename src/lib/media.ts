@@ -8,6 +8,7 @@ import { mediaReferences, records } from "./content";
 import type { Kind, Media } from "./types";
 import { replaceMediaReferences } from "./media-references";
 const maxMediaSize = 1024 * 1024 * 1024;
+const maxLocalMediaSize = 32 * 1024 * 1024;
 const partSize = 8 * 1024 * 1024;
 const allowed = [
   "image/jpeg",
@@ -54,6 +55,9 @@ export async function startUpload(
   projectId: string,
 ) {
   const parsed = uploadSchema.parse(input);
+  const local = localDriver();
+  if (local && parsed.size > maxLocalMediaSize)
+    throw new HttpError(413, "Local test uploads are limited to 32 MiB");
   const id = randomUUID();
   const media: Media = {
     ...parsed,
@@ -65,7 +69,7 @@ export async function startUpload(
     ready: false,
     deleted: false,
   };
-  const multipart = !localDriver() && parsed.size > 16 * 1024 * 1024;
+  const multipart = !local && parsed.size > 16 * 1024 * 1024;
   const uploadId = multipart
     ? await store.multipartStart(incoming(id), parsed.contentType)
     : null;
@@ -80,7 +84,7 @@ export async function startUpload(
     partSize,
     url: multipart
       ? null
-      : localDriver()
+      : local
         ? `/api/manage/projects/${projectId}/media/${id}/bytes`
         : await store.signPut(incoming(id), parsed.contentType),
   };
@@ -259,7 +263,8 @@ export async function editMedia(
   });
 }
 export async function deleteMedia(actor: string, id: string, store: Store) {
-  const media = await getMedia(id, store);
+  const normalizedId = parsedId(id);
+  const media = await getMedia(normalizedId, store);
   if (!media || media.deleted) throw new HttpError(404, "Media not found");
   const all = [
     ...(await records("articles", store)).map((record) => ({
@@ -274,8 +279,9 @@ export async function deleteMedia(actor: string, id: string, store: Store) {
   if (
     all.some(
       ({ record: r, kind }) =>
-        mediaReferences(r.draft, kind).includes(id) ||
-        (r.published && mediaReferences(r.published, kind).includes(id)),
+        mediaReferences(r.draft, kind).includes(normalizedId) ||
+        (r.published &&
+          mediaReferences(r.published, kind).includes(normalizedId)),
     )
   )
     throw new HttpError(
@@ -286,8 +292,8 @@ export async function deleteMedia(actor: string, id: string, store: Store) {
     ...media,
     deleted: true,
   });
-  await store.remove(original(id));
-  await store.remove(delivery(id));
+  await store.remove(original(normalizedId));
+  await store.remove(delivery(normalizedId));
 }
 export async function previewMedia(id: string, store: Store) {
   const media = await getMedia(id, store);

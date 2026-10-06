@@ -21,6 +21,7 @@ import {
   rename,
   unlink,
   readdir,
+  stat,
 } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -329,9 +330,11 @@ export class LocalStore implements Store {
     return out.sort();
   }
   async remove(key: string) {
-    await unlink(this.file(key)).catch((e: NodeJS.ErrnoException) => {
-      if (e.code !== "ENOENT") throw e;
-    });
+    const file = this.file(key);
+    for (const target of [file, `${file}.meta`])
+      await unlink(target).catch((e: NodeJS.ErrnoException) => {
+        if (e.code !== "ENOENT") throw e;
+      });
   }
   async bytes(key: string) {
     return readFile(this.file(key));
@@ -360,7 +363,15 @@ export class LocalStore implements Store {
     );
   }
   async head(key: string) {
-    return JSON.parse(await readFile(`${this.file(key)}.meta`, "utf8")) as {
+    const file = this.file(key);
+    try {
+      await stat(file);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT")
+        throw new HttpError(404, "Stored object not found");
+      throw error;
+    }
+    return JSON.parse(await readFile(`${file}.meta`, "utf8")) as {
       size: number;
       contentType: string;
     };
