@@ -313,6 +313,9 @@ export async function logout() {
   const token = jar.get(cookieName)?.value;
   try {
     if (token) await perministerLogout(token);
+  } catch {
+    // Local sign-out must still complete if the central session is already
+    // invalid or Perminister is temporarily unavailable.
   } finally {
     jar.set(cookieName, "", {
       httpOnly: true,

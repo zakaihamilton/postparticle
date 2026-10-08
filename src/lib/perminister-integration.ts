@@ -298,7 +298,8 @@ export function perministerRoleForProject(
 ): Role | null {
   const organization = session.organizations.find(
     (item) =>
-      item.organizationId.toLowerCase() === organizationId.toLowerCase(),
+      item.organizationId.toLowerCase() === organizationId.toLowerCase() &&
+      item.productId === productId,
   );
   if (!organization) return null;
   if (organization.platformAdmin) return "admin";
