@@ -36,7 +36,6 @@ export default defineConfig({
         LOCAL_STORAGE_PATH: process.env.LOCAL_STORAGE_PATH,
         APP_ORIGIN: "http://localhost:3100",
         PERMINISTER_BASE_URL: "http://127.0.0.1:3102",
-        PERMINISTER_ORGANIZATION_ID: "550e8400-e29b-41d4-a716-446655440000",
         PERMINISTER_CLIENT_ID: "550e8400-e29b-41d4-a716-446655440001",
         PERMINISTER_CLIENT_SECRET: "test-client-secret",
       },

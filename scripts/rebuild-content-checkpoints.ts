@@ -9,7 +9,8 @@ import { projectStore } from "../src/lib/storage";
 const args = process.argv.slice(2);
 const rawProjectId = args[0];
 const organizationOption = args.indexOf("--organization-id");
-const rawOrganizationId = organizationOption >= 0 ? args[organizationOption + 1] : undefined;
+const rawOrganizationId =
+  organizationOption >= 0 ? args[organizationOption + 1] : undefined;
 if (!rawProjectId || (organizationOption >= 0 && !rawOrganizationId))
   throw new Error(
     'Usage: npm run storage:checkpoint -- <project-id> [--organization-id "<organization-uuid>"]',

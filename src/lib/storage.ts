@@ -417,7 +417,10 @@ export class LocalStore implements Store {
 const stores = new Map<string, Store>();
 export function projectStore(projectId: string): Store;
 export function projectStore(organizationId: string, projectId: string): Store;
-export function projectStore(organizationOrProjectId: string, scopedProjectId?: string) {
+export function projectStore(
+  organizationOrProjectId: string,
+  scopedProjectId?: string,
+) {
   if (scopedProjectId === undefined) {
     const projectId = organizationOrProjectId;
     projectById(projectId);
@@ -431,7 +434,9 @@ export function projectStore(organizationOrProjectId: string, scopedProjectId?: 
   }
 
   const projectId = scopedProjectId;
-  const organizationId = organizationIdentifier.parse(organizationOrProjectId).toLowerCase();
+  const organizationId = organizationIdentifier
+    .parse(organizationOrProjectId)
+    .toLowerCase();
   projectById(projectId);
   if (legacyOrganizationIdForProject(projectId) === organizationId) {
     if (localDriver()) return storeFor(projectId, projectId);

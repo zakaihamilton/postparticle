@@ -5,7 +5,7 @@ export interface Project {
   name: string;
   description: string;
 }
-export interface OrganizationChoice {
+interface OrganizationChoice {
   organizationId: string;
   organizationName: string;
   platformAdmin: boolean;

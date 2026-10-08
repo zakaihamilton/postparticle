@@ -12,7 +12,10 @@ export async function GET(
     const url = new URL(request.url);
     const requestedOrganizationId = url.searchParams.get("organizationId");
     const store = requestedOrganizationId
-      ? projectStore(organizationIdentifier.parse(requestedOrganizationId), projectId)
+      ? projectStore(
+          organizationIdentifier.parse(requestedOrganizationId),
+          projectId,
+        )
       : projectStore(projectId);
     return json(
       await listPublicArticles(

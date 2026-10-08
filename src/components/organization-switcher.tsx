@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 import type { Actor } from "@/lib/types";
 import { api } from "./ui";
 import styles from "./organization-switcher.module.css";
@@ -16,8 +16,6 @@ export function OrganizationSwitcher({
   const [selected, setSelected] = useState(actor.organizationId);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-
-  useEffect(() => setSelected(actor.organizationId), [actor.organizationId]);
 
   async function changeOrganization(event: ChangeEvent<HTMLSelectElement>) {
     const organizationId = event.currentTarget.value;
@@ -59,7 +57,10 @@ export function OrganizationSwitcher({
             disabled={pending}
           >
             {actor.organizations.map((organization) => (
-              <option key={organization.organizationId} value={organization.organizationId}>
+              <option
+                key={organization.organizationId}
+                value={organization.organizationId}
+              >
                 {organization.organizationName}
               </option>
             ))}
@@ -68,7 +69,11 @@ export function OrganizationSwitcher({
       ) : (
         <span className={styles.single}>{actor.organizationName}</span>
       )}
-      {error ? <span className={styles.error} role="alert">{error}</span> : null}
+      {error ? (
+        <span className={styles.error} role="alert">
+          {error}
+        </span>
+      ) : null}
     </div>
   );
 }

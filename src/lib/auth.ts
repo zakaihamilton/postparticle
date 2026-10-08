@@ -46,7 +46,7 @@ export function minimumAccountPasswordLength() {
   return 15;
 }
 
-export async function currentSessionToken() {
+async function currentSessionToken() {
   return (await cookies()).get(cookieName)?.value;
 }
 
@@ -147,12 +147,17 @@ export async function updatePerministerAccount(
     (candidate) => candidate.username === username,
   );
   if (!account) throw new HttpError(404, "Account not found");
-  return perministerUpdateAccount(token, actor.organizationId, account.subjectId, {
-    ...(input.disabled === undefined
-      ? {}
-      : { status: input.disabled ? "disabled" : "active" }),
-    ...(input.password === undefined ? {} : { password: input.password }),
-  });
+  return perministerUpdateAccount(
+    token,
+    actor.organizationId,
+    account.subjectId,
+    {
+      ...(input.disabled === undefined
+        ? {}
+        : { status: input.disabled ? "disabled" : "active" }),
+      ...(input.password === undefined ? {} : { password: input.password }),
+    },
+  );
 }
 
 export async function changePerministerPassword(
@@ -172,7 +177,10 @@ export async function getUser(
   const normalizedUsername = usernameSchema.parse(username);
   const actor = await requireActor();
   const account = (
-    await perministerAccounts(await requirePerministerToken(), actor.organizationId)
+    await perministerAccounts(
+      await requirePerministerToken(),
+      actor.organizationId,
+    )
   ).find((candidate) => candidate.username === normalizedUsername);
   return account ? userFromPerministerAccount(account) : null;
 }
@@ -180,10 +188,11 @@ export async function getUser(
 export async function listUsers(): Promise<ManagedAccount[]> {
   const actor = await requireActor();
   return (
-    await perministerAccounts(await requirePerministerToken(), actor.organizationId)
-  ).map(
-    userFromPerministerAccount,
-  );
+    await perministerAccounts(
+      await requirePerministerToken(),
+      actor.organizationId,
+    )
+  ).map(userFromPerministerAccount);
 }
 
 export async function membership(
@@ -217,8 +226,8 @@ export async function setMembership(
   const token = await requirePerministerToken();
   const member = role
     ? undefined
-    : (await perministerProjectMembers(token, organizationId, projectId)).find((candidate) =>
-        matchesPerministerMember(candidate, username),
+    : (await perministerProjectMembers(token, organizationId, projectId)).find(
+        (candidate) => matchesPerministerMember(candidate, username),
       );
   await perministerSetProjectMember(
     token,
@@ -283,7 +292,7 @@ export async function projectMemberAccounts(
   });
 }
 
-export async function sessionUser(
+async function sessionUser(
   token: string | undefined,
   selectedOrganizationId?: string,
 ) {
@@ -377,7 +386,9 @@ export async function login(username: string, password: string) {
 }
 
 export async function selectOrganization(rawOrganizationId: string) {
-  const organizationId = organizationIdentifier.parse(rawOrganizationId).toLowerCase();
+  const organizationId = organizationIdentifier
+    .parse(rawOrganizationId)
+    .toLowerCase();
   const token = await requirePerministerToken();
   const actor = await sessionUser(token, organizationId);
   if (!actor || actor.organizationId !== organizationId)
@@ -427,26 +438,6 @@ export async function revokeUserSessions(username: string) {
     user.subjectId,
     {
       revokeSessions: true,
-    },
-  );
-}
-
-export async function resetUserPassword(username: string, password: string) {
-  const minimumLength = minimumAccountPasswordLength();
-  if (password.length < minimumLength || password.length > 256)
-    throw new HttpError(
-      400,
-      `Use a password between ${minimumLength} and 256 characters`,
-    );
-  const actor = await requireActor();
-  const user = await getUser(username);
-  if (!user) throw new HttpError(404, "Account not found");
-  await perministerUpdateAccount(
-    await requirePerministerToken(),
-    actor.organizationId,
-    user.subjectId,
-    {
-      password,
     },
   );
 }

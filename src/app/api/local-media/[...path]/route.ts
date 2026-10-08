@@ -19,7 +19,9 @@ export async function GET(
     let keySegments: string[];
     if (organizationIdentifier.safeParse(path[0]).success) {
       [organizationId, projectId, ...keySegments] = path;
-      organizationId = organizationIdentifier.parse(organizationId).toLowerCase();
+      organizationId = organizationIdentifier
+        .parse(organizationId)
+        .toLowerCase();
     } else {
       [projectId, ...keySegments] = path;
       organizationId = legacyOrganizationIdForProject(projectId);

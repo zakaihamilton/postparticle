@@ -146,8 +146,11 @@ function WorkspaceContent({
           </div>
           <div className={styles.topRight}>
             <OrganizationSwitcher
+              key={actor.organizationId}
               actor={actor}
-              onBeforeChange={() => confirmNavigation("Switch organization and discard")}
+              onBeforeChange={() =>
+                confirmNavigation("Switch organization and discard")
+              }
             />
             <span className={styles.projectType}>CONTENT WORKSPACE</span>
             <ThemeSwitch />

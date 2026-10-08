@@ -112,7 +112,7 @@ export function AccountArea({
             <strong>{title}</strong>
           </div>
           <div className={styles.accountHeaderActions}>
-            <OrganizationSwitcher actor={actor} />
+            <OrganizationSwitcher key={actor.organizationId} actor={actor} />
             <ThemeSwitch />
             <button
               className={styles.ghost}

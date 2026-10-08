@@ -7,7 +7,8 @@ import { projectStore, type Store } from "../src/lib/storage";
 
 const args = process.argv.slice(2);
 const organizationOption = args.indexOf("--organization-id");
-const rawOrganizationId = organizationOption >= 0 ? args[organizationOption + 1] : undefined;
+const rawOrganizationId =
+  organizationOption >= 0 ? args[organizationOption + 1] : undefined;
 const projectId = args.find(
   (arg, index) =>
     !arg.startsWith("--") &&

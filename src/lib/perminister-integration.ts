@@ -6,7 +6,7 @@ import type { Role } from "./types";
 const productId = "postparticle";
 const requestTimeoutMs = 12_000;
 
-export interface PerministerOrganizationAccess {
+interface PerministerOrganizationAccess {
   organizationId: string;
   organizationName: string;
   productId: string;
@@ -322,7 +322,9 @@ export async function perministerAccounts(
   token: string,
   organizationId: string,
 ): Promise<PerministerAccount[]> {
-  const payload = await request(organizationAccountsPath(organizationId), { token });
+  const payload = await request(organizationAccountsPath(organizationId), {
+    token,
+  });
   if (!Array.isArray(payload.accounts)) {
     throw new HttpError(
       503,
@@ -412,7 +414,9 @@ export async function perministerProjectMembers(
   organizationId: string,
   projectId: string,
 ): Promise<PerministerMember[]> {
-  const payload = await request(projectMembersPath(organizationId, projectId), { token });
+  const payload = await request(projectMembersPath(organizationId, projectId), {
+    token,
+  });
   if (!Array.isArray(payload.members)) {
     throw new HttpError(
       503,

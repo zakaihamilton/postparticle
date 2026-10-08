@@ -45,7 +45,7 @@ export const guideSearchIndex: GuideSearchEntry[] = [
     section: "Environment variables",
     id: "configuration",
     text: "TypeScript Next.js App Router. app and lib folders can live at repository root or under src. POSTPARTICLE_URL deployment base URL, POSTPARTICLE_PROJECT project ID, WEBSITE_URL public site origin without trailing slash. Set on server, Vercel or hosting provider environment settings, and restart local server after env changes. Install server-only react-markdown remark-gfm.",
-    code: ".env.local POSTPARTICLE_URL=https://cms.example.com POSTPARTICLE_PROJECT=demo POSTPARTICLE_ORGANIZATION_ID=\"<organization-uuid>\" WEBSITE_URL=https://journal.example.com npm install server-only react-markdown remark-gfm",
+    code: '.env.local POSTPARTICLE_URL=https://cms.example.com POSTPARTICLE_PROJECT=demo POSTPARTICLE_ORGANIZATION_ID="<organization-uuid>" WEBSITE_URL=https://journal.example.com npm install server-only react-markdown remark-gfm',
   },
   {
     href: "/developers/nextjs/setup",
@@ -77,7 +77,7 @@ export const guideSearchIndex: GuideSearchEntry[] = [
     section: "Run the example",
     id: "runnable-example",
     text: "Run examples/next-blog from repository root with Postparticle at localhost port 3300, website at localhost port 3301. Publish an article first. npm run example:dev -- --port 3301 and npm run example:build. Integration reference downloadable.",
-    code: "POSTPARTICLE_URL=http://localhost:3300 POSTPARTICLE_PROJECT=demo POSTPARTICLE_ORGANIZATION_ID=\"<organization-uuid>\" WEBSITE_URL=http://localhost:3301 npm run example:dev -- --port 3301",
+    code: 'POSTPARTICLE_URL=http://localhost:3300 POSTPARTICLE_PROJECT=demo POSTPARTICLE_ORGANIZATION_ID="<organization-uuid>" WEBSITE_URL=http://localhost:3301 npm run example:dev -- --port 3301',
   },
   {
     href: "/developers/nextjs/articles",

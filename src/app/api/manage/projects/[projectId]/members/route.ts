@@ -31,7 +31,12 @@ export const POST = manageHandler(
       .parse(await readJson(request));
     if (!actor.platformAdmin && data.username === actor.username)
       throw new HttpError(400, "Ask another administrator to change your role");
-    await setMembership(data.username, actor.organizationId, projectId, data.role);
+    await setMembership(
+      data.username,
+      actor.organizationId,
+      projectId,
+      data.role,
+    );
     return json({ ok: true });
   },
 );

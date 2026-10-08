@@ -6,7 +6,7 @@ The Postparticle workspace is private. Published articles and documents are avai
 
 The public guides require no login or Spaces credentials. Start at `/developers` and follow these routes in order:
 
-1. `/developers/nextjs/setup` configures the server environment and API helper. Its existing-project section includes a copyable prompt for an AI coding assistant. Supply the Postparticle URL, project ID, and website URL, then review the assistant's proposed changes.
+1. `/developers/nextjs/setup` configures the server environment and API helper. Its existing-project section includes a copyable prompt for an AI coding assistant. Supply the Postparticle URL, project ID, organization UUID, and website URL, then review the assistant's proposed changes.
 2. `/developers/nextjs/articles` covers recent content, filters, and pagination.
 3. `/developers/nextjs/article-pages` covers article routes, Markdown, media, and errors.
 4. `/developers/nextjs/metadata-and-caching` covers SEO metadata, sitemaps, and freshness.
@@ -47,7 +47,11 @@ When content is published, Postparticle validates referenced assets and creates 
 Copy `src/lib/client.ts` and its shared public types into your integration, or use the native-fetch example. This repository is an application, not a published SDK package.
 
 ```ts
-const client = new PostparticleClient("https://cms.example.com", "demo");
+const client = new PostparticleClient(
+  "https://cms.example.com",
+  "demo",
+  process.env.POSTPARTICLE_ORGANIZATION_ID!,
+);
 const latest = await client.articles(
   { tag: "journal", pageSize: 3 },
   { next: { revalidate: 60 } },
@@ -68,7 +72,7 @@ Start Postparticle, publish an article, and run the example from the repository 
 POSTPARTICLE_URL=http://localhost:3000 POSTPARTICLE_PROJECT=demo POSTPARTICLE_ORGANIZATION_ID="<organization-uuid>" WEBSITE_URL=http://localhost:3001 npm run example:dev -- --port 3001
 ```
 
-Set `POSTPARTICLE_URL` to the base URL of your Postparticle deployment, `POSTPARTICLE_PROJECT` to your project ID, `POSTPARTICLE_ORGANIZATION_ID` to the organization UUID that owns that project, and `WEBSITE_URL` to the base URL of your public website without a trailing slash. The organization parameter is optional only for legacy projects that still use the original storage namespace. Build with `npm run example:build`.
+Set `POSTPARTICLE_URL` to the base URL of your Postparticle deployment, `POSTPARTICLE_PROJECT` to your project ID, `POSTPARTICLE_ORGANIZATION_ID` to the owning organization UUID, and `WEBSITE_URL` to the base URL of your public website without a trailing slash. Build with `npm run example:build`.
 
 To deploy the example separately, set the project root to `examples/next-blog` and copy the shared client and types into that project. Do not pass Spaces credentials to the website.
 

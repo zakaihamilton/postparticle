@@ -9,9 +9,14 @@ export async function GET(
 ) {
   try {
     const { projectId, slug } = await params;
-    const requestedOrganizationId = new URL(request.url).searchParams.get("organizationId");
+    const requestedOrganizationId = new URL(request.url).searchParams.get(
+      "organizationId",
+    );
     const store = requestedOrganizationId
-      ? projectStore(organizationIdentifier.parse(requestedOrganizationId), projectId)
+      ? projectStore(
+          organizationIdentifier.parse(requestedOrganizationId),
+          projectId,
+        )
       : projectStore(projectId);
     return json(await readPublicArticle(projectId, slug, store));
   } catch (error) {

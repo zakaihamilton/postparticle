@@ -105,10 +105,10 @@ export default async function DeveloperGuide({
               project ID, <code>POSTPARTICLE_ORGANIZATION_ID</code> to the
               organization that owns that project, and <code>WEBSITE_URL</code>
               to the base URL readers use for your public website, without a
-              trailing slash. Replace the
-              example values. Configure these variables in each Vercel
-              environment, or in your hosting provider’s environment settings.
-              Restart the local server after changing <code>.env.local</code>.
+              trailing slash. Replace the example values. Configure these
+              variables in each Vercel environment, or in your hosting
+              provider’s environment settings. Restart the local server after
+              changing <code>.env.local</code>.
             </p>
             <CodeBlock
               filename="Terminal — website dependencies"

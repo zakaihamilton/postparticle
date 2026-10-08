@@ -13,7 +13,8 @@ if (process.env.STORAGE_DRIVER !== "spaces")
 if (projects.length === 0) throw new Error("Configure at least one project");
 const args = process.argv.slice(2);
 const organizationOption = args.indexOf("--organization-id");
-const rawOrganizationId = organizationOption >= 0 ? args[organizationOption + 1] : undefined;
+const rawOrganizationId =
+  organizationOption >= 0 ? args[organizationOption + 1] : undefined;
 if (organizationOption >= 0 && !rawOrganizationId)
   throw new Error(
     'Usage: npm run storage:verify -- [project-id] [--organization-id "<organization-uuid>"]',
@@ -23,7 +24,9 @@ const rawProjectId = args.find(
     !arg.startsWith("--") &&
     (organizationOption < 0 || index !== organizationOption + 1),
 );
-const projectId = rawProjectId ? identifier.parse(rawProjectId) : projects[0].id;
+const projectId = rawProjectId
+  ? identifier.parse(rawProjectId)
+  : projects[0].id;
 const organizationId = rawOrganizationId
   ? organizationIdentifier.parse(rawOrganizationId).toLowerCase()
   : undefined;
@@ -34,11 +37,12 @@ for (const prefix of ["CONTROL", "CONTENT"]) {
   const legacyOrganizationId = legacyOrganizationIdForProject(projectId);
   const usesLegacyNamespace =
     !organizationId || organizationId.toLowerCase() === legacyOrganizationId;
-  const root = prefix === "CONTENT"
-    ? usesLegacyNamespace
-      ? `projects/${projectId}/`
-      : `organizations/${organizationId}/projects/${projectId}/`
-    : "";
+  const root =
+    prefix === "CONTENT"
+      ? usesLegacyNamespace
+        ? `projects/${projectId}/`
+        : `organizations/${organizationId}/projects/${projectId}/`
+      : "";
   const base = `${root}verification/${randomUUID()}`;
   try {
     await store.put(`${base}/record.json`, { test: "postparticle" });
