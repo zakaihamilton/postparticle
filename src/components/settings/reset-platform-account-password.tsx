@@ -21,9 +21,11 @@ type PlatformUser = {
 export function ResetPlatformAccountPassword({
   currentUsername,
   initialUsername,
+  minimumPasswordLength,
 }: {
   currentUsername: string;
   initialUsername: string;
+  minimumPasswordLength: number;
 }) {
   const validationId = useId().replace(/:/g, "");
   const [users, setUsers] = useState<PlatformUser[]>([]);
@@ -145,7 +147,7 @@ export function ResetPlatformAccountPassword({
               <input
                 name="password"
                 type="password"
-                minLength={12}
+                minLength={minimumPasswordLength}
                 autoComplete="new-password"
                 required
                 aria-label="New password"

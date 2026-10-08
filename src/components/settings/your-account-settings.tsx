@@ -9,7 +9,11 @@ import {
   type FieldErrors,
 } from "../form-validation";
 import styles from "../workspace.module.css";
-export function YourAccountSettings() {
+export function YourAccountSettings({
+  minimumPasswordLength,
+}: {
+  minimumPasswordLength: number;
+}) {
   const router = useRouter();
   const validationId = useId().replace(/:/g, "");
   const [error, setError] = useState("");
@@ -101,7 +105,7 @@ export function YourAccountSettings() {
                 name="password"
                 type="password"
                 autoComplete="new-password"
-                minLength={12}
+                minLength={minimumPasswordLength}
                 required
                 aria-label="New password"
                 aria-invalid={fieldErrors.password ? true : undefined}
@@ -118,8 +122,8 @@ export function YourAccountSettings() {
             </label>
           </div>
           <small>
-            At least 12 characters. Changing your password signs out all your
-            sessions.
+            At least {minimumPasswordLength} characters. Changing your password
+            signs out all your sessions.
           </small>
           <button className={styles.secondary} disabled={busy}>
             Change password

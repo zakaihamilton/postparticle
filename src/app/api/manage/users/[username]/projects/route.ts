@@ -44,7 +44,7 @@ export const POST = manageHandler(
       })
       .parse(await readJson(request));
     projectById(data.projectId);
-    await setMembership(actor.username, username, data.projectId, data.role);
+    await setMembership(username, data.projectId, data.role);
     return json({ ok: true });
   },
 );

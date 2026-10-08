@@ -1,8 +1,10 @@
 import { usernameSchema } from "@/lib/username";
-import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { hashPassword, getUser, listUsers, saveUser } from "@/lib/auth";
-import { HttpError } from "@/lib/config";
+import {
+  createPerministerAccount,
+  listUsers,
+  minimumAccountPasswordLength,
+} from "@/lib/auth";
 import { json, readJson } from "@/lib/http";
 import { manageHandler, managePlatformAdmin } from "@/lib/manage-api";
 
@@ -18,21 +20,16 @@ export const GET = manageHandler(async (request: Request) => {
 });
 
 export const POST = manageHandler(async (request: Request) => {
-  const actor = await managePlatformAdmin(request);
+  await managePlatformAdmin(request);
   const data = z
     .object({
       username: usernameSchema,
-      password: z.string().min(12).max(256),
+      password: z.string().min(minimumAccountPasswordLength()).max(256),
     })
     .parse(await readJson(request));
-  if (await getUser(data.username))
-    throw new HttpError(409, "Account already exists");
-  await saveUser(actor.username, {
-    username: data.username,
-    passwordHash: await hashPassword(data.password),
-    platformAdmin: false,
-    disabled: false,
-    sessionVersion: randomUUID(),
-  });
-  return json({ ok: true }, 201);
+  const result = await createPerministerAccount(data.username, data.password);
+  return json(
+    { ok: true, created: result.created === true },
+    result.created === true ? 201 : 200,
+  );
 });

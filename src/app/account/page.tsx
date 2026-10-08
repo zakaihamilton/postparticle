@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { currentActor } from "@/lib/auth";
+import { currentActor, minimumAccountPasswordLength } from "@/lib/auth";
 import { AccountArea } from "@/components/account-area";
 import { YourAccountSettings } from "@/components/settings";
 
@@ -9,7 +9,9 @@ export default async function AccountPage() {
 
   return (
     <AccountArea actor={actor} activeSection="account">
-      <YourAccountSettings />
+      <YourAccountSettings
+        minimumPasswordLength={minimumAccountPasswordLength()}
+      />
     </AccountArea>
   );
 }

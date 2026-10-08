@@ -408,9 +408,6 @@ export class LocalStore implements Store {
   }
 }
 const stores = new Map<string, Store>();
-export function controlStore() {
-  return storeFor("__control", "CONTROL");
-}
 export function projectStore(id: string) {
   projectById(id);
   if (localDriver()) return storeFor(id, id);
@@ -420,20 +417,6 @@ export function projectStore(id: string) {
   );
 }
 function storeFor(scope: string, prefix: string) {
-  if (!localDriver()) {
-    const targets = ["CONTROL", "CONTENT"].flatMap((name) => {
-      const endpoint = process.env[`${name}_SPACES_ENDPOINT`];
-      const bucket = process.env[`${name}_SPACES_BUCKET`];
-      return endpoint && bucket
-        ? [`${new URL(endpoint).origin}/${bucket}`]
-        : [];
-    });
-    if (new Set(targets).size !== targets.length)
-      throw new HttpError(
-        503,
-        "Configure distinct Spaces for control and content storage.",
-      );
-  }
   if (!stores.has(scope))
     stores.set(
       scope,

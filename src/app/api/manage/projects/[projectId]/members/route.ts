@@ -1,6 +1,6 @@
 import { usernameSchema } from "@/lib/username";
 import { z } from "zod";
-import { getUser, listUsers, membership, setMembership } from "@/lib/auth";
+import { projectMemberAccounts, setMembership } from "@/lib/auth";
 import { HttpError } from "@/lib/config";
 import { json, readJson } from "@/lib/http";
 import { manageHandler, manageProject } from "@/lib/manage-api";
@@ -13,19 +13,7 @@ export const GET = manageHandler(async (request: Request, context: Context) => {
     (await context.params).projectId,
     true,
   );
-  return json(
-    await Promise.all(
-      (await listUsers()).map(
-        async ({ username, disabled, platformAdmin }) => ({
-          username,
-          disabled,
-          role: platformAdmin
-            ? ("admin" as const)
-            : await membership(username, projectId),
-        }),
-      ),
-    ),
-  );
+  return json(await projectMemberAccounts(projectId));
 });
 
 export const POST = manageHandler(
@@ -41,14 +29,9 @@ export const POST = manageHandler(
         role: z.enum(["admin", "editor", "viewer"]).nullable(),
       })
       .parse(await readJson(request));
-    if (!(await getUser(data.username)))
-      throw new HttpError(
-        404,
-        "Create this account as a platform administrator first",
-      );
     if (!actor.platformAdmin && data.username === actor.username)
       throw new HttpError(400, "Ask another administrator to change your role");
-    await setMembership(actor.username, data.username, projectId, data.role);
+    await setMembership(data.username, projectId, data.role);
     return json({ ok: true });
   },
 );

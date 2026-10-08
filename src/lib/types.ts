@@ -9,11 +9,6 @@ export interface Actor {
   username: string;
   platformAdmin: boolean;
 }
-export interface User extends Actor {
-  passwordHash: string;
-  disabled: boolean;
-  sessionVersion: string;
-}
 export interface Article {
   title: string;
   slug: string;

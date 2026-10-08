@@ -1,14 +1,11 @@
 import { usernameSchema } from "@/lib/username";
-import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
-  hashPassword,
-  getUser,
+  changePerministerPassword,
   login,
+  minimumAccountPasswordLength,
   logout,
   requireActor,
-  saveUser,
-  verifyPassword,
 } from "@/lib/auth";
 import { HttpError, localDriver } from "@/lib/config";
 import { errorResponse, json, readJson, sameOrigin } from "@/lib/http";
@@ -53,24 +50,14 @@ export async function POST(
       return json({ ok: true });
     }
     if (action === "password") {
-      const actor = await requireActor();
+      await requireActor();
       const data = z
         .object({
           currentPassword: z.string().max(256),
-          password: z.string().min(12).max(256),
+          password: z.string().min(minimumAccountPasswordLength()).max(256),
         })
         .parse(await readJson(request));
-      const user = await getUser(actor.username);
-      if (
-        !user ||
-        !(await verifyPassword(data.currentPassword, user.passwordHash))
-      )
-        throw new HttpError(400, "Current password is incorrect");
-      await saveUser(actor.username, {
-        ...user,
-        passwordHash: await hashPassword(data.password),
-        sessionVersion: randomUUID(),
-      });
+      await changePerministerPassword(data.currentPassword, data.password);
       await logout();
       return json({ ok: true });
     }

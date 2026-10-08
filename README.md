@@ -15,31 +15,21 @@ npm ci
 cp .env.example .env.local
 ```
 
-For local development, configure your Spaces credentials, then create the initial platform administrator:
+Configure the Perminister URL, organization ID, consumer client ID, and client secret in `.env.local`. Create or enable the account and grant PostParticle access in Perminister. For persistent content, configure the Content Spaces values from `.env.example`; to work without Spaces, use the local content adapter described below. Then start the app:
 
 ```sh
-npm run bootstrap -- admin
 npm run dev
 ```
 
-Bootstrap prompts for a password without echoing it. Choose at least 12 characters. It also accepts a password on stdin for automation; avoid placing secrets in command arguments or shell history. Bootstrap refuses to run once a platform administrator exists. Open [localhost:3000](http://localhost:3000).
+PostParticle does not store local passwords, accounts, or sessions. Open [localhost:3000](http://localhost:3000).
 
-For the first Vercel Production administrator, use the temporary-token endpoint described in [Spaces and Vercel setup](docs/deployment.md). It writes through the deployed app’s control Space credentials, so you do not need to copy those keys to your computer.
-
-For development without Spaces, set `STORAGE_DRIVER=local` in `.env.local`. This explicitly uses ignored `.local-storage/` files. It is a development adapter, not a database or supported deployment backend. It has a 32 MiB upload limit and single uploads only. Local storage is blocked on Vercel. Do not deploy fixture passwords or local test storage.
+For content development without Spaces, set `STORAGE_DRIVER=local` in `.env.local`. This explicitly uses ignored `.local-storage/` files. It is a development adapter, not a database or supported deployment backend. Authentication still uses Perminister. Local content storage has a 32 MiB upload limit and single uploads only, and is blocked on Vercel.
 
 ## Account names and recovery
 
 Accounts can use a traditional username or an email address. Email usernames are trimmed and stored in lowercase; sign-in is case-insensitive for email addresses. Existing usernames continue to work. Email usernames are identifiers, not a verified email or an email-delivery service.
 
-If you forget your username or password, a platform administrator can reset your password from **Platform accounts**. If you cannot sign in as an administrator, use the operator command with access to the configured storage:
-
-```sh
-npm run accounts -- list
-npm run accounts -- reset admin
-```
-
-Replace `admin` with the username or email shown by `list`. The reset command prompts privately for a new password and confirmation, then revokes existing sessions. Passwords are hashed and cannot be recovered. These commands use `.env.local`, just like bootstrap, and preserve project permissions and account status.
+If you forget your password, use the recovery process configured in Perminister or ask a platform administrator to reset it from **Platform accounts**. Account status, credentials, and sessions are managed centrally in Perminister.
 
 ## Features
 
@@ -56,6 +46,7 @@ Replace `admin` with the username or email shown by `list`. The reset command pr
 - [Spaces and Vercel setup](docs/deployment.md)
 - [API and generic website integration](docs/integration.md)
 - [Storage model, recovery, and operational limits](docs/storage.md)
+- [Perminister authentication](docs/auth-migration.md)
 - [Validation and repository guardrails](docs/validation.md)
 
 ## Development
@@ -71,7 +62,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Repnix inventories and runs the repository’s configured checks. `npm run health` requires type safety, linting, formatting, tests, accessibility lint rules, and dead-code detection. Browser tests exercise isolated local storage; they do not claim Spaces compatibility. Use `npm run storage:verify` with real credentials for the private JSON and pagination smoke check.
+Repnix inventories and runs the repository’s configured checks. `npm run health` requires type safety, linting, formatting, tests, accessibility lint rules, and dead-code detection. Browser tests use isolated content storage and a test-only Perminister service stub; they do not claim Spaces compatibility. Use `npm run storage:verify` with real credentials for the private JSON and pagination smoke check.
 
 ## License
 

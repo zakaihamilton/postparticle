@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { randomUUID } from "node:crypto";
 import { LocalStore } from "@/lib/storage";
 import { append } from "@/lib/events";
 import {
@@ -14,19 +14,6 @@ import {
   restoreRevision,
   saveContent,
 } from "@/lib/content";
-import {
-  authorize,
-  createSession,
-  getUser,
-  listUsers,
-  hashPassword,
-  membership,
-  resetUserPassword,
-  saveUser,
-  sessionUser,
-  setMembership,
-  verifyPassword,
-} from "@/lib/auth";
 import { listPublicArticles } from "@/lib/public";
 import {
   abortUpload,
@@ -41,7 +28,6 @@ import {
 } from "@/lib/media";
 let root: string;
 let store: LocalStore;
-let control: LocalStore;
 const article = {
   title: "A test story",
   slug: "story",
@@ -58,7 +44,6 @@ const article = {
 beforeEach(async () => {
   root = await mkdtemp(path.join(tmpdir(), "postparticle-unit-"));
   store = new LocalStore("demo", root);
-  control = new LocalStore("control", root);
   vi.stubEnv("STORAGE_DRIVER", "local");
 });
 afterEach(async () => {
@@ -217,119 +202,6 @@ describe("publishing and revisions", () => {
         store,
       ),
     ).rejects.toThrow();
-  });
-});
-describe("accounts, sessions, and isolation", () => {
-  it("loads email accounts and memberships using normalized names", async () => {
-    const emailUser = {
-      username: "Editor+News@Example.COM",
-      passwordHash: await hashPassword("test-password-long"),
-      platformAdmin: false,
-      disabled: false,
-      sessionVersion: randomUUID(),
-    };
-    await saveUser("admin", emailUser, control);
-    await setMembership("admin", emailUser.username, "demo", "editor", control);
-    expect((await listUsers(control))[0].username).toBe(
-      "editor+news@example.com",
-    );
-    expect((await getUser("EDITOR+NEWS@EXAMPLE.COM", control))?.username).toBe(
-      "editor+news@example.com",
-    );
-    expect(await membership("EDITOR+NEWS@EXAMPLE.COM", "demo", control)).toBe(
-      "editor",
-    );
-    const token = await createSession(emailUser, control);
-    expect(await sessionUser(token, control)).toMatchObject({
-      username: "editor+news@example.com",
-    });
-    await resetUserPassword(
-      "operator-recovery",
-      emailUser.username,
-      "new-password-long",
-      control,
-    );
-    expect(await sessionUser(token, control)).toBeNull();
-    const updated = (await getUser(emailUser.username, control))!;
-    expect(
-      await verifyPassword("new-password-long", updated.passwordHash),
-    ).toBe(true);
-    expect(
-      await verifyPassword("test-password-long", updated.passwordHash),
-    ).toBe(false);
-    expect(await membership(emailUser.username, "demo", control)).toBe(
-      "editor",
-    );
-    expect(updated.platformAdmin).toBe(false);
-    expect(updated.disabled).toBe(false);
-    await expect(
-      resetUserPassword(
-        "operator-recovery",
-        emailUser.username,
-        "short",
-        control,
-      ),
-    ).rejects.toMatchObject({ status: 400 });
-  });
-  async function user() {
-    return {
-      username: "editor",
-      passwordHash: await hashPassword("test-password-long"),
-      platformAdmin: false,
-      disabled: false,
-      sessionVersion: randomUUID(),
-    };
-  }
-  it("hashes and verifies passwords and revokes sessions on version change", async () => {
-    const u = await user();
-    expect(await verifyPassword("wrong", u.passwordHash)).toBe(false);
-    expect(await verifyPassword("test-password-long", u.passwordHash)).toBe(
-      true,
-    );
-    await saveUser("admin", u, control);
-    const token = await createSession(u, control);
-    expect(await sessionUser(token, control)).toMatchObject({
-      username: "editor",
-    });
-    await saveUser("admin", { ...u, sessionVersion: randomUUID() }, control);
-    expect(await sessionUser(token, control)).toBeNull();
-    expect(await sessionUser("invalid", control)).toBeNull();
-  });
-  it("rejects viewers' writes, unauthorized projects, and disabled accounts", async () => {
-    const u = await user();
-    await saveUser("admin", u, control);
-    await setMembership("admin", "editor", "demo", "viewer", control);
-    expect(await authorize(u, "demo", false, false, control)).toBe("viewer");
-    await expect(
-      authorize(u, "demo", true, false, control),
-    ).rejects.toMatchObject({ status: 403 });
-    await expect(
-      authorize(
-        { username: "outsider", platformAdmin: false },
-        "demo",
-        false,
-        false,
-        control,
-      ),
-    ).rejects.toMatchObject({ status: 403 });
-    const token = await createSession(u, control);
-    await saveUser("admin", { ...u, disabled: true }, control);
-    expect(await sessionUser(token, control)).toBeNull();
-    expect((await getUser("editor", control))?.disabled).toBe(true);
-  });
-  it("rejects expired sessions and keeps scopes isolated", async () => {
-    vi.useFakeTimers();
-    try {
-      const u = await user();
-      await saveUser("admin", u, control);
-      const token = await createSession(u, control);
-      vi.advanceTimersByTime(9 * 60 * 60 * 1000);
-      expect(await sessionUser(token, control)).toBeNull();
-    } finally {
-      vi.useRealTimers();
-    }
-    await store.put("private/a.json", { value: 1 });
-    expect(await control.get("private/a.json")).toBeNull();
   });
 });
 describe("media lifecycle", () => {

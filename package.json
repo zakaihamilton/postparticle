@@ -15,15 +15,13 @@
     "test:run": "vitest run",
     "test:e2e": "npm run build && npm run example:build && playwright test",
     "health": "repnix check",
-    "bootstrap": "tsx --conditions=react-server --env-file=.env.local scripts/bootstrap.ts",
     "storage:verify": "tsx --conditions=react-server --env-file=.env.local scripts/verify-storage.ts",
     "storage:checkpoint": "tsx --conditions=react-server --env-file=.env.local scripts/rebuild-content-checkpoints.ts",
     "benchmark:content": "tsx --conditions=react-server scripts/benchmark-content-checkpoints.ts",
     "storage:measure": "tsx --conditions=react-server --env-file=.env.local scripts/measure-content-storage.ts",
     "example:dev": "next dev examples/next-blog",
     "example:build": "next build examples/next-blog",
-    "example:start": "next start examples/next-blog",
-    "accounts": "tsx --conditions=react-server --env-file=.env.local scripts/accounts.ts"
+    "example:start": "next start examples/next-blog"
   },
   "engines": {
     "node": ">=22.20.0"

@@ -1,229 +1,355 @@
 import "server-only";
-import {
-  randomBytes,
-  scrypt as scryptCallback,
-  timingSafeEqual,
-  createHash,
-  randomUUID,
-} from "node:crypto";
-import { promisify } from "node:util";
+
 import { cookies } from "next/headers";
-import { append, events } from "./events";
-import { controlStore, mapBounded, type Store } from "./storage";
 import { HttpError, projects, projectById } from "./config";
 import { usernameSchema } from "./username";
-import type { Actor, Role, User } from "./types";
-const scrypt = promisify(scryptCallback);
+import type { Actor, Role } from "./types";
+import {
+  perministerAccounts,
+  perministerAuthorize,
+  perministerChangePassword,
+  perministerCreateAccount,
+  perministerLogin,
+  perministerLogout,
+  perministerOrganizationId,
+  perministerProjectMembers,
+  perministerRoleForProject,
+  perministerSession,
+  perministerSetProjectMember,
+  perministerUpdateAccount,
+  type PerministerAccount,
+  type PerministerSession,
+} from "./perminister-integration";
+
 const cookieName =
   process.env.NODE_ENV === "production"
     ? "__Host-postparticle"
     : "postparticle";
-const ttl = 60 * 60 * 8;
-export async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const hash = (await scrypt(password, salt, 64)) as Buffer;
-  return `${salt}:${hash.toString("hex")}`;
-}
-export async function verifyPassword(password: string, encoded: string) {
-  const [salt, hash] = encoded.split(":");
-  if (!salt || !hash || !/^[a-f0-9]{128}$/.test(hash)) return false;
-  const actual = (await scrypt(password, salt, 64)) as Buffer;
-  return timingSafeEqual(actual, Buffer.from(hash, "hex"));
-}
-export async function getUser(
-  username: string,
-  store = controlStore(),
-): Promise<User | null> {
-  const normalizedUsername = usernameSchema.parse(username);
-  const user = await rawUser(normalizedUsername, store);
-  if (!user || !user.platformAdmin) return user ?? null;
+const defaultSessionSeconds = 60 * 60 * 8;
 
-  // Bootstrap claims are immutable so simultaneous initializations converge on
-  // one effective platform administrator without a storage transaction.
-  const initialAdmin = (
-    await events<{ username: string }>(store, "bootstrap/platform-admins")
-  ).find((event) => event.action === "claim")?.data.username;
-  return initialAdmin
-    ? { ...user, platformAdmin: user.username === initialAdmin }
-    : user;
+export interface ManagedAccount extends Actor {
+  subjectId: string;
+  disabled: boolean;
 }
 
-async function rawUser(username: string, store: Store): Promise<User | null> {
-  const history = await events<User>(store, `users/${username}`);
-  return history.at(-1)?.data ?? null;
+export function minimumAccountPasswordLength() {
+  return 15;
 }
 
-async function userNames(store: Store) {
-  const keys = await store.list("users/");
-  return [...new Set(keys.map((key) => key.split("/")[1]))];
+export async function currentSessionToken() {
+  return (await cookies()).get(cookieName)?.value;
 }
-export async function saveUser(
-  actor: string,
-  user: User,
-  store = controlStore(),
-) {
-  const username = usernameSchema.parse(user.username);
-  await append(store, `users/${username}`, actor, "user", {
-    ...user,
-    username,
-  });
+
+async function requirePerministerToken() {
+  const token = await currentSessionToken();
+  if (!token) throw new HttpError(401, "Please sign in");
+  return token;
 }
-export async function listUsers(store = controlStore()) {
-  const names = await userNames(store);
-  return (await mapBounded(names, (n) => getUser(n, store))).filter(
-    (v): v is User => !!v,
+
+function userFromPerministerAccount(
+  account: PerministerAccount,
+): ManagedAccount {
+  return {
+    username: usernameSchema.parse(account.username),
+    subjectId: account.subjectId,
+    platformAdmin: account.platformAdmin,
+    disabled: account.status === "disabled",
+  };
+}
+
+function actorFromPerministerSession(
+  session: PerministerSession,
+): Actor | null {
+  const username =
+    session.account.username ??
+    session.account.email ??
+    session.account.loginIdentifier;
+  if (!username) return null;
+  const organizationId = perministerOrganizationId();
+  return {
+    username: usernameSchema.parse(username),
+    platformAdmin: session.organizations.some(
+      (organization) =>
+        organization.organizationId.toLowerCase() === organizationId &&
+        organization.productId === "postparticle" &&
+        organization.platformAdmin,
+    ),
+  };
+}
+
+function perministerRole(
+  session: PerministerSession,
+  projectId: string,
+): Role | null {
+  return perministerRoleForProject(
+    session,
+    perministerOrganizationId(),
+    projectId,
   );
 }
+
+function matchesPerministerMember(
+  member: { username: string | null; email: string | null },
+  username: string,
+) {
+  const normalizedUsername = username.toLowerCase();
+  return [member.username, member.email].some(
+    (identity) => identity?.toLowerCase() === normalizedUsername,
+  );
+}
+
+export async function createPerministerAccount(
+  username: string,
+  password: string,
+) {
+  const token = await requirePerministerToken();
+  const accounts = await perministerAccounts(token);
+  if (accounts.some((account) => account.username === username)) {
+    throw new HttpError(409, "Account already exists");
+  }
+  const email = username.includes("@") ? username : undefined;
+  return perministerCreateAccount(token, { username, password, email });
+}
+
+export async function updatePerministerAccount(
+  username: string,
+  input: {
+    disabled?: boolean;
+    password?: string;
+  },
+) {
+  const token = await requirePerministerToken();
+  const account = (await perministerAccounts(token)).find(
+    (candidate) => candidate.username === username,
+  );
+  if (!account) throw new HttpError(404, "Account not found");
+  return perministerUpdateAccount(token, account.subjectId, {
+    ...(input.disabled === undefined
+      ? {}
+      : { status: input.disabled ? "disabled" : "active" }),
+    ...(input.password === undefined ? {} : { password: input.password }),
+  });
+}
+
+export async function changePerministerPassword(
+  currentPassword: string,
+  newPassword: string,
+) {
+  await perministerChangePassword(
+    await requirePerministerToken(),
+    currentPassword,
+    newPassword,
+  );
+}
+
+export async function getUser(
+  username: string,
+): Promise<ManagedAccount | null> {
+  const normalizedUsername = usernameSchema.parse(username);
+  const account = (
+    await perministerAccounts(await requirePerministerToken())
+  ).find((candidate) => candidate.username === normalizedUsername);
+  return account ? userFromPerministerAccount(account) : null;
+}
+
+export async function listUsers(): Promise<ManagedAccount[]> {
+  return (await perministerAccounts(await requirePerministerToken())).map(
+    userFromPerministerAccount,
+  );
+}
+
 export async function membership(
   username: string,
   projectId: string,
-  store = controlStore(),
 ): Promise<Role | null> {
-  username = usernameSchema.parse(username);
-  const history = await events<Role | null>(
-    store,
-    `memberships/${projectId}/${username}`,
+  const normalizedUsername = usernameSchema.parse(username).toLowerCase();
+  const member = (
+    await perministerProjectMembers(await requirePerministerToken(), projectId)
+  ).find((candidate) =>
+    matchesPerministerMember(candidate, normalizedUsername),
   );
-  return history.at(-1)?.data ?? null;
+  return member?.active && ["admin", "editor", "viewer"].includes(member.role)
+    ? (member.role as Role)
+    : null;
 }
+
 export async function setMembership(
-  actor: string,
   username: string,
   projectId: string,
   role: Role | null,
-  store = controlStore(),
 ) {
   projectById(projectId);
   username = usernameSchema.parse(username);
-  await append(
-    store,
-    `memberships/${projectId}/${username}`,
-    actor,
-    "membership",
+  const token = await requirePerministerToken();
+  const member = role
+    ? undefined
+    : (await perministerProjectMembers(token, projectId)).find((candidate) =>
+        matchesPerministerMember(candidate, username),
+      );
+  await perministerSetProjectMember(
+    token,
+    projectId,
+    username,
     role,
+    member?.subjectId,
   );
 }
+
 export async function allowedProjects(actor: Actor) {
-  return (
-    await Promise.all(
-      projects.map(async (p) => ({
-        ...p,
-        role: actor.platformAdmin
-          ? ("admin" as const)
-          : await membership(actor.username, p.id),
-      })),
-    )
-  ).filter((p) => p.role);
+  const token = await requirePerministerToken();
+  const session = await perministerSession(token);
+  if (!session) throw new HttpError(401, "Please sign in");
+  const accessible = await Promise.all(
+    projects.map(async (project) => {
+      if (
+        !(await perministerAuthorize(
+          token,
+          project.id,
+          "postparticle:project:read",
+        ))
+      ) {
+        return null;
+      }
+      return {
+        ...project,
+        role:
+          perministerRole(session, project.id) ??
+          (actor.platformAdmin ? ("admin" as const) : ("viewer" as const)),
+      };
+    }),
+  );
+  return accessible.filter((project) => project !== null);
 }
-interface Session {
-  username: string;
-  version: string;
-  expiresAt: number;
-}
-const sessionKey = (token: string) =>
-  `sessions/${createHash("sha256").update(token).digest("hex")}.json`;
-export async function createSession(user: User, store = controlStore()) {
-  const token = randomBytes(32).toString("hex");
-  await store.put(sessionKey(token), {
-    username: user.username,
-    version: user.sessionVersion,
-    expiresAt: Date.now() + ttl * 1000,
+
+export async function projectMemberAccounts(projectId: string) {
+  const members = await perministerProjectMembers(
+    await requirePerministerToken(),
+    projectId,
+  );
+  return members.flatMap((member) => {
+    const username = member.username ?? member.email;
+    if (!username) return [];
+    const role = ["admin", "editor", "viewer"].includes(member.role)
+      ? (member.role as Role)
+      : null;
+    return [
+      {
+        username,
+        disabled: false,
+        accessActive: member.active,
+        role,
+      },
+    ];
   });
-  return token;
 }
-export async function sessionUser(
-  token: string | undefined,
-  store: Store = controlStore(),
-) {
-  if (!token || !/^[a-f0-9]{64}$/.test(token)) return null;
-  const session = await store.get<Session>(sessionKey(token));
-  if (!session || session.expiresAt <= Date.now()) return null;
-  const user = await getUser(session.username, store);
-  if (!user || user.disabled || user.sessionVersion !== session.version)
-    return null;
-  return {
-    username: user.username,
-    platformAdmin: user.platformAdmin,
-  } satisfies Actor;
+
+export async function sessionUser(token: string | undefined) {
+  if (!token) return null;
+  const session = await perministerSession(token);
+  return session ? actorFromPerministerSession(session) : null;
 }
+
 export async function currentActor() {
-  const token = (await cookies()).get(cookieName)?.value;
+  const token = await currentSessionToken();
   if (!token) return null;
   return sessionUser(token);
 }
+
 export async function requireActor() {
   const actor = await currentActor();
   if (!actor) throw new HttpError(401, "Please sign in");
   return actor;
 }
+
 export async function authorize(
   actor: Actor,
   projectId: string,
   write = false,
   admin = false,
-  store = controlStore(),
 ) {
   projectById(projectId);
-  const role = actor.platformAdmin
-    ? "admin"
-    : await membership(actor.username, projectId, store);
-  if (!role || (write && role === "viewer") || (admin && role !== "admin"))
+  const token = await requirePerministerToken();
+  const action = admin
+    ? "postparticle:members:manage"
+    : write
+      ? "postparticle:project:write"
+      : "postparticle:project:read";
+  if (!(await perministerAuthorize(token, projectId, action))) {
     throw new HttpError(403, "You do not have permission for this action");
-  return role;
-}
-export async function login(username: string, password: string) {
-  const user = await getUser(username);
-  // A fixed dummy hash keeps unknown accounts on the same expensive verification path.
-  const valid = await verifyPassword(
-    password,
-    user?.passwordHash ?? `${"0".repeat(32)}:${"0".repeat(128)}`,
+  }
+  const session = await perministerSession(token);
+  if (!session) throw new HttpError(401, "Please sign in");
+  return (
+    perministerRole(session, projectId) ??
+    (actor.platformAdmin
+      ? "admin"
+      : admin
+        ? "admin"
+        : write
+          ? "editor"
+          : "viewer")
   );
-  if (!valid || !user || user.disabled)
-    throw new HttpError(401, "Invalid username or password");
-  const token = await createSession(user);
+}
+
+export async function login(username: string, password: string) {
+  const { token, expiresAt } = await perministerLogin(username, password);
+  const parsedExpiry = expiresAt ? Date.parse(expiresAt) : Number.NaN;
+  const remaining = Number.isFinite(parsedExpiry)
+    ? Math.floor((parsedExpiry - Date.now()) / 1000)
+    : defaultSessionSeconds;
+  if (remaining <= 0)
+    throw new HttpError(401, "Your Perminister session has expired.");
   (await cookies()).set(cookieName, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: ttl,
+    maxAge: Math.min(remaining, 60 * 60 * 24 * 90),
   });
 }
+
 export async function logout() {
   const jar = await cookies();
   const token = jar.get(cookieName)?.value;
-  if (token) await controlStore().remove(sessionKey(token));
-  jar.set(cookieName, "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-  });
-}
-export async function revokeUserSessions(actor: string, username: string) {
-  const user = await getUser(username);
-  if (!user) throw new HttpError(404, "Account not found");
-  await saveUser(actor, { ...user, sessionVersion: randomUUID() });
+  try {
+    if (token) await perministerLogout(token);
+  } finally {
+    jar.set(cookieName, "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
+  }
 }
 
-export async function resetUserPassword(
-  actor: string,
-  username: string,
-  password: string,
-  store = controlStore(),
-) {
-  if (password.length < 12 || password.length > 256)
-    throw new HttpError(400, "Use a password between 12 and 256 characters");
-  const user = await getUser(username, store);
+export async function revokeUserSessions(username: string) {
+  const user = await getUser(username);
   if (!user) throw new HttpError(404, "Account not found");
-  await saveUser(
-    actor,
+  await perministerUpdateAccount(
+    await requirePerministerToken(),
+    user.subjectId,
     {
-      ...user,
-      passwordHash: await hashPassword(password),
-      sessionVersion: randomUUID(),
+      revokeSessions: true,
     },
-    store,
+  );
+}
+
+export async function resetUserPassword(username: string, password: string) {
+  const minimumLength = minimumAccountPasswordLength();
+  if (password.length < minimumLength || password.length > 256)
+    throw new HttpError(
+      400,
+      `Use a password between ${minimumLength} and 256 characters`,
+    );
+  const user = await getUser(username);
+  if (!user) throw new HttpError(404, "Account not found");
+  await perministerUpdateAccount(
+    await requirePerministerToken(),
+    user.subjectId,
+    {
+      password,
+    },
   );
 }

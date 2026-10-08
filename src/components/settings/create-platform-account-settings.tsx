@@ -11,7 +11,11 @@ import {
 } from "../form-validation";
 import styles from "../workspace.module.css";
 
-export function CreatePlatformAccountSettings() {
+export function CreatePlatformAccountSettings({
+  minimumPasswordLength,
+}: {
+  minimumPasswordLength: number;
+}) {
   const validationId = useId().replace(/:/g, "");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -55,17 +59,19 @@ export function CreatePlatformAccountSettings() {
             }
             const data = new FormData(form);
             setBusy(true);
-            void api("/api/manage/users", {
+            void api<{ created?: boolean }>("/api/manage/users", {
               method: "POST",
               body: JSON.stringify({
                 username: data.get("username"),
                 password: data.get("password"),
               }),
             })
-              .then(() => {
+              .then((result) => {
                 form.reset();
                 setMessage(
-                  "Account created. Assign project access from Users.",
+                  result.created === false
+                    ? "Perminister identity linked. Assign project access from Users."
+                    : "Account created. Assign project access from Users.",
                 );
               })
               .catch((e) => setError((e as Error).message))
@@ -99,7 +105,7 @@ export function CreatePlatformAccountSettings() {
               <input
                 type="password"
                 name="password"
-                minLength={12}
+                minLength={minimumPasswordLength}
                 required
                 autoComplete="new-password"
                 aria-label="Initial password"

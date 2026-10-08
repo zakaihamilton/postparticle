@@ -2,7 +2,8 @@
 
 ## Layout
 
-The control Space stores private objects:
+PostParticle now stores content only. The retired local-auth control bucket may contain historical
+objects from before the Perminister cutover:
 
 ```text
 users/{username}/{timestamp_uuid}.json
@@ -11,10 +12,9 @@ bootstrap/platform-admins/{timestamp_uuid}.json
 sessions/{sha256_token}.json
 ```
 
-The first bootstrap administrator is selected by the earliest immutable claim
-event. This lets concurrent initial setup requests converge on one effective
-platform administrator without relying on a distributed transaction. Platform
-administrators have implicit admin access to every configured project.
+These records are retained as an offline historical backup only. PostParticle does not read or write
+them, and the app no longer has credentials for that bucket. Perminister is the source of truth for
+accounts, credentials, sessions, and access.
 
 The shared content Space stores each project's objects under its own prefix:
 
@@ -30,7 +30,8 @@ projects/{projectId}/originals/{uuid}/asset
 projects/{projectId}/public/media/{uuid}/asset
 ```
 
-The content storage credential can access every project prefix. Project membership is enforced by the application. The control Space remains a separate bucket for accounts, memberships, and sessions.
+The content storage credential can access every project prefix. Project membership is enforced by
+the application through Perminister authorization.
 
 Every event records ID, UTC time, actor, action, and payload. Events use unique keys and remain immutable. Reads order by timestamp and UUID, independently of storage listing order. Append observes the newest existing event in that stream and chooses a timestamp later than it. Truly concurrent writes can still share a timestamp; UUID ordering breaks the tie. All writes are retained. The latest save wins for drafts; publish/unpublish events independently determine the public snapshot.
 
@@ -54,12 +55,19 @@ Media becomes ready only after successful finalization. Multipart completion is 
 
 Deletion checks current draft and published references, including trashed drafts. Historical-only references are not protected: if you remove an asset no longer referenced by current content, an old revision referencing it cannot be republished without replacing that reference. Race conditions between deletion and another editor's save/publish are possible without transactions; failures remain visible and recoverable from backups.
 
-Session IDs are random; storage keys hash the cookie token. Passwords use scrypt with unique salts. Disabling accounts, password resets, and session revocation invalidate the session version immediately on the next authenticated read. Older account-event objects contain old password hashes and must stay private. Expired session objects are unreadable as sessions but should be periodically purged. Consider bucket lifecycle expiry for session objects longer than eight hours; keys contain no username.
+Perminister owns password verification, session storage, account disabling, password resets, and
+session revocation. The old control bucket may contain password verifiers and session records; keep
+it private and outside the app's configured storage. Expired legacy sessions are not accepted by
+the current app.
 
 ## Backups and restoration
 
 Spaces does not provide built-in backups. Enable object versioning if desired, but keep independent backups. Use an administrative tool such as rclone with encrypted credentials to copy each control/content bucket to a separate private backup bucket or encrypted offline location. Never put credentials in command arguments or commit them. Schedule regular copies and test restores; choose retention according to your needs.
 
-Restore into fresh private buckets, configure their keys in a non-production environment, and run verification. Check accounts, memberships, article history, published responses, and representative originals. To revoke restored historical sessions, delete the restored `sessions/` prefix before enabling login. Public media URLs may change when buckets/CDN domains change; republish content and invalidate website caches accordingly.
+Restore content into a fresh private bucket, configure its key in a non-production environment,
+and run verification. Check article history, published responses, and representative originals.
+Authentication is managed in Perminister and is not restored from the retired control bucket. Public
+media URLs may change when buckets/CDN domains change; republish content and invalidate website
+caches accordingly.
 
 Application deployment rollback does not roll back content. Restore an article revision through its editor and explicitly publish it, or restore objects from a reviewed backup. Do not edit historical event JSON directly.

@@ -7,9 +7,9 @@ type Context = { params: Promise<{ username: string }> };
 
 export const POST = manageHandler(
   async (request: Request, context: Context) => {
-    const actor = await managePlatformAdmin(request);
+    await managePlatformAdmin(request);
     const username = usernameSchema.parse((await context.params).username);
-    await revokeUserSessions(actor.username, username);
+    await revokeUserSessions(username);
     return json({ ok: true });
   },
 );
