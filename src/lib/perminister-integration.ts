@@ -97,6 +97,29 @@ function authConfig(): AuthConfig {
   };
 }
 
+export function perministerClientSecretForSso() {
+  return authConfig().clientSecret;
+}
+
+export function perministerAuthorizationUrl(
+  state: string,
+  challenge: string,
+): string {
+  const config = authConfig();
+  const appOrigin = new URL(requiredEnv("APP_ORIGIN")).origin;
+  const redirectUri = new URL("/auth/perminister/callback", appOrigin);
+  const url = new URL("/oauth/authorize", config.baseUrl);
+  url.search = new URLSearchParams({
+    client_id: config.clientId,
+    redirect_uri: redirectUri.toString(),
+    response_type: "code",
+    state,
+    code_challenge: challenge,
+    code_challenge_method: "S256",
+  }).toString();
+  return url.toString();
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -221,6 +244,39 @@ export async function perministerLogin(identifier: string, password: string) {
     !session
   ) {
     throw new HttpError(503, "Perminister returned an invalid login response.");
+  }
+  return {
+    token: sessionToken,
+    expiresAt:
+      typeof session.expiresAt === "string" ? session.expiresAt : undefined,
+  };
+}
+
+export async function perministerExchangeAuthorizationCode(
+  code: string,
+  codeVerifier: string,
+) {
+  const payload = await request(authPath("token"), {
+    method: "POST",
+    body: {
+      grant_type: "authorization_code",
+      code,
+      code_verifier: codeVerifier,
+    },
+    purpose: "login",
+  });
+  const sessionToken = payload.sessionToken;
+  const session = asRecord(payload.session);
+  if (
+    payload.authenticated !== true ||
+    typeof sessionToken !== "string" ||
+    !sessionToken ||
+    !session
+  ) {
+    throw new HttpError(
+      503,
+      "Perminister returned an invalid sign-in response.",
+    );
   }
   return {
     token: sessionToken,

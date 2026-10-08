@@ -88,6 +88,54 @@
   line-height: 1.7;
   margin-bottom: 32px;
 }
+.ssoButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px 14px;
+  color: var(--text);
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    border-color var(--motion-fast),
+    background var(--motion-fast),
+    color var(--motion-fast);
+}
+.ssoButton:hover {
+  border-color: var(--accent-ink);
+  color: var(--accent-ink);
+  background: var(--surface-alt);
+}
+.ssoButton:focus-visible {
+  outline: 3px solid var(--accent-ink);
+  outline-offset: 3px;
+}
+.ssoButton span {
+  flex: 1;
+}
+.authDivider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+.authDivider::before,
+.authDivider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: var(--border);
+}
 .formInner label {
   display: grid;
   gap: 9px;

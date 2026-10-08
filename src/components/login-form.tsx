@@ -11,10 +11,14 @@ import {
   type FieldErrors,
 } from "./form-validation";
 import styles from "./auth.module.css";
-export default function LoginForm() {
+export default function LoginForm({
+  initialError = "",
+}: {
+  initialError?: string;
+}) {
   const router = useRouter();
   const validationId = useId().replace(/:/g, "");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialError);
   const [busy, setBusy] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   return (
@@ -55,6 +59,14 @@ export default function LoginForm() {
             </span>
             <h2>Welcome back.</h2>
             <p>Sign in to find your projects and pick up where you left off.</p>
+            <Link href="/auth/perminister/start" className={styles.ssoButton}>
+              <Icon name="lock" size={18} />
+              <span>Sign in with Perminister</span>
+              <Icon name="arrow" size={18} />
+            </Link>
+            <div className={styles.authDivider}>
+              <span>or use your account</span>
+            </div>
             <form
               noValidate
               onChange={(event) => {

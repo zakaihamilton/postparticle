@@ -15,6 +15,11 @@ that owns each project's data. The PostParticle product client must be restricte
 application origin. Keep the client
 secret out of browser code, logs, and repository files.
 
+The login page offers **Sign in with Perminister**. The callback is
+`/auth/perminister/callback` on the exact origin registered for that app client. The backend completes
+the authorization-code exchange with PKCE and stores the resulting app-bound session in the existing
+PostParticle cookie.
+
 New and changed passwords must be 15–256 characters. Imported legacy passwords remain usable until
 changed; Perminister rehashes them after a successful login. PostParticle fails closed when
 Perminister is unavailable. Account creation and reset are available to platform administrators in
