@@ -1296,7 +1296,22 @@ a.secondary:hover {
     z-index: 11;
   }
   .topbar > div {
+    min-width: 0;
     gap: 10px;
+  }
+  .topbar > div:first-child {
+    flex: 1 1 auto;
+  }
+  .topbar > div:first-child > span:not(.breadcrumb),
+  .topbar > div:first-child > strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .topbar .topRight {
+    flex: 0 1 auto;
+    gap: 8px;
   }
   .mobileMenu {
     display: inline-block;
@@ -1403,7 +1418,17 @@ a.secondary:hover {
     display: none;
   }
   .topbar {
-    padding: 0 12px;
-    gap: 6px;
+    height: auto;
+    min-height: 65px;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    gap: 4px 6px;
+  }
+  .topbar > div:first-child {
+    flex: 1 1 150px;
+  }
+  .topbar > .topRight,
+  .topbar > .accountHeaderActions {
+    margin-left: auto;
   }
 }

@@ -16,7 +16,7 @@ export const guideSearchIndex: GuideSearchEntry[] = [
     page: "Overview",
     section: "Prerequisites",
     id: "start",
-    text: "TypeScript Next.js App Router project, running Postparticle deployment, project ID, and at least one published article. Configure POSTPARTICLE_URL POSTPARTICLE_PROJECT WEBSITE_URL on the website server. Public articles API requires no login, Spaces credentials, or browser cookies.",
+    text: "TypeScript Next.js App Router project, running Postparticle deployment, project ID, and at least one published article. Configure POSTPARTICLE_URL POSTPARTICLE_PROJECT POSTPARTICLE_ORGANIZATION_ID WEBSITE_URL on the website server. Public articles API requires no login, Spaces credentials, or browser cookies.",
   },
   {
     href: "/developers",
@@ -45,7 +45,7 @@ export const guideSearchIndex: GuideSearchEntry[] = [
     section: "Environment variables",
     id: "configuration",
     text: "TypeScript Next.js App Router. app and lib folders can live at repository root or under src. POSTPARTICLE_URL deployment base URL, POSTPARTICLE_PROJECT project ID, WEBSITE_URL public site origin without trailing slash. Set on server, Vercel or hosting provider environment settings, and restart local server after env changes. Install server-only react-markdown remark-gfm.",
-    code: ".env.local POSTPARTICLE_URL=https://cms.example.com POSTPARTICLE_PROJECT=demo WEBSITE_URL=https://journal.example.com npm install server-only react-markdown remark-gfm",
+    code: ".env.local POSTPARTICLE_URL=https://cms.example.com POSTPARTICLE_PROJECT=demo POSTPARTICLE_ORGANIZATION_ID=\"<organization-uuid>\" WEBSITE_URL=https://journal.example.com npm install server-only react-markdown remark-gfm",
   },
   {
     href: "/developers/nextjs/setup",
@@ -77,7 +77,7 @@ export const guideSearchIndex: GuideSearchEntry[] = [
     section: "Run the example",
     id: "runnable-example",
     text: "Run examples/next-blog from repository root with Postparticle at localhost port 3300, website at localhost port 3301. Publish an article first. npm run example:dev -- --port 3301 and npm run example:build. Integration reference downloadable.",
-    code: "POSTPARTICLE_URL=http://localhost:3300 POSTPARTICLE_PROJECT=demo WEBSITE_URL=http://localhost:3301 npm run example:dev -- --port 3301",
+    code: "POSTPARTICLE_URL=http://localhost:3300 POSTPARTICLE_PROJECT=demo POSTPARTICLE_ORGANIZATION_ID=\"<organization-uuid>\" WEBSITE_URL=http://localhost:3301 npm run example:dev -- --port 3301",
   },
   {
     href: "/developers/nextjs/articles",
@@ -101,7 +101,7 @@ export const guideSearchIndex: GuideSearchEntry[] = [
     section: "Listing API",
     id: "queries",
     text: "GET /api/v1/projects/demo/articles. Query q searches title excerpt and Markdown body case-insensitively, maximum 200 characters. tag exact case-insensitive matching max 60. order asc or desc by article date; slug ties. page 1 to 100000. pageSize 1 to 100, default 12. Response items total page pageSize. Published articles only.",
-    code: "GET /api/v1/projects/demo/articles?q=journey&tag=journal&order=desc&page=1&pageSize=12",
+    code: "GET /api/v1/projects/demo/articles?organizationId={organizationId}&q=journey&tag=journal&order=desc&page=1&pageSize=12",
   },
   {
     href: "/developers/nextjs/article-pages",
@@ -155,7 +155,7 @@ export const guideSearchIndex: GuideSearchEntry[] = [
     section: "Base URL and endpoints",
     id: "endpoints",
     text: "Public GET endpoints for published articles listing, article slug, and published JSON document key. Base path /api/v1/projects/{projectId}. Encode project ID, slug, document key.",
-    code: "GET /api/v1/projects/{projectId}/articles\nGET /api/v1/projects/{projectId}/articles/{slug}\nGET /api/v1/projects/{projectId}/documents/{key}",
+    code: "GET /api/v1/projects/{projectId}/articles?organizationId={organizationId}\nGET /api/v1/projects/{projectId}/articles/{slug}?organizationId={organizationId}\nGET /api/v1/projects/{projectId}/documents/{key}?organizationId={organizationId}",
   },
   {
     href: "/developers/api-reference",

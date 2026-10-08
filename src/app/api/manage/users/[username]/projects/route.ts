@@ -8,7 +8,7 @@ import { usernameSchema } from "@/lib/username";
 type Context = { params: Promise<{ username: string }> };
 
 export const GET = manageHandler(async (request: Request, context: Context) => {
-  await managePlatformAdmin(request);
+  const actor = await managePlatformAdmin(request);
   const username = usernameSchema.parse((await context.params).username);
   const user = await getUser(username);
   if (!user) throw new HttpError(404, "Account not found");
@@ -19,7 +19,7 @@ export const GET = manageHandler(async (request: Request, context: Context) => {
         ...project,
         role: user.platformAdmin
           ? ("admin" as const)
-          : await membership(username, project.id),
+          : await membership(username, actor.organizationId, project.id),
       })),
     ),
   });
@@ -44,7 +44,7 @@ export const POST = manageHandler(
       })
       .parse(await readJson(request));
     projectById(data.projectId);
-    await setMembership(username, data.projectId, data.role);
+    await setMembership(username, actor.organizationId, data.projectId, data.role);
     return json({ ok: true });
   },
 );

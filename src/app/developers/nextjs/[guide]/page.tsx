@@ -96,14 +96,16 @@ export default async function DeveloperGuide({
             <CodeBlock
               filename=".env.local"
               code={
-                "POSTPARTICLE_URL=https://cms.example.com\nPOSTPARTICLE_PROJECT=demo\nWEBSITE_URL=https://journal.example.com\n"
+                "POSTPARTICLE_URL=https://cms.example.com\nPOSTPARTICLE_PROJECT=demo\nPOSTPARTICLE_ORGANIZATION_ID=<organization-uuid>\nWEBSITE_URL=https://journal.example.com\n"
               }
             />
             <p>
               Set <code>POSTPARTICLE_URL</code> to the base URL of your
               Postparticle deployment, <code>POSTPARTICLE_PROJECT</code> to your
-              project ID, and <code>WEBSITE_URL</code> to the base URL readers
-              use for your public website, without a trailing slash. Replace the
+              project ID, <code>POSTPARTICLE_ORGANIZATION_ID</code> to the
+              organization that owns that project, and <code>WEBSITE_URL</code>
+              to the base URL readers use for your public website, without a
+              trailing slash. Replace the
               example values. Configure these variables in each Vercel
               environment, or in your hosting provider’s environment settings.
               Restart the local server after changing <code>.env.local</code>.
@@ -176,7 +178,7 @@ export default async function DeveloperGuide({
             </p>
             <CodeBlock
               filename="Terminal — run the example"
-              code="POSTPARTICLE_URL=http://localhost:3300 POSTPARTICLE_PROJECT=demo WEBSITE_URL=http://localhost:3301 npm run example:dev -- --port 3301"
+              code={`POSTPARTICLE_URL=http://localhost:3300 POSTPARTICLE_PROJECT=demo POSTPARTICLE_ORGANIZATION_ID="<organization-uuid>" WEBSITE_URL=http://localhost:3301 npm run example:dev -- --port 3301`}
             />
             <p>
               Open{" "}
@@ -240,7 +242,7 @@ export default async function DeveloperGuide({
             <h2>Listing endpoint parameters</h2>
             <CodeBlock
               filename="HTTP — listing example"
-              code="GET /api/v1/projects/demo/articles?q=journey&tag=journal&order=desc&page=1&pageSize=12"
+              code="GET /api/v1/projects/demo/articles?organizationId={organizationId}&q=journey&tag=journal&order=desc&page=1&pageSize=12"
             />
             <ul>
               <li>

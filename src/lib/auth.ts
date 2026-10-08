@@ -1,7 +1,12 @@
 import "server-only";
 
 import { cookies } from "next/headers";
-import { HttpError, projects, projectById } from "./config";
+import {
+  HttpError,
+  organizationIdentifier,
+  projects,
+  projectById,
+} from "./config";
 import { usernameSchema } from "./username";
 import type { Actor, Role } from "./types";
 import {
@@ -11,7 +16,6 @@ import {
   perministerCreateAccount,
   perministerLogin,
   perministerLogout,
-  perministerOrganizationId,
   perministerProjectMembers,
   perministerRoleForProject,
   perministerSession,
@@ -25,10 +29,16 @@ const cookieName =
   process.env.NODE_ENV === "production"
     ? "__Host-postparticle"
     : "postparticle";
+const organizationCookieName =
+  process.env.NODE_ENV === "production"
+    ? "__Host-postparticle-organization"
+    : "postparticle-organization";
 const defaultSessionSeconds = 60 * 60 * 8;
 
-export interface ManagedAccount extends Actor {
+export interface ManagedAccount {
+  username: string;
   subjectId: string;
+  platformAdmin: boolean;
   disabled: boolean;
 }
 
@@ -59,33 +69,41 @@ function userFromPerministerAccount(
 
 function actorFromPerministerSession(
   session: PerministerSession,
+  selectedOrganizationId?: string,
 ): Actor | null {
   const username =
     session.account.username ??
     session.account.email ??
     session.account.loginIdentifier;
   if (!username) return null;
-  const organizationId = perministerOrganizationId();
+  const organizations = session.organizations
+    .filter((organization) => organization.productId === "postparticle")
+    .map((organization) => ({
+      organizationId: organization.organizationId.toLowerCase(),
+      organizationName: organization.organizationName,
+      platformAdmin: organization.platformAdmin,
+    }));
+  const activeOrganization =
+    organizations.find(
+      (organization) =>
+        organization.organizationId === selectedOrganizationId?.toLowerCase(),
+    ) ?? organizations[0];
+  if (!activeOrganization) return null;
   return {
     username: usernameSchema.parse(username),
-    platformAdmin: session.organizations.some(
-      (organization) =>
-        organization.organizationId.toLowerCase() === organizationId &&
-        organization.productId === "postparticle" &&
-        organization.platformAdmin,
-    ),
+    organizationId: activeOrganization.organizationId,
+    organizationName: activeOrganization.organizationName,
+    organizations,
+    platformAdmin: activeOrganization.platformAdmin,
   };
 }
 
 function perministerRole(
   session: PerministerSession,
+  organizationId: string,
   projectId: string,
 ): Role | null {
-  return perministerRoleForProject(
-    session,
-    perministerOrganizationId(),
-    projectId,
-  );
+  return perministerRoleForProject(session, organizationId, projectId);
 }
 
 function matchesPerministerMember(
@@ -102,13 +120,18 @@ export async function createPerministerAccount(
   username: string,
   password: string,
 ) {
+  const actor = await requireActor();
   const token = await requirePerministerToken();
-  const accounts = await perministerAccounts(token);
+  const accounts = await perministerAccounts(token, actor.organizationId);
   if (accounts.some((account) => account.username === username)) {
     throw new HttpError(409, "Account already exists");
   }
   const email = username.includes("@") ? username : undefined;
-  return perministerCreateAccount(token, { username, password, email });
+  return perministerCreateAccount(token, actor.organizationId, {
+    username,
+    password,
+    email,
+  });
 }
 
 export async function updatePerministerAccount(
@@ -118,12 +141,13 @@ export async function updatePerministerAccount(
     password?: string;
   },
 ) {
+  const actor = await requireActor();
   const token = await requirePerministerToken();
-  const account = (await perministerAccounts(token)).find(
+  const account = (await perministerAccounts(token, actor.organizationId)).find(
     (candidate) => candidate.username === username,
   );
   if (!account) throw new HttpError(404, "Account not found");
-  return perministerUpdateAccount(token, account.subjectId, {
+  return perministerUpdateAccount(token, actor.organizationId, account.subjectId, {
     ...(input.disabled === undefined
       ? {}
       : { status: input.disabled ? "disabled" : "active" }),
@@ -146,25 +170,34 @@ export async function getUser(
   username: string,
 ): Promise<ManagedAccount | null> {
   const normalizedUsername = usernameSchema.parse(username);
+  const actor = await requireActor();
   const account = (
-    await perministerAccounts(await requirePerministerToken())
+    await perministerAccounts(await requirePerministerToken(), actor.organizationId)
   ).find((candidate) => candidate.username === normalizedUsername);
   return account ? userFromPerministerAccount(account) : null;
 }
 
 export async function listUsers(): Promise<ManagedAccount[]> {
-  return (await perministerAccounts(await requirePerministerToken())).map(
+  const actor = await requireActor();
+  return (
+    await perministerAccounts(await requirePerministerToken(), actor.organizationId)
+  ).map(
     userFromPerministerAccount,
   );
 }
 
 export async function membership(
   username: string,
+  organizationId: string,
   projectId: string,
 ): Promise<Role | null> {
   const normalizedUsername = usernameSchema.parse(username).toLowerCase();
   const member = (
-    await perministerProjectMembers(await requirePerministerToken(), projectId)
+    await perministerProjectMembers(
+      await requirePerministerToken(),
+      organizationId,
+      projectId,
+    )
   ).find((candidate) =>
     matchesPerministerMember(candidate, normalizedUsername),
   );
@@ -175,6 +208,7 @@ export async function membership(
 
 export async function setMembership(
   username: string,
+  organizationId: string,
   projectId: string,
   role: Role | null,
 ) {
@@ -183,11 +217,12 @@ export async function setMembership(
   const token = await requirePerministerToken();
   const member = role
     ? undefined
-    : (await perministerProjectMembers(token, projectId)).find((candidate) =>
+    : (await perministerProjectMembers(token, organizationId, projectId)).find((candidate) =>
         matchesPerministerMember(candidate, username),
       );
   await perministerSetProjectMember(
     token,
+    organizationId,
     projectId,
     username,
     role,
@@ -204,6 +239,7 @@ export async function allowedProjects(actor: Actor) {
       if (
         !(await perministerAuthorize(
           token,
+          actor.organizationId,
           project.id,
           "postparticle:project:read",
         ))
@@ -213,7 +249,7 @@ export async function allowedProjects(actor: Actor) {
       return {
         ...project,
         role:
-          perministerRole(session, project.id) ??
+          perministerRole(session, actor.organizationId, project.id) ??
           (actor.platformAdmin ? ("admin" as const) : ("viewer" as const)),
       };
     }),
@@ -221,9 +257,13 @@ export async function allowedProjects(actor: Actor) {
   return accessible.filter((project) => project !== null);
 }
 
-export async function projectMemberAccounts(projectId: string) {
+export async function projectMemberAccounts(
+  organizationId: string,
+  projectId: string,
+) {
   const members = await perministerProjectMembers(
     await requirePerministerToken(),
+    organizationId,
     projectId,
   );
   return members.flatMap((member) => {
@@ -243,16 +283,23 @@ export async function projectMemberAccounts(projectId: string) {
   });
 }
 
-export async function sessionUser(token: string | undefined) {
+export async function sessionUser(
+  token: string | undefined,
+  selectedOrganizationId?: string,
+) {
   if (!token) return null;
   const session = await perministerSession(token);
-  return session ? actorFromPerministerSession(session) : null;
+  return session
+    ? actorFromPerministerSession(session, selectedOrganizationId)
+    : null;
 }
 
 export async function currentActor() {
-  const token = await currentSessionToken();
+  const jar = await cookies();
+  const token = jar.get(cookieName)?.value;
   if (!token) return null;
-  return sessionUser(token);
+  const selectedOrganizationId = jar.get(organizationCookieName)?.value;
+  return sessionUser(token, selectedOrganizationId);
 }
 
 export async function requireActor() {
@@ -274,13 +321,20 @@ export async function authorize(
     : write
       ? "postparticle:project:write"
       : "postparticle:project:read";
-  if (!(await perministerAuthorize(token, projectId, action))) {
+  if (
+    !(await perministerAuthorize(
+      token,
+      actor.organizationId,
+      projectId,
+      action,
+    ))
+  ) {
     throw new HttpError(403, "You do not have permission for this action");
   }
   const session = await perministerSession(token);
   if (!session) throw new HttpError(401, "Please sign in");
   return (
-    perministerRole(session, projectId) ??
+    perministerRole(session, actor.organizationId, projectId) ??
     (actor.platformAdmin
       ? "admin"
       : admin
@@ -299,12 +353,41 @@ export async function login(username: string, password: string) {
     : defaultSessionSeconds;
   if (remaining <= 0)
     throw new HttpError(401, "Your Perminister session has expired.");
-  (await cookies()).set(cookieName, token, {
+  const session = await perministerSession(token);
+  const actor = session ? actorFromPerministerSession(session) : null;
+  if (!actor) {
+    await perministerLogout(token).catch(() => undefined);
+    throw new HttpError(403, "No PostParticle organization access was found.");
+  }
+  const jar = await cookies();
+  jar.set(cookieName, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: Math.min(remaining, 60 * 60 * 24 * 90),
+  });
+  jar.set(organizationCookieName, actor.organizationId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: Math.min(remaining, 60 * 60 * 24 * 90),
+  });
+}
+
+export async function selectOrganization(rawOrganizationId: string) {
+  const organizationId = organizationIdentifier.parse(rawOrganizationId).toLowerCase();
+  const token = await requirePerministerToken();
+  const actor = await sessionUser(token, organizationId);
+  if (!actor || actor.organizationId !== organizationId)
+    throw new HttpError(403, "You do not have access to this organization.");
+  (await cookies()).set(organizationCookieName, organizationId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
   });
 }
 
@@ -324,14 +407,23 @@ export async function logout() {
       path: "/",
       maxAge: 0,
     });
+    jar.set(organizationCookieName, "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
   }
 }
 
 export async function revokeUserSessions(username: string) {
+  const actor = await requireActor();
   const user = await getUser(username);
   if (!user) throw new HttpError(404, "Account not found");
   await perministerUpdateAccount(
     await requirePerministerToken(),
+    actor.organizationId,
     user.subjectId,
     {
       revokeSessions: true,
@@ -346,10 +438,12 @@ export async function resetUserPassword(username: string, password: string) {
       400,
       `Use a password between ${minimumLength} and 256 characters`,
     );
+  const actor = await requireActor();
   const user = await getUser(username);
   if (!user) throw new HttpError(404, "Account not found");
   await perministerUpdateAccount(
     await requirePerministerToken(),
+    actor.organizationId,
     user.subjectId,
     {
       password,

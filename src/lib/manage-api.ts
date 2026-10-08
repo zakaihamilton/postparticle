@@ -42,5 +42,10 @@ export async function manageProject(
     request.method !== "GET",
     admin,
   );
-  return { actor, projectId, role, store: projectStore(projectId) };
+  return {
+    actor,
+    projectId,
+    role,
+    store: projectStore(actor.organizationId, projectId),
+  };
 }

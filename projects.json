@@ -3,11 +3,13 @@
     "id": "demo",
     "name": "Demo Journal",
     "description": "Stories, ideas, and everything in between.",
-    "production": false
+    "production": false,
+    "legacyOrganizationId": "660601f6-c1c3-42b0-9118-c2285d7659a3"
   },
   {
     "id": "sentry8",
     "name": "SENTRY8",
-    "description": "SENTRY8 content and media."
+    "description": "SENTRY8 content and media.",
+    "legacyOrganizationId": "660601f6-c1c3-42b0-9118-c2285d7659a3"
   }
 ]

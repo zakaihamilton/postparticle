@@ -213,6 +213,7 @@ const server = createServer(async (request, response) => {
       organizations: [
         {
           organizationId,
+          organizationName: "SENTRY8",
           productId,
           platformAdmin: account.platformAdmin,
           resourceRoles,

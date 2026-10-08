@@ -2,6 +2,7 @@ export const integrationPrompt = `Integrate Postparticle into this existing webs
 
 Postparticle base URL: {{POSTPARTICLE_URL}}
 Postparticle project ID: {{POSTPARTICLE_PROJECT}}
+Postparticle organization UUID: {{POSTPARTICLE_ORGANIZATION_ID}}
 Public website URL: {{WEBSITE_URL}}
 
 Before changing files:
@@ -12,7 +13,7 @@ Before changing files:
 Implementation requirements:
 - Read published content from the public Postparticle API on the website server. Never put credentials, private storage keys, or server configuration in browser code. The public content API does not require workspace credentials.
 - Use the existing server-rendering or server-side data-fetching pattern. Encode project IDs, slugs, and document keys as URL path segments, and encode query parameters with URLSearchParams or the framework's equivalent.
-- Use these endpoints when needed: GET {{POSTPARTICLE_URL}}/api/v1/projects/{{POSTPARTICLE_PROJECT}}/articles, GET {{POSTPARTICLE_URL}}/api/v1/projects/{{POSTPARTICLE_PROJECT}}/articles/{slug}, and GET {{POSTPARTICLE_URL}}/api/v1/projects/{{POSTPARTICLE_PROJECT}}/documents/{key}.
+- Use these endpoints when needed: GET {{POSTPARTICLE_URL}}/api/v1/projects/{{POSTPARTICLE_PROJECT}}/articles?organizationId={{POSTPARTICLE_ORGANIZATION_ID}}, GET {{POSTPARTICLE_URL}}/api/v1/projects/{{POSTPARTICLE_PROJECT}}/articles/{slug}?organizationId={{POSTPARTICLE_ORGANIZATION_ID}}, and GET {{POSTPARTICLE_URL}}/api/v1/projects/{{POSTPARTICLE_PROJECT}}/documents/{key}?organizationId={{POSTPARTICLE_ORGANIZATION_ID}}.
 - The API returns published content only. Handle 404 for missing or unpublished content, 400 for invalid input, 503 for service or storage failures, and network errors using the project's existing error and not-found conventions.
 - Preserve the existing site's caching policy where possible. The API response is no-store; the website must choose its own server-side cache or revalidation policy. Document any freshness tradeoff.
 - If rendering article Markdown, use the project's established safe Markdown renderer. Keep raw HTML disabled unless the project has a deliberate, reviewed sanitization policy. Use resolved media URLs from the public response.

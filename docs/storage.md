@@ -16,22 +16,24 @@ These records are retained as an offline historical backup only. PostParticle do
 them, and the app no longer has credentials for that bucket. Perminister is the source of truth for
 accounts, credentials, sessions, and access.
 
-The shared content Space stores each project's objects under its own prefix:
+New organization content is namespaced by both organization and project:
 
 ```text
-projects/{projectId}/content/articles/{slug}/{timestamp_uuid}.json
-projects/{projectId}/content/documents/{key}/{timestamp_uuid}.json
-projects/{projectId}/checkpoints/content/{kind}/{generation}/manifest.json
-projects/{projectId}/checkpoints/content/{kind}/{generation}/shard-00000.json
-projects/{projectId}/media/{uuid}/{timestamp_uuid}.json
-projects/{projectId}/uploads/{uuid}.json
-projects/{projectId}/incoming/{uuid}/asset
-projects/{projectId}/originals/{uuid}/asset
-projects/{projectId}/public/media/{uuid}/asset
+organizations/{organizationId}/projects/{projectId}/content/articles/{slug}/{timestamp_uuid}.json
+organizations/{organizationId}/projects/{projectId}/content/documents/{key}/{timestamp_uuid}.json
+organizations/{organizationId}/projects/{projectId}/checkpoints/content/{kind}/{generation}/manifest.json
+organizations/{organizationId}/projects/{projectId}/checkpoints/content/{kind}/{generation}/shard-00000.json
+organizations/{organizationId}/projects/{projectId}/media/{uuid}/{timestamp_uuid}.json
+organizations/{organizationId}/projects/{projectId}/uploads/{uuid}.json
+organizations/{organizationId}/projects/{projectId}/incoming/{uuid}/asset
+organizations/{organizationId}/projects/{projectId}/originals/{uuid}/asset
+organizations/{organizationId}/projects/{projectId}/public/media/{uuid}/asset
 ```
 
-The content storage credential can access every project prefix. Project membership is enforced by
-the application through Perminister authorization.
+The Sentry8 organization keeps its existing `projects/{projectId}/...` namespace so current content
+and media remain available. New organizations use the organization-prefixed path. The content
+storage credential can access every prefix; the application scopes reads and writes by the active
+Perminister organization and its project grants.
 
 Every event records ID, UTC time, actor, action, and payload. Events use unique keys and remain immutable. Reads order by timestamp and UUID, independently of storage listing order. Append observes the newest existing event in that stream and chooses a timestamp later than it. Truly concurrent writes can still share a timestamp; UUID ordering breaks the tie. All writes are retained. The latest save wins for drafts; publish/unpublish events independently determine the public snapshot.
 
@@ -41,15 +43,15 @@ Listings still enumerate immutable event keys, while checkpoints reduce how many
 
 Content checkpoints are versioned derived snapshots; the event objects remain authoritative. Each checkpoint generation has a manifest written after its shards. Shards are capped at 4 MiB or 1,000 records and contain each record's reduced state, last folded event cursor, and replay cutoff. The newest event timestamp for a record remains in the replay tail, so events sharing that timestamp continue to follow the existing UUID tie ordering. Readers verify shard hashes and fall back to an older valid generation or full event replay when a checkpoint is missing or invalid. After a new generation passes read-back validation, the two newest complete valid generations are retained; older generations and corrupt manifests are pruned. Well-formed unreferenced shard generations without manifests are retained for 24 hours so an in-progress concurrent build is not mistaken for an orphan. Malformed orphan keys are pruned immediately. Source events are never pruned. If source keys change while a generation is built, the builder retries twice; if it remains unstable, it publishes no manifest and does not prune existing checkpoints.
 
-Build checkpoints for a single project using the shared content storage credentials:
+Build checkpoints for one project's active organization namespace using the shared content storage credentials. Omit the organization option only when rebuilding a project in the legacy namespace:
 
 ```sh
-npm run storage:checkpoint -- demo
+npm run storage:checkpoint -- demo --organization-id "<organization-uuid>"
 ```
 
 Run this operator command against a quiet project after bulk imports or when the replay tail grows. It processes articles and documents and never removes source events. `npm run benchmark:content` creates disposable local fixtures of 1,000, 5,000, and 10,000 events and reports elapsed time, object reads, list calls, keys enumerated, and estimated 1,000-key Spaces list pages for record listing, public article listing, and single-article lookup before and after checkpointing. It also checks the shard size limits. The local benchmark exposes the remaining full key-list scan but does not model Spaces pagination latency.
 
-For read-only measurements against an isolated development or preview Space, run `npm run storage:measure -- <project-id> --confirm-non-production`. The command reports record counts and read/list metrics for record listing, public article listing, and a published-article lookup; it does not print content or write objects. Do not point it at production credentials. Compare those timings and list-page counts with the local benchmark before deciding whether a reconstructible key index is warranted.
+For read-only measurements against an isolated development or preview Space, run `npm run storage:measure -- <project-id> --organization-id "<organization-uuid>" --confirm-non-production`. Omit the organization option only for the legacy Sentry8 namespace. The command reports record counts and read/list metrics for record listing, public article listing, and a published-article lookup; it does not print content or write objects. Do not point it at production credentials. Compare those timings and list-page counts with the local benchmark before deciding whether a reconstructible key index is warranted.
 
 Media becomes ready only after successful finalization. Multipart completion is checkpointed in its private upload ticket. Retrying finalization resumes validation and sealing; if a completion response or checkpoint was lost, the application checks for the completed staging object before proceeding. A committed asset is returned idempotently without overwriting its metadata. Cleanup can also be retried. The staging object is copied to a separate private original, then its ticket and staging key are deleted. This prevents a still-valid upload URL from modifying a finalized original. Publish copies assets to public delivery paths before writing the publication event. A failed publish can leave unused public copies; the content stays unpublished. Unpublishing removes content from the API but does not erase previously distributed media URLs or guarantee CDN recall. Never publish confidential media.
 

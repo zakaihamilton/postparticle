@@ -5,8 +5,16 @@ export interface Project {
   name: string;
   description: string;
 }
+export interface OrganizationChoice {
+  organizationId: string;
+  organizationName: string;
+  platformAdmin: boolean;
+}
 export interface Actor {
   username: string;
+  organizationId: string;
+  organizationName: string;
+  organizations: OrganizationChoice[];
   platformAdmin: boolean;
 }
 export interface Article {

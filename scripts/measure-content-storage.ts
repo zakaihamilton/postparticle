@@ -1,15 +1,25 @@
 import { performance } from "node:perf_hooks";
 import registry from "../projects.json";
-import { identifier } from "../src/lib/config";
+import { identifier, organizationIdentifier } from "../src/lib/config";
 import { records } from "../src/lib/content";
 import { listPublicArticles, readPublicArticle } from "../src/lib/public";
 import { projectStore, type Store } from "../src/lib/storage";
 
 const args = process.argv.slice(2);
-const projectId = args.find((arg) => !arg.startsWith("--"));
-if (!projectId || !args.includes("--confirm-non-production"))
+const organizationOption = args.indexOf("--organization-id");
+const rawOrganizationId = organizationOption >= 0 ? args[organizationOption + 1] : undefined;
+const projectId = args.find(
+  (arg, index) =>
+    !arg.startsWith("--") &&
+    (organizationOption < 0 || index !== organizationOption + 1),
+);
+if (
+  !projectId ||
+  !args.includes("--confirm-non-production") ||
+  (organizationOption >= 0 && !rawOrganizationId)
+)
   throw new Error(
-    "Usage: npm run storage:measure -- <non-production-project-id> --confirm-non-production",
+    'Usage: npm run storage:measure -- <non-production-project-id> [--organization-id "<organization-uuid>"] --confirm-non-production',
   );
 if (process.env.STORAGE_DRIVER !== "spaces")
   throw new Error("Measurement requires STORAGE_DRIVER=spaces");
@@ -26,7 +36,12 @@ if (
     "Choose a project explicitly marked production:false in projects.json",
   );
 
-const target = projectStore(parsedProjectId);
+const organizationId = rawOrganizationId
+  ? organizationIdentifier.parse(rawOrganizationId).toLowerCase()
+  : undefined;
+const target = organizationId
+  ? projectStore(organizationId, parsedProjectId)
+  : projectStore(parsedProjectId);
 const stats = {
   gets: 0,
   listCalls: 0,
@@ -96,6 +111,7 @@ console.log(
   JSON.stringify(
     {
       project: parsedProjectId,
+      organizationId: organizationId ?? "legacy namespace",
       measurements: {
         recordListing: {
           recordCount: recordListing.value.length,

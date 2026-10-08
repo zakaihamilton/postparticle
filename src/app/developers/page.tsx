@@ -59,8 +59,9 @@ export default function Developers() {
         </p>
         <ol>
           <li>
-            Set <code>POSTPARTICLE_URL</code>, <code>POSTPARTICLE_PROJECT</code>
-            , and <code>WEBSITE_URL</code> as server-side environment variables.
+            Set <code>POSTPARTICLE_URL</code>, <code>POSTPARTICLE_PROJECT</code>,
+            <code>POSTPARTICLE_ORGANIZATION_ID</code>, and <code>WEBSITE_URL</code>
+            as server-side environment variables.
           </li>
           <li>
             Follow the setup guide to add a server-only helper, then render the
