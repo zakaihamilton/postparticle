@@ -14,6 +14,7 @@ import {
   perministerAuthorize,
   perministerChangePassword,
   perministerCreateAccount,
+  perministerExchangeAuthorizationCode,
   perministerLogin,
   perministerLogout,
   perministerProjectMembers,
@@ -356,6 +357,21 @@ export async function authorize(
 
 export async function login(username: string, password: string) {
   const { token, expiresAt } = await perministerLogin(username, password);
+  await establishPerministerSession(token, expiresAt);
+}
+
+export async function loginWithPerministerAuthorizationCode(
+  code: string,
+  codeVerifier: string,
+) {
+  const { token, expiresAt } = await perministerExchangeAuthorizationCode(
+    code,
+    codeVerifier,
+  );
+  await establishPerministerSession(token, expiresAt);
+}
+
+async function establishPerministerSession(token: string, expiresAt?: string) {
   const parsedExpiry = expiresAt ? Date.parse(expiresAt) : Number.NaN;
   const remaining = Number.isFinite(parsedExpiry)
     ? Math.floor((parsedExpiry - Date.now()) / 1000)
