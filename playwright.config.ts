@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 import path from "node:path";
 import { tmpdir } from "node:os";
+import { testOrganizationId } from "./tests/e2e/organization";
 process.env.LOCAL_STORAGE_PATH = path.join(
   tmpdir(),
   `postparticle-test-e2e-${process.pid}`,
@@ -36,7 +37,6 @@ export default defineConfig({
         LOCAL_STORAGE_PATH: process.env.LOCAL_STORAGE_PATH,
         APP_ORIGIN: "http://localhost:3100",
         PERMINISTER_BASE_URL: "http://127.0.0.1:3102",
-        PERMINISTER_ORGANIZATION_ID: "550e8400-e29b-41d4-a716-446655440000",
         PERMINISTER_CLIENT_ID: "550e8400-e29b-41d4-a716-446655440001",
         PERMINISTER_CLIENT_SECRET: "test-client-secret",
       },
@@ -50,6 +50,7 @@ export default defineConfig({
         POSTPARTICLE_URL: "http://localhost:3100",
         WEBSITE_URL: "http://localhost:3101",
         POSTPARTICLE_PROJECT: "demo",
+        POSTPARTICLE_ORGANIZATION_ID: testOrganizationId,
       },
     },
   ],

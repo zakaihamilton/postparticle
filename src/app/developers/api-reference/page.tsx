@@ -35,7 +35,7 @@ export default function ApiReference() {
         <CodeBlock
           filename="HTTP — public endpoints"
           code={
-            "GET /api/v1/projects/{projectId}/articles\nGET /api/v1/projects/{projectId}/articles/{slug}\nGET /api/v1/projects/{projectId}/documents/{key}"
+            "GET /api/v1/projects/{projectId}/articles?organizationId={organizationId}\nGET /api/v1/projects/{projectId}/articles/{slug}?organizationId={organizationId}\nGET /api/v1/projects/{projectId}/documents/{key}?organizationId={organizationId}"
           }
         />
         <p>
@@ -67,7 +67,7 @@ export default function ApiReference() {
         </ul>
         <CodeBlock
           filename="HTTP — filtered listing"
-          code="GET /api/v1/projects/demo/articles?q=journey&tag=journal&order=desc&page=1&pageSize=12"
+          code="GET /api/v1/projects/demo/articles?organizationId={organizationId}&q=journey&tag=journal&order=desc&page=1&pageSize=12"
         />
         <p>
           A listing response has <code>items</code>, <code>total</code>,{" "}

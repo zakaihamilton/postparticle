@@ -1,5 +1,10 @@
 import { requireActor, authorize } from "@/lib/auth";
-import { HttpError, localDriver } from "@/lib/config";
+import {
+  HttpError,
+  legacyOrganizationIdForProject,
+  localDriver,
+  organizationIdentifier,
+} from "@/lib/config";
 import { errorResponse } from "@/lib/http";
 import { projectStore } from "@/lib/storage";
 export async function GET(
@@ -8,13 +13,30 @@ export async function GET(
 ) {
   try {
     if (!localDriver()) throw new HttpError(404, "Not found");
-    const [projectId, ...segments] = (await params).path;
-    const key = segments.join("/");
+    const path = (await params).path;
+    let organizationId: string | null;
+    let projectId: string;
+    let keySegments: string[];
+    if (organizationIdentifier.safeParse(path[0]).success) {
+      [organizationId, projectId, ...keySegments] = path;
+      organizationId = organizationIdentifier
+        .parse(organizationId)
+        .toLowerCase();
+    } else {
+      [projectId, ...keySegments] = path;
+      organizationId = legacyOrganizationIdForProject(projectId);
+    }
+    if (!organizationId || !projectId) throw new HttpError(404, "Not found");
+    const key = keySegments.join("/");
     if (!/^((public\/media)|(originals))\/[0-9a-f-]{36}\/asset$/.test(key))
       throw new HttpError(404, "Not found");
-    if (!key.startsWith("public/"))
-      await authorize(await requireActor(), projectId);
-    const store = projectStore(projectId);
+    if (!key.startsWith("public/")) {
+      const actor = await requireActor();
+      if (actor.organizationId !== organizationId)
+        throw new HttpError(403, "You do not have permission for this action");
+      await authorize(actor, projectId);
+    }
+    const store = projectStore(organizationId, projectId);
     const head = await store.head(key);
     return new Response(new Uint8Array(await store.bytes(key)), {
       headers: {

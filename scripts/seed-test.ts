@@ -1,11 +1,12 @@
 import { saveContent, contentAction } from "../src/lib/content";
 import { projectStore } from "../src/lib/storage";
+import { testOrganizationId } from "../tests/e2e/organization";
 if (
   process.env.STORAGE_DRIVER !== "local" ||
   !process.env.LOCAL_STORAGE_PATH?.includes("postparticle-test")
 )
   throw new Error("Seeding is restricted to explicit local test directories");
-const store = projectStore("demo");
+const store = projectStore(testOrganizationId, "demo");
 await saveContent(
   "articles",
   "admin",

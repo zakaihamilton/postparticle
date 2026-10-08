@@ -8,12 +8,12 @@ import { manageHandler, manageProject } from "@/lib/manage-api";
 type Context = { params: Promise<{ projectId: string }> };
 
 export const GET = manageHandler(async (request: Request, context: Context) => {
-  const { projectId } = await manageProject(
+  const { actor, projectId } = await manageProject(
     request,
     (await context.params).projectId,
     true,
   );
-  return json(await projectMemberAccounts(projectId));
+  return json(await projectMemberAccounts(actor.organizationId, projectId));
 });
 
 export const POST = manageHandler(
@@ -31,7 +31,12 @@ export const POST = manageHandler(
       .parse(await readJson(request));
     if (!actor.platformAdmin && data.username === actor.username)
       throw new HttpError(400, "Ask another administrator to change your role");
-    await setMembership(data.username, projectId, data.role);
+    await setMembership(
+      data.username,
+      actor.organizationId,
+      projectId,
+      data.role,
+    );
     return json({ ok: true });
   },
 );

@@ -1,14 +1,48 @@
 import { randomUUID } from "node:crypto";
-import { projects } from "../src/lib/config";
+import {
+  identifier,
+  legacyOrganizationIdForProject,
+  organizationIdentifier,
+  projects,
+} from "../src/lib/config";
 import { SpacesStore } from "../src/lib/storage";
 if (process.env.STORAGE_DRIVER !== "spaces")
   throw new Error(
     "Verification requires STORAGE_DRIVER=spaces and real Spaces credentials",
   );
 if (projects.length === 0) throw new Error("Configure at least one project");
+const args = process.argv.slice(2);
+const organizationOption = args.indexOf("--organization-id");
+const rawOrganizationId =
+  organizationOption >= 0 ? args[organizationOption + 1] : undefined;
+if (organizationOption >= 0 && !rawOrganizationId)
+  throw new Error(
+    'Usage: npm run storage:verify -- [project-id] [--organization-id "<organization-uuid>"]',
+  );
+const rawProjectId = args.find(
+  (arg, index) =>
+    !arg.startsWith("--") &&
+    (organizationOption < 0 || index !== organizationOption + 1),
+);
+const projectId = rawProjectId
+  ? identifier.parse(rawProjectId)
+  : projects[0].id;
+const organizationId = rawOrganizationId
+  ? organizationIdentifier.parse(rawOrganizationId).toLowerCase()
+  : undefined;
+if (!organizationId && !legacyOrganizationIdForProject(projectId))
+  throw new Error("Organization ID is required for this project");
 for (const prefix of ["CONTROL", "CONTENT"]) {
   const store = new SpacesStore(prefix);
-  const root = prefix === "CONTENT" ? `projects/${projects[0].id}/` : "";
+  const legacyOrganizationId = legacyOrganizationIdForProject(projectId);
+  const usesLegacyNamespace =
+    !organizationId || organizationId.toLowerCase() === legacyOrganizationId;
+  const root =
+    prefix === "CONTENT"
+      ? usesLegacyNamespace
+        ? `projects/${projectId}/`
+        : `organizations/${organizationId}/projects/${projectId}/`
+      : "";
   const base = `${root}verification/${randomUUID()}`;
   try {
     await store.put(`${base}/record.json`, { test: "postparticle" });

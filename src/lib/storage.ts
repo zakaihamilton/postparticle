@@ -25,7 +25,14 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { HttpError, localDriver, projectById, requiredEnv } from "./config";
+import {
+  HttpError,
+  legacyOrganizationIdForProject,
+  localDriver,
+  organizationIdentifier,
+  projectById,
+  requiredEnv,
+} from "./config";
 
 export interface Store {
   get<T>(key: string): Promise<T | null>;
@@ -408,13 +415,43 @@ export class LocalStore implements Store {
   }
 }
 const stores = new Map<string, Store>();
-export function projectStore(id: string) {
-  projectById(id);
-  if (localDriver()) return storeFor(id, id);
-  return new NamespacedStore(
-    storeFor("__content", "CONTENT"),
-    `projects/${id}`,
-  );
+export function projectStore(projectId: string): Store;
+export function projectStore(organizationId: string, projectId: string): Store;
+export function projectStore(
+  organizationOrProjectId: string,
+  scopedProjectId?: string,
+) {
+  if (scopedProjectId === undefined) {
+    const projectId = organizationOrProjectId;
+    projectById(projectId);
+    if (!legacyOrganizationIdForProject(projectId))
+      throw new HttpError(400, "Organization ID is required for this project");
+    if (localDriver()) return storeFor(projectId, projectId);
+    return new NamespacedStore(
+      storeFor("__content", "CONTENT"),
+      `projects/${projectId}`,
+    );
+  }
+
+  const projectId = scopedProjectId;
+  const organizationId = organizationIdentifier
+    .parse(organizationOrProjectId)
+    .toLowerCase();
+  projectById(projectId);
+  if (legacyOrganizationIdForProject(projectId) === organizationId) {
+    if (localDriver()) return storeFor(projectId, projectId);
+    return new NamespacedStore(
+      storeFor("__content", "CONTENT"),
+      `projects/${projectId}`,
+    );
+  }
+
+  const namespace = `organizations/${organizationId}/projects/${projectId}`;
+  if (localDriver()) {
+    const localScope = `${organizationId}/${projectId}`;
+    return storeFor(localScope, localScope);
+  }
+  return new NamespacedStore(storeFor("__content", "CONTENT"), namespace);
 }
 function storeFor(scope: string, prefix: string) {
   if (!stores.has(scope))

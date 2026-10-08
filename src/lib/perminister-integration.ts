@@ -6,8 +6,9 @@ import type { Role } from "./types";
 const productId = "postparticle";
 const requestTimeoutMs = 12_000;
 
-export interface PerministerOrganizationAccess {
+interface PerministerOrganizationAccess {
   organizationId: string;
+  organizationName: string;
   productId: string;
   platformAdmin: boolean;
   resourceRoles: Array<{
@@ -46,7 +47,6 @@ export interface PerministerMember {
 
 interface AuthConfig {
   baseUrl: string;
-  organizationId: string;
   clientId: string;
   clientSecret: string;
 }
@@ -81,13 +81,9 @@ function baseUrl() {
 }
 
 function authConfig(): AuthConfig {
-  const organizationId = requiredEnv("PERMINISTER_ORGANIZATION_ID");
   const clientId = requiredEnv("PERMINISTER_CLIENT_ID");
   const clientSecret = requiredEnv("PERMINISTER_CLIENT_SECRET");
   if (
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      organizationId,
-    ) ||
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       clientId,
     )
@@ -96,14 +92,9 @@ function authConfig(): AuthConfig {
   }
   return {
     baseUrl: baseUrl(),
-    organizationId: organizationId.toLowerCase(),
     clientId: clientId.toLowerCase(),
     clientSecret,
   };
-}
-
-export function perministerOrganizationId() {
-  return authConfig().organizationId;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -273,6 +264,7 @@ export async function perministerLogout(token: string) {
 
 export async function perministerAuthorize(
   token: string,
+  organizationId: string,
   projectId: string,
   action: string,
 ) {
@@ -280,7 +272,7 @@ export async function perministerAuthorize(
     method: "POST",
     token,
     body: {
-      organizationId: authConfig().organizationId,
+      organizationId,
       productId,
       resourceKind: "project",
       resourceId: projectId,
@@ -328,11 +320,11 @@ function organizationAccountsPath(organizationId: string) {
 
 export async function perministerAccounts(
   token: string,
+  organizationId: string,
 ): Promise<PerministerAccount[]> {
-  const payload = await request(
-    organizationAccountsPath(authConfig().organizationId),
-    { token },
-  );
+  const payload = await request(organizationAccountsPath(organizationId), {
+    token,
+  });
   if (!Array.isArray(payload.accounts)) {
     throw new HttpError(
       503,
@@ -364,13 +356,14 @@ export async function perministerAccounts(
 
 export async function perministerCreateAccount(
   token: string,
+  organizationId: string,
   input: { username: string; password: string; email?: string },
 ) {
   return request(authPath("accounts"), {
     method: "POST",
     token,
     body: {
-      organizationId: authConfig().organizationId,
+      organizationId,
       username: input.username,
       password: input.password,
       ...(input.email ? { email: input.email } : {}),
@@ -380,6 +373,7 @@ export async function perministerCreateAccount(
 
 export async function perministerUpdateAccount(
   token: string,
+  organizationId: string,
   subjectId: string,
   input: {
     status?: "active" | "disabled";
@@ -391,7 +385,7 @@ export async function perministerUpdateAccount(
   return request(`${authPath("accounts")}/${encodeURIComponent(subjectId)}`, {
     method: "PATCH",
     token,
-    body: { organizationId: authConfig().organizationId, ...input },
+    body: { organizationId, ...input },
   });
 }
 
@@ -407,9 +401,9 @@ export async function perministerChangePassword(
   });
 }
 
-function projectMembersPath(projectId: string) {
+function projectMembersPath(organizationId: string, projectId: string) {
   return `${authPath("members")}?${new URLSearchParams({
-    organizationId: authConfig().organizationId,
+    organizationId,
     scopeKind: "project",
     resourceId: projectId,
   })}`;
@@ -417,9 +411,12 @@ function projectMembersPath(projectId: string) {
 
 export async function perministerProjectMembers(
   token: string,
+  organizationId: string,
   projectId: string,
 ): Promise<PerministerMember[]> {
-  const payload = await request(projectMembersPath(projectId), { token });
+  const payload = await request(projectMembersPath(organizationId, projectId), {
+    token,
+  });
   if (!Array.isArray(payload.members)) {
     throw new HttpError(
       503,
@@ -451,13 +448,14 @@ export async function perministerProjectMembers(
 
 export async function perministerSetProjectMember(
   token: string,
+  organizationId: string,
   projectId: string,
   username: string,
   role: Role | null,
   subjectId?: string,
 ) {
   const body = {
-    organizationId: authConfig().organizationId,
+    organizationId,
     scopeKind: "project",
     resourceId: projectId,
   };

@@ -1,11 +1,12 @@
 import { randomUUID } from "node:crypto";
+import { testOrganizationId } from "./organization";
 import {
   createServer,
   type IncomingMessage,
   type ServerResponse,
 } from "node:http";
 
-const organizationId = "550e8400-e29b-41d4-a716-446655440000";
+const organizationId = testOrganizationId;
 const productId = "postparticle";
 const clientId = "550e8400-e29b-41d4-a716-446655440001";
 const clientSecret = "test-client-secret";
@@ -165,11 +166,13 @@ const server = createServer(async (request, response) => {
 
   if (request.method === "POST" && url.pathname === "/api/authorize") {
     const body = await readJson(request);
-    const authorized = canAuthorize(
-      sessionAccount(request),
-      String(body.resourceId ?? ""),
-      String(body.action ?? ""),
-    );
+    const authorized =
+      body.organizationId === organizationId &&
+      canAuthorize(
+        sessionAccount(request),
+        String(body.resourceId ?? ""),
+        String(body.action ?? ""),
+      );
     send(response, authorized ? 200 : 403, { authorized });
     return;
   }
@@ -213,6 +216,7 @@ const server = createServer(async (request, response) => {
       organizations: [
         {
           organizationId,
+          organizationName: "SENTRY8",
           productId,
           platformAdmin: account.platformAdmin,
           resourceRoles,
@@ -229,6 +233,10 @@ const server = createServer(async (request, response) => {
       return;
     }
     if (request.method === "GET") {
+      if (url.searchParams.get("organizationId") !== organizationId) {
+        send(response, 403, { error: "forbidden" });
+        return;
+      }
       send(response, 200, {
         accounts: [...accounts.values()].map(accountPayload),
       });
@@ -236,6 +244,10 @@ const server = createServer(async (request, response) => {
     }
     if (request.method === "POST") {
       const body = await readJson(request);
+      if (body.organizationId !== organizationId) {
+        send(response, 403, { error: "forbidden" });
+        return;
+      }
       const username = String(body.username ?? "")
         .trim()
         .toLowerCase();
@@ -275,6 +287,10 @@ const server = createServer(async (request, response) => {
       return;
     }
     const body = await readJson(request);
+    if (body.organizationId !== organizationId) {
+      send(response, 403, { error: "forbidden" });
+      return;
+    }
     if (body.status === "active" || body.status === "disabled")
       account.status = body.status;
     if (typeof body.password === "string") account.password = body.password;
@@ -304,9 +320,12 @@ const server = createServer(async (request, response) => {
 
   if (url.pathname === "/api/auth/consumer/members") {
     const actor = sessionAccount(request);
-    const projectId = url.searchParams.get("resourceId") ?? "";
     if (request.method === "GET") {
-      if (!canAuthorize(actor, projectId, "postparticle:project:read")) {
+      const projectId = url.searchParams.get("resourceId") ?? "";
+      if (
+        url.searchParams.get("organizationId") !== organizationId ||
+        !canAuthorize(actor, projectId, "postparticle:project:read")
+      ) {
         send(response, 403, { error: "forbidden" });
         return;
       }
@@ -319,11 +338,15 @@ const server = createServer(async (request, response) => {
       return;
     }
     if (request.method === "POST") {
-      if (!canAuthorize(actor, projectId, "postparticle:members:manage")) {
+      const body = await readJson(request);
+      const projectId = String(body.resourceId ?? "");
+      if (
+        body.organizationId !== organizationId ||
+        !canAuthorize(actor, projectId, "postparticle:members:manage")
+      ) {
         send(response, 403, { error: "forbidden" });
         return;
       }
-      const body = await readJson(request);
       const username = String(body.username ?? body.email ?? "")
         .trim()
         .toLowerCase();
@@ -348,7 +371,10 @@ const server = createServer(async (request, response) => {
     const actor = sessionAccount(request);
     const body = await readJson(request);
     const projectId = String(body.resourceId ?? "");
-    if (!canAuthorize(actor, projectId, "postparticle:members:manage")) {
+    if (
+      body.organizationId !== organizationId ||
+      !canAuthorize(actor, projectId, "postparticle:members:manage")
+    ) {
       send(response, 403, { error: "forbidden" });
       return;
     }

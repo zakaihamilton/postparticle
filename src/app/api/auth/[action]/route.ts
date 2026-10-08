@@ -6,6 +6,7 @@ import {
   minimumAccountPasswordLength,
   logout,
   requireActor,
+  selectOrganization,
 } from "@/lib/auth";
 import { HttpError, localDriver } from "@/lib/config";
 import { errorResponse, json, readJson, sameOrigin } from "@/lib/http";
@@ -43,6 +44,13 @@ export async function POST(
         })
         .parse(await readJson(request));
       await login(data.username, data.password);
+      return json({ ok: true });
+    }
+    if (action === "organization") {
+      const data = z
+        .object({ organizationId: z.string().uuid() })
+        .parse(await readJson(request));
+      await selectOrganization(data.organizationId);
       return json({ ok: true });
     }
     if (action === "logout") {

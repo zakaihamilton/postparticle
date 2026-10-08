@@ -11,7 +11,6 @@ const clientId = "550e8400-e29b-41d4-a716-446655440001";
 
 function configure() {
   vi.stubEnv("PERMINISTER_BASE_URL", "https://perminister.example");
-  vi.stubEnv("PERMINISTER_ORGANIZATION_ID", organizationId);
   vi.stubEnv("PERMINISTER_CLIENT_ID", clientId);
   vi.stubEnv("PERMINISTER_CLIENT_SECRET", "server-only-client-secret");
 }
@@ -85,6 +84,7 @@ describe("Perminister consumer integration", () => {
     await expect(
       perministerAuthorize(
         "session-token",
+        organizationId,
         "journal",
         "postparticle:project:read",
       ),
@@ -105,6 +105,7 @@ describe("Perminister consumer integration", () => {
       organizations: [
         {
           organizationId,
+          organizationName: "Example Organization",
           productId: "postparticle",
           platformAdmin: false,
           resourceRoles: [

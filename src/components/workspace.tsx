@@ -7,6 +7,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState, type ComponentProps } from "react";
 import type { Actor, Project, Role } from "@/lib/types";
+import { OrganizationSwitcher } from "./organization-switcher";
 import { api, Brand, Icon, Notice, ThemeSwitch } from "./ui";
 import { ContentList, Dashboard } from "./content-list";
 import Editor from "./editor";
@@ -144,6 +145,13 @@ function WorkspaceContent({
             </strong>
           </div>
           <div className={styles.topRight}>
+            <OrganizationSwitcher
+              key={actor.organizationId}
+              actor={actor}
+              onBeforeChange={() =>
+                confirmNavigation("Switch organization and discard")
+              }
+            />
             <span className={styles.projectType}>CONTENT WORKSPACE</span>
             <ThemeSwitch />
           </div>

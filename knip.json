@@ -6,6 +6,7 @@
     "scripts/*.ts",
     "tests/**/*.test.ts",
     "tests/e2e/*.spec.ts",
+    "tests/e2e/perminister-stub.ts",
     "src/lib/client.ts"
   ],
   "project": ["src/**/*.{ts,tsx}", "scripts/*.ts", "tests/**/*.{ts,tsx}"],

@@ -6,13 +6,13 @@ server-only values in each environment:
 
 ```dotenv
 PERMINISTER_BASE_URL=https://www.perminister.com
-PERMINISTER_ORGANIZATION_ID=<approved-organization-uuid>
 PERMINISTER_CLIENT_ID=<postparticle-client-uuid>
 PERMINISTER_CLIENT_SECRET=<postparticle-client-secret>
 ```
 
-Use a separate Perminister client and organization for development and preview deployments. The
-PostParticle product client must be restricted to the matching application origin. Keep the client
+Use a separate Perminister client for development and preview deployments, and select the organization
+that owns each project's data. The PostParticle product client must be restricted to the matching
+application origin. Keep the client
 secret out of browser code, logs, and repository files.
 
 New and changed passwords must be 15–256 characters. Imported legacy passwords remain usable until

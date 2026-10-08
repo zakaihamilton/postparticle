@@ -73,8 +73,11 @@ export async function readPublicArticle(
     throw new HttpError(404, "Article not found");
   return publicArticle(record, store);
 }
-export async function readPublicDocument(projectId: string, key: string) {
-  const store = projectStore(projectId);
+export async function readPublicDocument(
+  projectId: string,
+  key: string,
+  store = projectStore(projectId),
+) {
   const record = await getRecord("documents", key, store);
   if (!record?.published || record.trashed)
     throw new HttpError(404, "Document not found");

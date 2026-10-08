@@ -1,6 +1,12 @@
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { createHash } from "node:crypto";
+import { testOrganizationId } from "./organization";
+
+function organizationScopedPath(path: string): string {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}organizationId=${testOrganizationId}`;
+}
 
 // Each browser workflow has its own fixture client so login throttling stays isolated.
 test.beforeEach(async ({ page }, info) => {
@@ -240,7 +246,9 @@ test("login, project selection, article editing, publishing, tags, history, and 
   await page.getByRole("button", { name: "Publish", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Published");
   const published = await page.request.get(
-    `/api/v1/projects/demo/articles/browser-story-${info.project.name}`,
+    organizationScopedPath(
+      `/api/v1/projects/demo/articles/browser-story-${info.project.name}`,
+    ),
   );
   expect(published.status()).toBe(200);
   expect((await published.json()).tags).toEqual(["browser", "test"]);
@@ -251,7 +259,9 @@ test("login, project selection, article editing, publishing, tags, history, and 
     (
       await (
         await page.request.get(
-          `/api/v1/projects/demo/articles/browser-story-${info.project.name}`,
+          organizationScopedPath(
+            `/api/v1/projects/demo/articles/browser-story-${info.project.name}`,
+          ),
         )
       ).json()
     ).title,
@@ -265,7 +275,9 @@ test("login, project selection, article editing, publishing, tags, history, and 
   expect(
     (
       await page.request.get(
-        `/api/v1/projects/demo/articles/browser-story-${info.project.name}`,
+        organizationScopedPath(
+          `/api/v1/projects/demo/articles/browser-story-${info.project.name}`,
+        ),
       )
     ).status(),
   ).toBe(404);
@@ -322,7 +334,7 @@ test("media upload and metadata plus JSON publication work", async ({
   await expect(page).toHaveURL(/documents\/browser-json-/);
   const key = new URL(page.url()).pathname.split("/").at(-1);
   const document = await page.request.get(
-    `/api/v1/projects/demo/documents/${key}`,
+    organizationScopedPath(`/api/v1/projects/demo/documents/${key}`),
   );
   expect(document.status()).toBe(200);
   expect((await document.json()).value).toEqual({
@@ -485,7 +497,7 @@ test("malformed media literals and arbitrary JSON fields publish through the pub
     ).status(),
   ).toBe(200);
   const listing = await page.request.get(
-    "/api/v1/projects/demo/articles?tag=regression",
+    organizationScopedPath("/api/v1/projects/demo/articles?tag=regression"),
   );
   expect(listing.status()).toBe(200);
   expect(
@@ -494,7 +506,7 @@ test("malformed media literals and arbitrary JSON fields publish through the pub
     ).body,
   ).toBe(body);
   const detail = await page.request.get(
-    `/api/v1/projects/demo/articles/${slug}`,
+    organizationScopedPath(`/api/v1/projects/demo/articles/${slug}`),
   );
   expect(detail.status()).toBe(200);
   expect((await detail.json()).body).toBe(body);
@@ -524,7 +536,7 @@ test("malformed media literals and arbitrary JSON fields publish through the pub
     ).status(),
   ).toBe(200);
   const document = await page.request.get(
-    `/api/v1/projects/demo/documents/${key}`,
+    organizationScopedPath(`/api/v1/projects/demo/documents/${key}`),
   );
   expect(document.status()).toBe(200);
   expect((await document.json()).value).toEqual(value);
@@ -704,7 +716,7 @@ test("form constraints show inline errors without native validation dialogs", as
     page.getByText("This field is required.", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("Enter at least 12 characters.", { exact: true }),
+    page.getByText("Enter at least 15 characters.", { exact: true }),
   ).toBeVisible();
 
   await page.goto("/account/platform-accounts/create");
@@ -715,7 +727,7 @@ test("form constraints show inline errors without native validation dialogs", as
     page.getByText(/Use 1–80 characters: start with a lowercase letter/),
   ).toBeVisible();
   await expect(
-    page.getByText("Enter at least 12 characters.", { exact: true }),
+    page.getByText("Enter at least 15 characters.", { exact: true }),
   ).toBeVisible();
 
   await page.goto("/account/platform-accounts/reset-password");
@@ -723,7 +735,7 @@ test("form constraints show inline errors without native validation dialogs", as
   await page.getByRole("button", { name: "Reset password" }).click();
   await expect(page.getByText("Choose an account to reset.")).toBeVisible();
   await expect(
-    page.getByText("Enter at least 12 characters.", { exact: true }),
+    page.getByText("Enter at least 15 characters.", { exact: true }),
   ).toBeVisible();
 
   expect(accountMutations).toBe(0);

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import type { Actor } from "@/lib/types";
+import { OrganizationSwitcher } from "./organization-switcher";
 import { api, Brand, Icon, Notice, ThemeSwitch } from "./ui";
 import styles from "./workspace.module.css";
 
@@ -111,6 +112,7 @@ export function AccountArea({
             <strong>{title}</strong>
           </div>
           <div className={styles.accountHeaderActions}>
+            <OrganizationSwitcher key={actor.organizationId} actor={actor} />
             <ThemeSwitch />
             <button
               className={styles.ghost}
