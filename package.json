@@ -22,7 +22,7 @@
     "example:dev": "next dev examples/next-blog",
     "example:build": "next build examples/next-blog",
     "example:start": "next start examples/next-blog",
-    "health:a11y": "npm run build && npm run example:build && playwright test tests/e2e/guardrails.spec.ts --project=desktop",
+    "health:a11y": "npm run build && npm run example:build && playwright test tests/e2e/guardrails.spec.ts --project=desktop --grep=WCAG",
     "health:visual": "if [ \"$RUN_VISUAL_REGRESSION\" = \"1\" ] || [ \"$(uname)\" = \"Darwin\" ]; then npm run build && npm run example:build && playwright test tests/e2e/guardrails.spec.ts --project=desktop; else echo \"Visual regression runs in the macOS guardrail job.\"; fi",
     "health:interactions": "vitest run tests/ui/user-interactions.test.tsx",
     "health:styles": "stylelint --formatter json \"**/*.{css,pcss,postcss}\""
