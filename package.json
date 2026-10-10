@@ -13,7 +13,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:run": "vitest run",
-    "test:e2e": "npm run build && npm run example:build && playwright test",
+    "test:e2e": "npm run build && npm run example:build && playwright test --grep-invert='matches the reviewed'",
     "health": "repnix check",
     "storage:verify": "tsx --conditions=react-server --env-file=.env.local scripts/verify-storage.ts",
     "storage:checkpoint": "tsx --conditions=react-server --env-file=.env.local scripts/rebuild-content-checkpoints.ts",
@@ -21,7 +21,11 @@
     "storage:measure": "tsx --conditions=react-server --env-file=.env.local scripts/measure-content-storage.ts",
     "example:dev": "next dev examples/next-blog",
     "example:build": "next build examples/next-blog",
-    "example:start": "next start examples/next-blog"
+    "example:start": "next start examples/next-blog",
+    "health:a11y": "npm run build && npm run example:build && playwright test tests/e2e/guardrails.spec.ts --project=desktop --grep=WCAG",
+    "health:visual": "if [ \"$RUN_VISUAL_REGRESSION\" = \"1\" ] || [ \"$(uname)\" = \"Darwin\" ]; then npm run build && npm run example:build && playwright test tests/e2e/guardrails.spec.ts --project=desktop; else echo \"Visual regression runs in the macOS guardrail job.\"; fi",
+    "health:interactions": "vitest run tests/ui/user-interactions.test.tsx",
+    "health:styles": "stylelint --formatter json \"**/*.{css,pcss,postcss}\""
   },
   "engines": {
     "node": ">=22.20.0"
@@ -49,10 +53,16 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "knip": "^6.39.0",
     "prettier": "^3.9.9",
-    "repnix": "^1.0.4",
+    "repnix": "^1.1.0",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vite": "^8.3.2",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.3",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.1",
+    "jsdom": "^26.1.0",
+    "stylelint": "^17.11.1",
+    "stylelint-config-standard": "^40.0.0"
   }
 }

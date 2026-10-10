@@ -112,6 +112,10 @@ select {
 }
 button {
   cursor: pointer;
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast),
+    color var(--motion-fast);
 }
 button:disabled {
   cursor: not-allowed;
@@ -148,12 +152,6 @@ textarea {
 ::selection {
   background: var(--accent-soft);
   color: var(--accent-ink);
-}
-button {
-  transition:
-    background-color var(--motion-fast),
-    border-color var(--motion-fast),
-    color var(--motion-fast);
 }
 
 @media (prefers-reduced-motion: reduce) {

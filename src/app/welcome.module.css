@@ -48,8 +48,6 @@
 }
 .hero {
   position: relative;
-  padding-top: 86px;
-  padding-bottom: 64px;
   padding: 72px 40px 80px;
   text-align: left;
 }
@@ -577,7 +575,6 @@
 }
 .steps p {
   color: var(--muted);
-  margin-bottom: 22px;
   font-size: 16px;
   line-height: 1.65;
   margin: 0;
@@ -1202,6 +1199,7 @@
   }
   .productCaption {
     font-size: 13px;
+    line-height: 1.5;
   }
   .productCaption > span:last-child {
     display: none;
@@ -1274,17 +1272,16 @@
   }
   .flowNodes {
     flex-direction: column;
+    gap: 6px;
   }
   .flowNodes > div {
     width: 100%;
+    padding: 15px 5px;
   }
   .sectionHeading h2,
   .integrationCopy h2 {
     font-size: 38px;
     letter-spacing: -1px;
-  }
-  .productCaption {
-    line-height: 1.5;
   }
   .delivery {
     flex-direction: column;
@@ -1324,12 +1321,6 @@
     grid-template-columns: 1fr;
     padding: 55px 24px;
     gap: 30px;
-  }
-  .flowNodes {
-    gap: 6px;
-  }
-  .flowNodes > div {
-    padding: 15px 5px;
   }
   .flowLine {
     width: 10px;
