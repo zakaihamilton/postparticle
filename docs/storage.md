@@ -35,15 +35,28 @@ and media remain available. New organizations use the organization-prefixed path
 storage credential can access every prefix; the application scopes reads and writes by the active
 Perminister organization and its project grants.
 
+Each organization's private project registry is stored at
+`organizations/{organizationId}/projects.json`. Registries are cached for at most one minute and
+the current instance refreshes its cache after an admin change. Deletion markers are stored
+separately at `organizations/{organizationId}/project-deletions/{projectId}.json`; every project
+request checks this uncached marker, so a stale registry cache cannot reopen a deleting project.
+Markers remain after cleanup, which permanently retires deleted project IDs. Archiving hides a
+project from the picker and new access assignments while preserving data and published reads.
+Permanent deletion is limited to archived projects: the app marks the project as deleting, revokes
+explicit Perminister project grants, waits six minutes for outstanding upload URLs to expire, then
+removes its exact storage prefix in retryable batches. If cleanup fails, the project remains blocked
+and can be resumed from **Account → Projects**. Published media already cached by a CDN may remain
+available until that cache expires.
+
 Every event records ID, UTC time, actor, action, and payload. Events use unique keys and remain immutable. Reads order by timestamp and UUID, independently of storage listing order. Append observes the newest existing event in that stream and chooses a timestamp later than it. Truly concurrent writes can still share a timestamp; UUID ordering breaks the tie. All writes are retained. The latest save wins for drafts; publish/unpublish events independently determine the public snapshot.
 
 This is designed for small editorial teams. It does not provide distributed transactions, strict stale-editor rejection, or live co-editing. Identifier uniqueness comes from using the slug/key as the record identity. Concurrent creation with the same identifier can produce two retained revisions of the same record; one becomes the draft. Renaming identifiers is excluded from this release.
 
-Listings still enumerate immutable event keys, while checkpoints reduce how many event bodies they fetch. The adapter uses legacy S3 marker pagination because Spaces documentation reports limitations with ListObjectsV2 pagination. There is no authoritative mutable index and no in-memory data dependency across Vercel instances. Large histories can still increase listing latency and request cost; measure pagination as the event log grows and consider a reconstructible key index if it becomes the bottleneck. Failed writes are surfaced, not silently accepted.
+Content listings still enumerate immutable event keys, while checkpoints reduce how many event bodies they fetch. The adapter uses legacy S3 marker pagination because Spaces documentation reports limitations with ListObjectsV2 pagination. Content history does not depend on a mutable index or a cross-instance in-memory cache. Large histories can still increase listing latency and request cost; measure pagination as the event log grows and consider a reconstructible key index if it becomes the bottleneck. Failed writes are surfaced, not silently accepted.
 
 Content checkpoints are versioned derived snapshots; the event objects remain authoritative. Each checkpoint generation has a manifest written after its shards. Shards are capped at 4 MiB or 1,000 records and contain each record's reduced state, last folded event cursor, and replay cutoff. The newest event timestamp for a record remains in the replay tail, so events sharing that timestamp continue to follow the existing UUID tie ordering. Readers verify shard hashes and fall back to an older valid generation or full event replay when a checkpoint is missing or invalid. After a new generation passes read-back validation, the two newest complete valid generations are retained; older generations and corrupt manifests are pruned. Well-formed unreferenced shard generations without manifests are retained for 24 hours so an in-progress concurrent build is not mistaken for an orphan. Malformed orphan keys are pruned immediately. Source events are never pruned. If source keys change while a generation is built, the builder retries twice; if it remains unstable, it publishes no manifest and does not prune existing checkpoints.
 
-Build checkpoints for one project's active organization namespace using the shared content storage credentials. Omit the organization option only when rebuilding a project in the legacy namespace:
+Build checkpoints for one project's active organization namespace using the shared content storage credentials. Always supply the owning organization UUID, including for a project in the legacy namespace:
 
 ```sh
 npm run storage:checkpoint -- demo --organization-id "<organization-uuid>"
@@ -51,7 +64,7 @@ npm run storage:checkpoint -- demo --organization-id "<organization-uuid>"
 
 Run this operator command against a quiet project after bulk imports or when the replay tail grows. It processes articles and documents and never removes source events. `npm run benchmark:content` creates disposable local fixtures of 1,000, 5,000, and 10,000 events and reports elapsed time, object reads, list calls, keys enumerated, and estimated 1,000-key Spaces list pages for record listing, public article listing, and single-article lookup before and after checkpointing. It also checks the shard size limits. The local benchmark exposes the remaining full key-list scan but does not model Spaces pagination latency.
 
-For read-only measurements against an isolated development or preview Space, run `npm run storage:measure -- <project-id> --organization-id "<organization-uuid>" --confirm-non-production`. Omit the organization option only for the legacy Sentry8 namespace. The command reports record counts and read/list metrics for record listing, public article listing, and a published-article lookup; it does not print content or write objects. Do not point it at production credentials. Compare those timings and list-page counts with the local benchmark before deciding whether a reconstructible key index is warranted.
+For read-only measurements against an isolated development or preview Space, run `npm run storage:measure -- <project-id> --organization-id "<organization-uuid>" --confirm-non-production`. The command reports record counts and read/list metrics for record listing, public article listing, and a published-article lookup; it does not print content or write objects. Do not point it at production credentials. Compare those timings and list-page counts with the local benchmark before deciding whether a reconstructible key index is warranted.
 
 Media becomes ready only after successful finalization. Multipart completion is checkpointed in its private upload ticket. Retrying finalization resumes validation and sealing; if a completion response or checkpoint was lost, the application checks for the completed staging object before proceeding. A committed asset is returned idempotently without overwriting its metadata. Cleanup can also be retried. The staging object is copied to a separate private original, then its ticket and staging key are deleted. This prevents a still-valid upload URL from modifying a finalized original. Publish copies assets to public delivery paths before writing the publication event. A failed publish can leave unused public copies; the content stays unpublished. Unpublishing removes content from the API but does not erase previously distributed media URLs or guarantee CDN recall. Never publish confidential media.
 

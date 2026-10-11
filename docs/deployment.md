@@ -2,29 +2,17 @@
 
 ## Storage and projects
 
-Create one private **Standard** Space for all project content. Each project is stored beneath `projects/{projectId}/`. Do not grant public bucket listing or blanket public read access. Only published delivery objects receive `public-read` ACLs. Perminister stores account, credential, permission, and session data separately.
+Create one private **Standard** Space for all project content. Organization registries are stored at `organizations/{organizationId}/projects.json`; new project content is stored beneath `organizations/{organizationId}/projects/{projectId}/`. The migrated Sentry8 projects retain their legacy `projects/{projectId}/` content namespace. Do not grant public bucket listing or blanket public read access. Only published delivery objects receive `public-read` ACLs. Perminister stores account, credential, permission, and session data separately.
 
 Use a bucket-scoped read/write/delete key for the content Space. Configure bucket CORS/lifecycle through a separate administrative key as required by DigitalOcean’s permissions. Keep that administrative key outside the application.
 
-Edit `projects.json` with non-secret entries:
+The checked-in `projects.json` is only the input to the one-time migration utility. Configure `.env.local` with the destination Spaces credentials, then run:
 
-```json
-[
-  {
-    "id": "demo",
-    "name": "Demo Journal",
-    "description": "Stories, ideas, and everything in between.",
-    "production": false
-  },
-  {
-    "id": "sentry8",
-    "name": "SENTRY8",
-    "description": "SENTRY8 content and media."
-  }
-]
+```sh
+npm run projects:migrate
 ```
 
-Set `production` to `false` to keep a project in local development and preview deployments while excluding it from production. Demo Journal is a sample project and is excluded from the production registry. IDs use lowercase letters, numbers, hyphens, or underscores; start with a letter or number. `new` is reserved by the editor routing and must not be used as an article slug or document key. Adding a project requires a new registry entry and redeployment, but no project-specific storage variables. Secrets never belong in this registry.
+Migration groups entries by `legacyOrganizationId`, preserves `production` visibility and the legacy storage mapping, and refuses to replace any existing S3 registry. Run it once for each separate environment bucket before directing that environment to the new registry. After migration, platform administrators manage projects in **Account → Projects**; changes take effect at runtime. New projects are visible in production by default. Demo Journal stays excluded because its migrated entry has `production: false`. Project IDs are immutable and use lowercase letters, numbers, hyphens, or underscores; IDs of permanently deleted projects stay retired. Secrets never belong in a registry.
 
 Set the corresponding values from `.env.example` in `.env.local` and Vercel’s environment settings. `CONTENT_SPACES_*` configures the shared content bucket. The endpoint is the **origin**, for example `https://nyc3.digitaloceanspaces.com`. Never sign uploads against the CDN. Optional `CONTENT_MEDIA_BASE_URL` is the complete shared-bucket CDN/custom-domain URL and must use HTTPS. The application automatically falls back to the bucket origin URL. The content bucket key can access every project's prefix; Postparticle enforces project access in the application.
 
@@ -48,7 +36,7 @@ Set CORS on the shared content bucket for the exact CRM origin. Replace the orig
 </CORSConfiguration>
 ```
 
-Configure a lifecycle rule on the shared content bucket to abort incomplete multipart uploads under `projects/` after one day. To expire completed staging objects after two days, add a rule for each exact `projects/{projectId}/incoming/` prefix; add that rule when you add a project. Upload tickets expire after 24 hours. If file transfer succeeds but a transient storage or finalization error occurs, the media library retains the upload and offers **Retry finalization** or **Discard upload**. A signature mismatch returns HTTP 415, removes the staging object and ticket, and is terminal. Keep the media screen open while resolving a transient failure; uploads abandoned by closing it are handled by the lifecycle rules. Cancellation requests abort the multipart upload and remove its ticket; the lifecycle rule handles disconnected clients that cannot complete cleanup. Tickets for abandoned uploads can be removed after their recorded expiry using an administrative maintenance job.
+Configure lifecycle rules to abort incomplete multipart uploads beneath both `projects/` and `organizations/` after one day. To expire completed staging objects after two days, add a rule for each exact `projects/{projectId}/incoming/` or `organizations/{organizationId}/projects/{projectId}/incoming/` prefix. Upload tickets expire after 24 hours. If file transfer succeeds but a transient storage or finalization error occurs, the media library retains the upload and offers **Retry finalization** or **Discard upload**. A signature mismatch returns HTTP 415, removes the staging object and ticket, and is terminal. Keep the media screen open while resolving a transient failure; uploads abandoned by closing it are handled by the lifecycle rules. Cancellation requests abort the multipart upload and remove its ticket; the lifecycle rule handles disconnected clients that cannot complete cleanup. Tickets for abandoned uploads can be removed after their recorded expiry using an administrative maintenance job.
 
 The application accepts JPEG, PNG, WebP, GIF, MP4, and WebM up to 1 GiB. SVG and HTML uploads are excluded. Finalization checks origin object length, declared content type, and a bounded file signature before copying to a private sealed original. Signature checks do not fully decode media or prove that a file is safe. No antivirus scanning or transcoding is provided. Signed single-upload URLs expire after five minutes; multipart parts receive individual five-minute URLs.
 

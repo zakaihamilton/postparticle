@@ -1,12 +1,44 @@
 import { saveContent, contentAction } from "../src/lib/content";
-import { projectStore } from "../src/lib/storage";
+import {
+  updateProjectRegistry,
+  getProject,
+  projectStoreFor,
+} from "../src/lib/projects";
 import { testOrganizationId } from "../tests/e2e/organization";
 if (
   process.env.STORAGE_DRIVER !== "local" ||
   !process.env.LOCAL_STORAGE_PATH?.includes("postparticle-test")
 )
   throw new Error("Seeding is restricted to explicit local test directories");
-const store = projectStore(testOrganizationId, "demo");
+await updateProjectRegistry(testOrganizationId, (projects) => {
+  const fixtureProjects = [
+    {
+      id: "demo",
+      name: "Demo Journal",
+      description: "Stories, ideas, and everything in between.",
+      production: false,
+      archived: false,
+      deleting: false,
+    },
+    {
+      id: "sentry8",
+      name: "SENTRY8",
+      description: "SENTRY8 content and media.",
+      production: true,
+      archived: false,
+      deleting: false,
+    },
+  ];
+  const existingIds = new Set(projects.map((project) => project.id));
+  return [
+    ...projects,
+    ...fixtureProjects.filter((project) => !existingIds.has(project.id)),
+  ];
+});
+const project = await getProject(testOrganizationId, "demo", {
+  includeArchived: true,
+});
+const store = projectStoreFor(testOrganizationId, project);
 await saveContent(
   "articles",
   "admin",

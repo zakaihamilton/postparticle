@@ -2,8 +2,8 @@ import "server-only";
 import { errorResponse } from "./http";
 import { HttpError, identifier } from "./config";
 import { authorize, requireActor } from "./auth";
-import { projectStore } from "./storage";
 import { sameOrigin } from "./http";
+import { getProject, projectStoreFor } from "./projects";
 
 export function manageHandler<Args extends unknown[]>(
   handler: (...args: Args) => Promise<Response>,
@@ -42,10 +42,12 @@ export async function manageProject(
     request.method !== "GET",
     admin,
   );
+  const project = await getProject(actor.organizationId, projectId);
   return {
     actor,
     projectId,
+    project,
     role,
-    store: projectStore(actor.organizationId, projectId),
+    store: projectStoreFor(actor.organizationId, project),
   };
 }

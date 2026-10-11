@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { authorize, currentActor } from "@/lib/auth";
-import { HttpError, projectById } from "@/lib/config";
+import { HttpError } from "@/lib/config";
+import { getProject } from "@/lib/projects";
 import Workspace from "@/components/workspace";
 import type { Role } from "@/lib/types";
 export default async function WorkspacePage({
@@ -28,11 +29,16 @@ export default async function WorkspacePage({
       redirect("/projects");
     throw error;
   }
+  const project = await getProject(actor.organizationId, projectId);
   return (
     <Workspace
       actor={actor}
       role={role}
-      project={projectById(projectId)}
+      project={{
+        id: project.id,
+        name: project.name,
+        description: project.description,
+      }}
       view={view}
     />
   );

@@ -34,8 +34,6 @@ interface ArticleQuery {
 export const websiteUrl = process.env.WEBSITE_URL || "http://localhost:3001";
 const cmsUrl = process.env.POSTPARTICLE_URL || "http://localhost:3000";
 const project = process.env.POSTPARTICLE_PROJECT || "demo";
-const organizationId = process.env.POSTPARTICLE_ORGANIZATION_ID;
-
 class ContentError extends Error {
   constructor(public status: number) {
     super(`Postparticle returned ${status}`);
@@ -44,11 +42,14 @@ class ContentError extends Error {
 async function get<T>(path: string): Promise<T> {
   // Fetch at request time so a build does not depend on a running CMS.
   await connection();
+  const organizationId = process.env.POSTPARTICLE_ORGANIZATION_ID;
+  if (!organizationId)
+    throw new Error("POSTPARTICLE_ORGANIZATION_ID must be configured.");
   const url = new URL(
     `/api/v1/projects/${encodeURIComponent(project)}/${path}`,
     cmsUrl,
   );
-  if (organizationId) url.searchParams.set("organizationId", organizationId);
+  url.searchParams.set("organizationId", organizationId);
   const response = await fetch(url, { next: { revalidate: 60 } });
   if (!response.ok) throw new ContentError(response.status);
   return response.json() as Promise<T>;

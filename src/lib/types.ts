@@ -4,6 +4,9 @@ export interface Project {
   id: string;
   name: string;
   description: string;
+  production?: boolean;
+  archived?: boolean;
+  deleting?: boolean;
 }
 interface OrganizationChoice {
   organizationId: string;

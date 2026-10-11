@@ -884,6 +884,104 @@ a.secondary:hover {
   gap: 8px;
   flex-wrap: wrap;
 }
+.projectEditForm {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(240px, 1.5fr);
+  align-items: end;
+  gap: 15px;
+  margin-top: 17px;
+  padding: 17px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-alt);
+}
+.projectEditForm label,
+.formSection label.projectProductionToggle,
+.projectEditForm label.projectProductionToggle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.projectEditForm input,
+.projectEditForm textarea {
+  min-width: 0;
+  font: inherit;
+  font-size: 14px;
+}
+.formSection label.projectProductionToggle,
+.projectEditForm label.projectProductionToggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+  font-weight: 400;
+}
+.formSection label.projectProductionToggle input,
+.projectEditForm label.projectProductionToggle input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+.projectDeleteOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.projectDeleteBackdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: var(--overlay);
+}
+.projectDeleteDialog {
+  position: relative;
+  width: min(100%, 520px);
+  padding: 25px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.projectDeleteDialog h2 {
+  margin: 0 0 13px;
+  font-size: 19px;
+}
+.projectDeleteDialog p {
+  margin: 0 0 13px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+.projectDeleteDialog label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.projectDeleteDialog code {
+  color: var(--text);
+  user-select: all;
+}
+.projectDeleteDialog input {
+  font: 14px monospace;
+}
+.projectDeleteActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 22px;
+}
+.projectDeleteActions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
 .accountProjectAccess {
   margin-top: 17px;
   padding: 17px;
@@ -1396,6 +1494,15 @@ a.secondary:hover {
   }
   .accountUserActions {
     justify-content: flex-start;
+  }
+  .projectEditForm {
+    grid-template-columns: 1fr;
+  }
+  .projectDeleteActions {
+    flex-direction: column-reverse;
+  }
+  .projectDeleteActions button {
+    width: 100%;
   }
   .projectAccessList {
     grid-template-columns: 1fr;

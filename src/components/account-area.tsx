@@ -7,7 +7,8 @@ import { OrganizationSwitcher } from "./organization-switcher";
 import { api, Brand, Icon, Notice, ThemeSwitch } from "./ui";
 import styles from "./workspace.module.css";
 
-type AccountSection = "workspaces" | "account" | "platform-accounts";
+type AccountSection =
+  "workspaces" | "account" | "platform-accounts" | "projects";
 
 export function AccountArea({
   actor,
@@ -26,7 +27,9 @@ export function AccountArea({
       ? "Workspaces"
       : activeSection === "account"
         ? "Your account"
-        : "Platform accounts";
+        : activeSection === "projects"
+          ? "Projects"
+          : "Platform accounts";
 
   async function logout() {
     setError("");
@@ -70,17 +73,28 @@ export function AccountArea({
             Your account
           </Link>
           {actor.platformAdmin && (
-            <Link
-              href="/account/platform-accounts"
-              aria-current={
-                activeSection === "platform-accounts" ? "page" : undefined
-              }
-              className={`${styles.navItem} ${activeSection === "platform-accounts" ? styles.navActive : ""}`}
-              onClick={() => setMenu(false)}
-            >
-              <Icon name="users" size={18} />
-              Platform accounts
-            </Link>
+            <>
+              <Link
+                href="/account/projects"
+                aria-current={activeSection === "projects" ? "page" : undefined}
+                className={`${styles.navItem} ${activeSection === "projects" ? styles.navActive : ""}`}
+                onClick={() => setMenu(false)}
+              >
+                <Icon name="grid" size={18} />
+                Projects
+              </Link>
+              <Link
+                href="/account/platform-accounts"
+                aria-current={
+                  activeSection === "platform-accounts" ? "page" : undefined
+                }
+                className={`${styles.navItem} ${activeSection === "platform-accounts" ? styles.navActive : ""}`}
+                onClick={() => setMenu(false)}
+              >
+                <Icon name="users" size={18} />
+                Platform accounts
+              </Link>
+            </>
           )}
         </nav>
         <div className={styles.sidebarBottom}>

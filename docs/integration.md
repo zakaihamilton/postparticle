@@ -1,6 +1,6 @@
 # Website integration
 
-The Postparticle workspace is private. Published articles and documents are available through read-only API endpoints. Fetch them from your website’s server so article content and metadata are present in the rendered HTML. The API supplies content; it does not host a blog.
+The Postparticle workspace is private. Published articles and documents are available through read-only API endpoints. Every public request must include the owning `organizationId` and project ID because project IDs are not globally unique. Fetch them from your website’s server so article content and metadata are present in the rendered HTML. The API supplies content; it does not host a blog.
 
 ## Next.js guides
 

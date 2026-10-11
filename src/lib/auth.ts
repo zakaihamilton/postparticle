@@ -1,12 +1,8 @@
 import "server-only";
 
 import { cookies } from "next/headers";
-import {
-  HttpError,
-  organizationIdentifier,
-  projects,
-  projectById,
-} from "./config";
+import { HttpError, organizationIdentifier } from "./config";
+import { getProject, getProjectRegistry, productionVisible } from "./projects";
 import { usernameSchema } from "./username";
 import type { Actor, Role } from "./types";
 import {
@@ -222,7 +218,9 @@ export async function setMembership(
   projectId: string,
   role: Role | null,
 ) {
-  projectById(projectId);
+  const project = await getProject(organizationId, projectId);
+  if (!productionVisible(project))
+    throw new HttpError(404, "Project not found");
   username = usernameSchema.parse(username);
   const token = await requirePerministerToken();
   const member = role
@@ -240,10 +238,43 @@ export async function setMembership(
   );
 }
 
+export async function revokeProjectGrantsForDeletion(
+  actor: Actor,
+  projectId: string,
+) {
+  const project = await getProject(actor.organizationId, projectId, {
+    includeArchived: true,
+    includeDeleting: true,
+  });
+  if (!project.deleting)
+    throw new HttpError(409, "The project is not being deleted.");
+  const token = await requirePerministerToken();
+  const members = await perministerProjectMembers(
+    token,
+    actor.organizationId,
+    projectId,
+  );
+  await Promise.all(
+    members.map((member) =>
+      perministerSetProjectMember(
+        token,
+        actor.organizationId,
+        projectId,
+        member.username ?? member.email ?? member.subjectId,
+        null,
+        member.subjectId,
+      ),
+    ),
+  );
+}
+
 export async function allowedProjects(actor: Actor) {
   const token = await requirePerministerToken();
   const session = await perministerSession(token);
   if (!session) throw new HttpError(401, "Please sign in");
+  const projects = (await getProjectRegistry(actor.organizationId)).filter(
+    productionVisible,
+  );
   const accessible = await Promise.all(
     projects.map(async (project) => {
       if (
@@ -257,7 +288,9 @@ export async function allowedProjects(actor: Actor) {
         return null;
       }
       return {
-        ...project,
+        id: project.id,
+        name: project.name,
+        description: project.description,
         role:
           perministerRole(session, actor.organizationId, project.id) ??
           (actor.platformAdmin ? ("admin" as const) : ("viewer" as const)),
@@ -324,7 +357,9 @@ export async function authorize(
   write = false,
   admin = false,
 ) {
-  projectById(projectId);
+  const project = await getProject(actor.organizationId, projectId);
+  if (!productionVisible(project))
+    throw new HttpError(404, "Project not found");
   const token = await requirePerministerToken();
   const action = admin
     ? "postparticle:members:manage"
