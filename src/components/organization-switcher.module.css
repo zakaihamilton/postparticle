@@ -17,12 +17,15 @@
   text-overflow: ellipsis;
 }
 .select {
-  width: auto;
+  flex: 0 1 220px;
   min-width: 130px;
   max-width: 220px;
+}
+.select > button {
   min-height: 40px;
   padding: 7px 10px;
   font-size: 13px;
+  gap: 8px;
 }
 .error {
   color: var(--danger, #a33);
@@ -43,8 +46,11 @@
   .select {
     min-width: 0;
     max-width: min(150px, 36vw);
+  }
+  .select > button {
     min-height: 40px;
     padding: 6px 8px;
+    font-size: 12px;
   }
   .error {
     max-width: 110px;

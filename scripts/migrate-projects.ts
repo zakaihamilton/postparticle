@@ -1,34 +1,11 @@
-import { readFile } from "node:fs/promises";
-import { z } from "zod";
-import { identifier, organizationIdentifier } from "../src/lib/config";
 import { contentStore } from "../src/lib/storage";
 import { writeProjectRegistry } from "../src/lib/projects";
+import { legacyProjectsByOrganization } from "../src/lib/legacy-projects";
 
 if (process.env.STORAGE_DRIVER !== "spaces")
   throw new Error("Project migration requires STORAGE_DRIVER=spaces.");
 
-const legacyProjectSchema = z.object({
-  id: identifier,
-  name: z.string().min(1),
-  description: z.string(),
-  production: z.boolean().optional(),
-  legacyOrganizationId: organizationIdentifier,
-});
-const legacyProjects = z
-  .array(legacyProjectSchema)
-  .parse(
-    JSON.parse(
-      await readFile(new URL("../projects.json", import.meta.url), "utf8"),
-    ),
-  );
-const grouped = new Map<string, z.infer<typeof legacyProjectSchema>[]>();
-for (const project of legacyProjects) {
-  const organizationId = project.legacyOrganizationId.toLowerCase();
-  grouped.set(organizationId, [
-    ...(grouped.get(organizationId) ?? []),
-    project,
-  ]);
-}
+const grouped = legacyProjectsByOrganization();
 if (!grouped.size)
   throw new Error("projects.json does not contain any projects.");
 
@@ -45,8 +22,6 @@ for (const [organizationId, projects] of grouped) {
     projects.map((project) => ({
       ...project,
       legacyOrganizationId: organizationId,
-      archived: false,
-      deleting: false,
     })),
     { onlyIfMissing: true },
   );

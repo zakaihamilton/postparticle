@@ -1,8 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState, type ChangeEvent } from "react";
+import { useState } from "react";
 import type { Actor } from "@/lib/types";
 import { api } from "./ui";
+import Select from "./select";
 import styles from "./organization-switcher.module.css";
 
 export function OrganizationSwitcher({
@@ -13,18 +14,30 @@ export function OrganizationSwitcher({
   onBeforeChange?: () => Promise<boolean>;
 }) {
   const router = useRouter();
-  const [selected, setSelected] = useState(actor.organizationId);
+  const [selection, setSelection] = useState({
+    organizationId: actor.organizationId,
+    selected: actor.organizationId,
+  });
+  const selected =
+    selection.organizationId === actor.organizationId
+      ? selection.selected
+      : actor.organizationId;
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
-  async function changeOrganization(event: ChangeEvent<HTMLSelectElement>) {
-    const organizationId = event.currentTarget.value;
-    setSelected(organizationId);
+  async function changeOrganization(organizationId: string) {
+    setSelection({
+      organizationId: actor.organizationId,
+      selected: organizationId,
+    });
     setError("");
     setPending(true);
     try {
       if (onBeforeChange && !(await onBeforeChange())) {
-        setSelected(actor.organizationId);
+        setSelection({
+          organizationId: actor.organizationId,
+          selected: actor.organizationId,
+        });
         return;
       }
       await api("/api/auth/organization", {
@@ -34,7 +47,10 @@ export function OrganizationSwitcher({
       router.replace("/projects");
       router.refresh();
     } catch (cause) {
-      setSelected(actor.organizationId);
+      setSelection({
+        organizationId: actor.organizationId,
+        selected: actor.organizationId,
+      });
       setError((cause as Error).message);
     } finally {
       setPending(false);
@@ -45,26 +61,18 @@ export function OrganizationSwitcher({
     <div className={styles.switcher}>
       {actor.organizations.length > 1 ? (
         <>
-          <label className={styles.label} htmlFor="active-organization">
-            Organization
-          </label>
-          <select
-            id="active-organization"
-            className={styles.select}
-            aria-label="Organization"
+          <span className={styles.label}>Organization</span>
+          <Select
+            label="Organization"
             value={selected}
-            onChange={changeOrganization}
+            options={actor.organizations.map((organization) => ({
+              value: organization.organizationId,
+              label: organization.organizationName,
+            }))}
+            onValueChange={changeOrganization}
             disabled={pending}
-          >
-            {actor.organizations.map((organization) => (
-              <option
-                key={organization.organizationId}
-                value={organization.organizationId}
-              >
-                {organization.organizationName}
-              </option>
-            ))}
-          </select>
+            className={styles.select}
+          />
         </>
       ) : (
         <span className={styles.single}>{actor.organizationName}</span>
