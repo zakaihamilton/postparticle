@@ -6,15 +6,13 @@ Create one private **Standard** Space for all project content. Organization regi
 
 Use a bucket-scoped read/write/delete key for the content Space. Configure bucket CORS/lifecycle through a separate administrative key as required by DigitalOcean’s permissions. Keep that administrative key outside the application.
 
-The checked-in `projects.json` is only used by the guarded migration and restore paths; organization registries remain the runtime source of truth. Configure `.env.local` with the destination Spaces credentials, then run:
+The checked-in `projects.json` is only used by the guarded migration utility; organization registries remain the runtime source of truth. Configure `.env.local` with the destination Spaces credentials, then run:
 
 ```sh
 npm run projects:migrate
 ```
 
 Migration groups entries by `legacyOrganizationId`, preserves `production` visibility and the legacy storage mapping, and refuses to replace any existing S3 registry. Run it once for each separate environment bucket before directing that environment to the new registry. After migration, platform administrators manage projects in **Account → Projects**; changes take effect at runtime. New projects are visible in production by default. Demo Journal stays excluded because its migrated entry has `production: false`. Project IDs are immutable and use lowercase letters, numbers, hyphens, or underscores; IDs of permanently deleted projects stay retired. Secrets never belong in a registry.
-
-If a registry is already present but is missing one of the legacy entries, a platform admin can use **Account → Projects → Restore existing content**. This adds only absent, non-retired entries for the active organization and preserves their existing storage mapping and all current registry entries.
 
 Set the corresponding values from `.env.example` in `.env.local` and Vercel’s environment settings. `CONTENT_SPACES_*` configures the shared content bucket. The endpoint is the **origin**, for example `https://nyc3.digitaloceanspaces.com`. Never sign uploads against the CDN. Optional `CONTENT_MEDIA_BASE_URL` is the complete shared-bucket CDN/custom-domain URL and must use HTTPS. The application automatically falls back to the bucket origin URL. The content bucket key can access every project's prefix; Postparticle enforces project access in the application.
 

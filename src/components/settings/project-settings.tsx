@@ -25,7 +25,6 @@ export function ProjectSettings({
   organizationId: string;
 }) {
   const [projects, setProjects] = useState<ProjectRecord[]>([]);
-  const [legacyProjects, setLegacyProjects] = useState<ProjectRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -36,17 +35,11 @@ export function ProjectSettings({
 
   const refresh = useCallback(async () => {
     try {
-      const [result, legacy] = await Promise.all([
-        api<{ projects: ProjectRecord[] }>("/api/manage/projects/catalog", {
-          cache: "no-store",
-        }),
-        api<{ projects: ProjectRecord[] }>(
-          "/api/manage/projects/catalog/legacy/restore",
-          { cache: "no-store" },
-        ),
-      ]);
+      const result = await api<{ projects: ProjectRecord[] }>(
+        "/api/manage/projects/catalog",
+        { cache: "no-store" },
+      );
       setProjects(result.projects);
-      setLegacyProjects(legacy.projects);
       setError("");
     } catch (e) {
       setError((e as Error).message);
@@ -59,18 +52,12 @@ export function ProjectSettings({
     let active = true;
     async function loadProjects() {
       try {
-        const [result, legacy] = await Promise.all([
-          api<{ projects: ProjectRecord[] }>("/api/manage/projects/catalog", {
-            cache: "no-store",
-          }),
-          api<{ projects: ProjectRecord[] }>(
-            "/api/manage/projects/catalog/legacy/restore",
-            { cache: "no-store" },
-          ),
-        ]);
+        const result = await api<{ projects: ProjectRecord[] }>(
+          "/api/manage/projects/catalog",
+          { cache: "no-store" },
+        );
         if (!active) return;
         setProjects(result.projects);
-        setLegacyProjects(legacy.projects);
         setError("");
       } catch (e) {
         if (active) setError((e as Error).message);
@@ -147,21 +134,6 @@ export function ProjectSettings({
       });
       form.reset();
       setMessage("Project created.");
-      await refresh();
-    });
-  }
-
-  async function restoreLegacyProjects() {
-    await run(async () => {
-      const result = await api<{ restoredIds: string[] }>(
-        "/api/manage/projects/catalog/legacy/restore",
-        { method: "POST", body: JSON.stringify({}) },
-      );
-      setMessage(
-        result.restoredIds.length
-          ? `Restored existing projects: ${result.restoredIds.join(", ")}.`
-          : "All existing project entries are already registered.",
-      );
       await refresh();
     });
   }
@@ -282,36 +254,6 @@ export function ProjectSettings({
         </div>
       </div>
       <Notice error={error} message={message} />
-      <section className={styles.panel} id="project-recovery">
-        <div className={styles.panelHeading}>
-          <div>
-            <h2>Restore existing content</h2>
-            <p>
-              {loading
-                ? "Checking for legacy projects that are missing from this organization’s registry."
-                : legacyProjects.length
-                  ? "These legacy projects still have stored content but are missing from this organization’s registry. Restoring them adds the original storage mapping without moving or overwriting content: " +
-                    legacyProjects
-                      .map((project) => `${project.name} (${project.id})`)
-                      .join(", ") +
-                    "."
-                  : error
-                    ? "Could not check for legacy projects. Refresh this page to retry."
-                    : "No legacy projects are missing from this organization’s registry."}
-            </p>
-          </div>
-        </div>
-        <div className={styles.formSection}>
-          <button
-            className={styles.secondary}
-            type="button"
-            disabled={busy || loading || legacyProjects.length === 0}
-            onClick={() => void restoreLegacyProjects()}
-          >
-            Restore existing projects
-          </button>
-        </div>
-      </section>
       <section className={styles.panel}>
         <div className={styles.panelHeading}>
           <div>

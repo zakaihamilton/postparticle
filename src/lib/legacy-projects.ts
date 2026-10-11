@@ -32,7 +32,3 @@ export function legacyProjectsByOrganization() {
 
   return grouped;
 }
-
-export function legacyProjectsForOrganization(organizationId: string) {
-  return legacyProjectsByOrganization().get(organizationId.toLowerCase()) ?? [];
-}
