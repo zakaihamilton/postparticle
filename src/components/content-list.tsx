@@ -134,7 +134,7 @@ export function ContentList({
           .then((data) => {
             if (active) {
               setRows(data.rows);
-            setRecordCount(data.recordCount);
+              setRecordCount(data.recordCount);
               setActiveCount(data.activeCount);
               setError("");
               setBusy(false);

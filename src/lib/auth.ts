@@ -467,21 +467,6 @@ export async function authorizeResolvedProject(
   };
 }
 
-export async function authorize(
-  actor: Actor,
-  projectId: string,
-  write = false,
-  admin = false,
-) {
-  const context = await requireAuthContext();
-  if (
-    context.actor.username !== actor.username ||
-    context.actor.organizationId !== actor.organizationId
-  )
-    throw new HttpError(403, "You do not have permission for this action");
-  return (await authorizeProject(context, projectId, write, admin)).role;
-}
-
 export async function login(username: string, password: string) {
   const { token, expiresAt } = await perministerLogin(username, password);
   await establishPerministerSession(token, expiresAt);

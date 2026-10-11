@@ -30,20 +30,23 @@ describe("media publish confirmation", () => {
     const mediaId = "550e8400-e29b-41d4-a716-446655440099";
     const fetch = vi.fn().mockResolvedValue(
       new Response(
-        JSON.stringify([
-          {
-            id: mediaId,
-            filename: "cover.png",
-            contentType: "image/png",
-            size: 45,
-            alt: "",
-            caption: "",
-            metadata: {},
-            createdAt: "2026-10-11T00:00:00.000Z",
-            ready: true,
-            deleted: false,
-          },
-        ]),
+        JSON.stringify({
+          record: null,
+          media: [
+            {
+              id: mediaId,
+              filename: "cover.png",
+              contentType: "image/png",
+              size: 45,
+              alt: "",
+              caption: "",
+              metadata: {},
+              createdAt: "2026-10-11T00:00:00.000Z",
+              ready: true,
+              deleted: false,
+            },
+          ],
+        }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       ),
     );
@@ -76,7 +79,7 @@ describe("media publish confirmation", () => {
     const user = userEvent.setup();
     const mediaId = "550e8400-e29b-41d4-a716-446655440099";
     const fetch = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify([]), {
+      new Response(JSON.stringify({ record: null, media: [] }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       }),

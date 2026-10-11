@@ -57,13 +57,6 @@ export interface RecordState<T = Content> {
   trashed: boolean;
   revision: string;
 }
-export interface DashboardArticle {
-  id: string;
-  draft: Pick<Article, "title" | "author" | "tags" | "articleDate">;
-  published: boolean;
-  trashed: boolean;
-  updatedAt: string;
-}
 export interface ContentListRow {
   id: string;
   draft: {
@@ -86,7 +79,13 @@ export interface WorkspaceDashboard {
   articleCount: number;
   publishedCount: number;
   mediaCount: number;
-  recentArticles: DashboardArticle[];
+  recentArticles: {
+    id: string;
+    draft: Pick<Article, "title" | "author" | "tags" | "articleDate">;
+    published: boolean;
+    trashed: boolean;
+    updatedAt: string;
+  }[];
 }
 export interface Media {
   id: string;

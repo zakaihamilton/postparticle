@@ -17,7 +17,7 @@ export function manageHandler<Args extends unknown[]>(
   };
 }
 
-export async function manageActor(request: Request) {
+async function manageActor(request: Request) {
   if (request.method !== "GET") sameOrigin(request);
   return requireActor();
 }
