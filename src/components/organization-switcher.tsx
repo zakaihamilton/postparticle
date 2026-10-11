@@ -1,8 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState, type ChangeEvent } from "react";
+import { useEffect, useState } from "react";
 import type { Actor } from "@/lib/types";
 import { api } from "./ui";
+import Select from "./select";
 import styles from "./organization-switcher.module.css";
 
 export function OrganizationSwitcher({
@@ -17,8 +18,11 @@ export function OrganizationSwitcher({
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
-  async function changeOrganization(event: ChangeEvent<HTMLSelectElement>) {
-    const organizationId = event.currentTarget.value;
+  useEffect(() => {
+    setSelected(actor.organizationId);
+  }, [actor.organizationId]);
+
+  async function changeOrganization(organizationId: string) {
     setSelected(organizationId);
     setError("");
     setPending(true);
@@ -45,26 +49,18 @@ export function OrganizationSwitcher({
     <div className={styles.switcher}>
       {actor.organizations.length > 1 ? (
         <>
-          <label className={styles.label} htmlFor="active-organization">
-            Organization
-          </label>
-          <select
-            id="active-organization"
-            className={styles.select}
-            aria-label="Organization"
+          <span className={styles.label}>Organization</span>
+          <Select
+            label="Organization"
             value={selected}
-            onChange={changeOrganization}
+            options={actor.organizations.map((organization) => ({
+              value: organization.organizationId,
+              label: organization.organizationName,
+            }))}
+            onValueChange={changeOrganization}
             disabled={pending}
-          >
-            {actor.organizations.map((organization) => (
-              <option
-                key={organization.organizationId}
-                value={organization.organizationId}
-              >
-                {organization.organizationName}
-              </option>
-            ))}
-          </select>
+            className={styles.select}
+          />
         </>
       ) : (
         <span className={styles.single}>{actor.organizationName}</span>
