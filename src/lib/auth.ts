@@ -11,6 +11,7 @@ import {
   perministerChangePassword,
   perministerCreateAccount,
   perministerExchangeAuthorizationCode,
+  perministerHasProductAdminAccess,
   perministerLogin,
   perministerLogout,
   perministerProjectMembers,
@@ -78,7 +79,7 @@ function actorFromPerministerSession(
     .map((organization) => ({
       organizationId: organization.organizationId.toLowerCase(),
       organizationName: organization.organizationName,
-      platformAdmin: organization.platformAdmin,
+      platformAdmin: perministerHasProductAdminAccess(organization),
     }));
   const activeOrganization =
     organizations.find(
