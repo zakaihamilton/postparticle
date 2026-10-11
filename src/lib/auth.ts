@@ -306,21 +306,28 @@ export async function projectMemberAccounts(
   organizationId: string,
   projectId: string,
 ) {
-  const members = await perministerProjectMembers(
-    await requirePerministerToken(),
-    organizationId,
-    projectId,
+  const token = await requirePerministerToken();
+  const [members, accounts] = await Promise.all([
+    perministerProjectMembers(token, organizationId, projectId),
+    perministerAccounts(token, organizationId),
+  ]);
+  const accountBySubject = new Map(
+    accounts.map((account) => [account.subjectId, account]),
   );
   return members.flatMap((member) => {
-    const username = member.username ?? member.email;
-    if (!username) return [];
+    const account = accountBySubject.get(member.subjectId);
+    if (!account)
+      throw new HttpError(
+        503,
+        "Perminister did not return account status for a project member.",
+      );
     const role = ["admin", "editor", "viewer"].includes(member.role)
       ? (member.role as Role)
       : null;
     return [
       {
-        username,
-        disabled: false,
+        username: usernameSchema.parse(account.username),
+        disabled: account.status === "disabled",
         accessActive: member.active,
         role,
       },

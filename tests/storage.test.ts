@@ -4,6 +4,7 @@ import {
   ListObjectsCommand,
   GetObjectCommand,
   PutObjectCommand,
+  HeadObjectCommand,
   CopyObjectCommand,
   CompleteMultipartUploadCommand,
   AbortMultipartUploadCommand,
@@ -50,6 +51,31 @@ describe("Spaces adapter", () => {
     const { store, send } = fake();
     send.mockResolvedValue({ IsTruncated: true, Contents: [] });
     await expect(store.list("events/")).rejects.toThrow("did not advance");
+  });
+  it("starts marker-based listing after the supplied key", async () => {
+    const { store, send } = fake();
+    send.mockResolvedValueOnce({
+      IsTruncated: false,
+      Contents: [{ Key: "feed/2026/10/11/15/event-2.json" }],
+    });
+    const marker = "feed/2026/10/11/15/event-1.json";
+    expect(await store.list("feed/", marker)).toEqual([
+      "feed/2026/10/11/15/event-2.json",
+    ]);
+    expect(send.mock.calls[0][0]).toBeInstanceOf(ListObjectsCommand);
+    expect(send.mock.calls[0][0].input.Marker).toBe(marker);
+  });
+  it("reads a bounded object suffix using a ranged request", async () => {
+    const { store, send } = fake();
+    send.mockResolvedValueOnce({ ContentLength: 5 }).mockResolvedValueOnce({
+      Body: { transformToByteArray: async () => Uint8Array.from([3, 4, 5]) },
+    });
+    expect(await store.readSuffix("asset.bin", 3)).toEqual(
+      Uint8Array.from([3, 4, 5]),
+    );
+    expect(send.mock.calls[0][0]).toBeInstanceOf(HeadObjectCommand);
+    expect(send.mock.calls[1][0]).toBeInstanceOf(GetObjectCommand);
+    expect(send.mock.calls[1][0].input.Range).toBe("bytes=2-4");
   });
   it("uses private ACLs and differentiates missing data from outages", async () => {
     const { store, send } = fake();

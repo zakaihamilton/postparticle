@@ -1,16 +1,22 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  contentIndexStatus,
   readContentRecord,
   readContentRecords,
   rebuildContentCheckpoints,
 } from "@/lib/content-state";
+import { append } from "@/lib/events";
+import { contentEventFeedKey } from "@/lib/events";
 import type { Store } from "@/lib/storage";
 import type { Article, Event } from "@/lib/types";
 
 class MemoryStore {
   objects = new Map<string, unknown>();
   listCalls = 0;
-  beforeList: ((call: number, prefix: string) => void) | null = null;
+  listedPrefixes: string[] = [];
+  listMarkers: Array<string | undefined> = [];
+  beforeList: ((call: number, prefix: string) => void | Promise<void>) | null =
+    null;
 
   async get<T>(key: string): Promise<T | null> {
     return (this.objects.get(key) as T | undefined) ?? null;
@@ -20,12 +26,20 @@ class MemoryStore {
     this.objects.set(key, structuredClone(data));
   }
 
-  async list(prefix: string) {
+  async list(prefix: string, marker?: string) {
     const call = ++this.listCalls;
-    this.beforeList?.(call, prefix);
+    this.listedPrefixes.push(prefix);
+    this.listMarkers.push(marker);
+    await this.beforeList?.(call, prefix);
     return [...this.objects.keys()]
-      .filter((key) => key.startsWith(prefix))
+      .filter((key) => key.startsWith(prefix) && (!marker || key > marker))
       .sort();
+  }
+
+  resetListings() {
+    this.listCalls = 0;
+    this.listedPrefixes = [];
+    this.listMarkers = [];
   }
 
   async remove(key: string) {
@@ -109,6 +123,142 @@ function eventHistory(store: MemoryStore) {
 }
 
 describe("content checkpoints", () => {
+  it("backfills the feed and reads a snapshot plus only its recent tail", async () => {
+    const store = new MemoryStore();
+    addEvents(store);
+    expect(await contentIndexStatus("articles", store.asStore())).toMatchObject(
+      {
+        indexedThrough: null,
+        unindexedEvents: 5,
+        valid: true,
+      },
+    );
+
+    const built = await rebuildContentCheckpoints("articles", store.asStore());
+    expect(built).toMatchObject({ complete: true, indexedEvents: 5 });
+    expect(await contentIndexStatus("articles", store.asStore())).toMatchObject(
+      {
+        unindexedEvents: 0,
+        valid: true,
+      },
+    );
+    expect(
+      [...store.objects.keys()].filter((key) =>
+        key.startsWith("indexes/content/articles/feed/"),
+      ),
+    ).toHaveLength(5);
+
+    await append(
+      store.asStore(),
+      "content/articles/alpha",
+      "test",
+      "save",
+      article("alpha", 3),
+    );
+    const expected = await withoutCheckpoints(store);
+    store.resetListings();
+    expect(await readContentRecords("articles", store.asStore())).toEqual(
+      expected,
+    );
+    expect(store.listedPrefixes).not.toContain("content/articles/");
+    expect(store.listedPrefixes).toContain("indexes/content/articles/feed/");
+    expect(store.listMarkers.some(Boolean)).toBe(true);
+  });
+
+  it("merges concurrent appends and ignores dangling feed entries", async () => {
+    const store = new MemoryStore();
+    addEvents(store);
+    await rebuildContentCheckpoints("articles", store.asStore());
+
+    await Promise.all([
+      append(
+        store.asStore(),
+        "content/articles/alpha",
+        "writer-a",
+        "save",
+        article("alpha", 3),
+      ),
+      append(
+        store.asStore(),
+        "content/articles/beta",
+        "writer-b",
+        "save",
+        article("beta", 3),
+      ),
+    ]);
+
+    const danglingAt = new Date(Date.now() + 60_000).toISOString();
+    const danglingId = `${danglingAt.replace(/[:.]/g, "-")}_00000000-0000-4000-8000-999999999999`;
+    const danglingKey = contentEventFeedKey("articles", danglingAt, danglingId);
+    store.objects.set(danglingKey, {
+      version: 1,
+      kind: "articles",
+      recordId: "orphan",
+      eventId: danglingId,
+      at: danglingAt,
+      action: "save",
+    });
+
+    const expected = await withoutCheckpoints(store);
+    store.resetListings();
+    expect(await readContentRecords("articles", store.asStore())).toEqual(
+      expected,
+    );
+    expect(store.listedPrefixes).not.toContain("content/articles/");
+    expect(store.listedPrefixes).toContain("indexes/content/articles/feed/");
+  });
+
+  it("keeps a write racing snapshot publication in the replay tail", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(baseTime + 70_000);
+    const store = new MemoryStore();
+    addEvents(store);
+    let appended = false;
+    store.beforeList = async (_call, prefix) => {
+      if (prefix.startsWith("indexes/content/articles/feed/") && !appended) {
+        appended = true;
+        await append(
+          store.asStore(),
+          "content/articles/alpha",
+          "racing-writer",
+          "save",
+          article("alpha", 3),
+        );
+      }
+    };
+
+    const built = await rebuildContentCheckpoints("articles", store.asStore());
+    store.beforeList = null;
+    expect(built.complete).toBe(true);
+    expect(built.unindexedEvents).toBe(1);
+    expect(await readContentRecords("articles", store.asStore())).toEqual(
+      await withoutCheckpoints(store),
+    );
+  });
+
+  it("falls back to source replay when a feed entry is invalid", async () => {
+    const store = new MemoryStore();
+    addEvents(store);
+    await rebuildContentCheckpoints("articles", store.asStore());
+    const event = await append(
+      store.asStore(),
+      "content/articles/alpha",
+      "test",
+      "save",
+      article("alpha", 3),
+    );
+    store.objects.set(contentEventFeedKey("articles", event.at, event.id), {
+      version: 999,
+      invalid: true,
+    });
+
+    const expected = await withoutCheckpoints(store);
+    store.resetListings();
+    expect(await readContentRecords("articles", store.asStore())).toEqual(
+      expected,
+    );
+    expect(store.listedPrefixes).toContain("content/articles/");
+  });
+
   it("matches full replay after checkpoint edits and records created later", async () => {
     const store = new MemoryStore();
     addEvents(store);
@@ -118,8 +268,20 @@ describe("content checkpoints", () => {
     expect(built.complete).toBe(true);
     expect(built.records).toBe(2);
 
-    addEvent(store, makeEvent("alpha", 3, 4));
-    addEvent(store, makeEvent("gamma", 1, 5));
+    await append(
+      store.asStore(),
+      "content/articles/alpha",
+      "test",
+      "save",
+      article("alpha", 3),
+    );
+    await append(
+      store.asStore(),
+      "content/articles/gamma",
+      "test",
+      "save",
+      article("gamma", 1),
+    );
     const expected = await withoutCheckpoints(store);
     const checkpointed = await readContentRecords("articles", store.asStore());
     expect(checkpointed).toEqual(expected);
@@ -157,7 +319,13 @@ describe("content checkpoints", () => {
     const store = new MemoryStore();
     addEvents(store);
     const first = await rebuildContentCheckpoints("articles", store.asStore());
-    addEvent(store, makeEvent("alpha", 3, 4));
+    await append(
+      store.asStore(),
+      "content/articles/alpha",
+      "test",
+      "save",
+      article("alpha", 3),
+    );
     const newest = await rebuildContentCheckpoints("articles", store.asStore());
     expect(newest.generation).not.toBe(first.generation);
 

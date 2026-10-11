@@ -2,6 +2,11 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import { identifier } from "./config";
 import { mapBounded, type Store } from "./storage";
+import {
+  contentEventFeedKey,
+  contentEventFeedPrefix,
+  type ContentEventFeedEntry,
+} from "./events";
 import type {
   Article,
   Content,
@@ -11,11 +16,12 @@ import type {
   RecordState,
 } from "./types";
 
-const checkpointVersion = 1;
+const checkpointVersion = 2;
 const maxShardBytes = 4 * 1024 * 1024;
-const maxShardRows = 1000;
+const maxShardRows = 200;
 const checkpointRetries = 2;
 const checkpointOrphanGraceMs = 24 * 60 * 60 * 1000;
+const snapshotOverlapMs = 60 * 1000;
 
 interface CheckpointRow {
   id: string;
@@ -37,7 +43,10 @@ interface CheckpointManifest {
   version: number;
   kind: Kind;
   generation: string;
+  /** Events before this UTC instant are folded into the snapshot. */
+  cutoffAt: string;
   records: number;
+  indexedEvents: number;
   shards: Array<{
     key: string;
     firstId: string;
@@ -54,6 +63,8 @@ export interface CheckpointBuildResult {
   shards: number;
   retries: number;
   complete: boolean;
+  indexedEvents?: number;
+  unindexedEvents?: number;
   failure?:
     | "source-changed"
     | "source-unavailable"
@@ -67,6 +78,48 @@ function eventPrefix(kind: Kind) {
 
 function checkpointPrefix(kind: Kind) {
   return `checkpoints/content/${kind}`;
+}
+
+function feedHour(at: string) {
+  const date = new Date(at);
+  return [
+    date.getUTCFullYear().toString().padStart(4, "0"),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    String(date.getUTCDate()).padStart(2, "0"),
+    String(date.getUTCHours()).padStart(2, "0"),
+  ].join("/");
+}
+
+function isFeedEntry(
+  value: unknown,
+  kind: Kind,
+  key: string,
+): value is ContentEventFeedEntry {
+  if (!value || typeof value !== "object") return false;
+  const entry = value as Partial<ContentEventFeedEntry>;
+  if (
+    entry.version !== 1 ||
+    entry.kind !== kind ||
+    typeof entry.recordId !== "string" ||
+    typeof entry.eventId !== "string" ||
+    typeof entry.at !== "string" ||
+    !Number.isFinite(Date.parse(entry.at)) ||
+    typeof entry.action !== "string"
+  )
+    return false;
+  try {
+    identifier.parse(entry.recordId);
+  } catch {
+    return false;
+  }
+  const filename = key.slice(key.lastIndexOf("/") + 1).replace(/\.json$/, "");
+  const prefix = `${contentEventFeedPrefix(kind)}${feedHour(entry.at)}/`;
+  return (
+    entry.eventId === filename &&
+    key === contentEventFeedKey(kind, entry.at, entry.eventId) &&
+    key.startsWith(prefix) &&
+    eventTimeKey(entry.at) === eventTimeKeyFromPath(key)
+  );
 }
 
 function eventKeysById(kind: Kind, keys: string[]) {
@@ -165,6 +218,10 @@ function isManifest(
     manifest.version === checkpointVersion &&
     manifest.kind === kind &&
     manifest.generation === generation &&
+    typeof manifest.cutoffAt === "string" &&
+    Number.isFinite(Date.parse(manifest.cutoffAt)) &&
+    Number.isInteger(manifest.indexedEvents) &&
+    manifest.indexedEvents! >= 0 &&
     Number.isInteger(manifest.records) &&
     manifest.records! >= 0 &&
     Array.isArray(manifest.shards) &&
@@ -274,6 +331,25 @@ async function readCompleteGeneration(kind: Kind, store: Store) {
   return null;
 }
 
+async function readCheckpointRecord(
+  kind: Kind,
+  id: string,
+  store: Store,
+): Promise<{ manifest: CheckpointManifest; row: CheckpointRow | null } | null> {
+  for (const candidate of await checkpointManifests(kind, store)) {
+    const manifest = await readManifest(kind, store, candidate);
+    if (!manifest) continue;
+    const descriptor = manifest.shards.find(
+      (shard) => id >= shard.firstId && id <= shard.lastId,
+    );
+    if (!descriptor) return { manifest, row: null };
+    const rows = await readShard(kind, manifest, descriptor, store);
+    if (!rows) continue;
+    return { manifest, row: rows.find((row) => row.id === id) ?? null };
+  }
+  return null;
+}
+
 async function readGeneration(
   kind: Kind,
   store: Store,
@@ -354,21 +430,6 @@ async function pruneCheckpointGenerations(
   await Promise.all(obsolete.map((key) => store.remove(key)));
 }
 
-async function readCheckpointRow(kind: Kind, id: string, store: Store) {
-  for (const candidate of await checkpointManifests(kind, store)) {
-    const manifest = await readManifest(kind, store, candidate);
-    if (!manifest) continue;
-    const descriptor = manifest.shards.find(
-      (shard) => id >= shard.firstId && id <= shard.lastId,
-    );
-    if (!descriptor) return null;
-    const rows = await readShard(kind, manifest, descriptor, store);
-    if (!rows) continue;
-    return rows.find((row) => row.id === id) ?? null;
-  }
-  return null;
-}
-
 async function readEventKeys<T extends Content>(
   keys: string[],
   cutoffAt: string | null,
@@ -381,6 +442,58 @@ async function readEventKeys<T extends Content>(
   return (await mapBounded(selected, (key) => store.get<Event<T>>(key))).filter(
     (event): event is Event<T> => !!event,
   );
+}
+
+async function readContentFeedTail(
+  kind: Kind,
+  cutoffAt: string,
+  store: Store,
+  onlyRecordId?: string,
+): Promise<Event<Content>[] | null> {
+  const prefix = contentEventFeedPrefix(kind);
+  const marker = `${prefix}${feedHour(cutoffAt)}/`;
+  const cutoff = eventTimeKey(cutoffAt);
+  const keys = (await store.list(prefix, marker)).filter(
+    (key) => key.endsWith(".json") && eventTimeKeyFromPath(key) >= cutoff,
+  );
+  const rawEntries = await mapBounded(keys, (key) => store.get<unknown>(key));
+  const entries: ContentEventFeedEntry[] = [];
+  for (const [index, value] of rawEntries.entries()) {
+    if (!isFeedEntry(value, kind, keys[index])) return null;
+    entries.push(value);
+  }
+
+  const relevant = entries.filter(
+    (entry) => !onlyRecordId || entry.recordId === onlyRecordId,
+  );
+  const loaded = await mapBounded(relevant, async (entry) => {
+    const key = `${eventPrefix(kind)}/${entry.recordId}/${entry.eventId}.json`;
+    return { entry, key, event: await store.get<Event<Content>>(key) };
+  });
+  const events: Event<Content>[] = [];
+  for (const { entry, key, event } of loaded) {
+    // Feed-first appends can be interrupted before writing the source event.
+    if (event === null) continue;
+    if (
+      !eventMatchesPath(kind, event, key) ||
+      event.id !== entry.eventId ||
+      event.at !== entry.at ||
+      event.action !== entry.action
+    )
+      return null;
+    events.push(event);
+  }
+  return events.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+}
+
+async function fullReplay(kind: Kind, store: Store) {
+  const keys = await store.list(`${eventPrefix(kind)}/`);
+  const groups = eventKeysById(kind, keys);
+  return (
+    await mapBounded([...groups], ([id, eventKeys]) =>
+      stateFromKeys(id, eventKeys, store),
+    )
+  ).filter((state): state is RecordState<Content> => !!state);
 }
 
 function reduceContent<T extends Content>(
@@ -447,26 +560,62 @@ async function stateFromKeys(
 }
 
 export async function readContentRecord(kind: Kind, id: string, store: Store) {
+  identifier.parse(id);
+  const checkpoint = await readCheckpointRecord(kind, id, store);
+  if (checkpoint) {
+    const tail = await readContentFeedTail(
+      kind,
+      checkpoint.manifest.cutoffAt,
+      store,
+      id,
+    );
+    if (tail) return reduceContent(id, tail, checkpoint.row?.state ?? null);
+  }
   const keys = (await store.list(`${eventPrefix(kind)}/${id}/`)).filter((key) =>
     key.endsWith(".json"),
   );
   if (!keys.length) return null;
-  const checkpoint = await readCheckpointRow(kind, id, store);
-  return stateFromKeys(id, keys, store, checkpoint ?? undefined);
+  return stateFromKeys(id, keys, store);
 }
 
 export async function readContentRecords(kind: Kind, store: Store) {
-  const keys = await store.list(`${eventPrefix(kind)}/`);
-  const groups = eventKeysById(kind, keys);
   const checkpoint = await readCompleteGeneration(kind, store);
-  return (
-    await mapBounded([...groups], ([id, eventKeys]) =>
-      stateFromKeys(id, eventKeys, store, checkpoint?.rows.get(id)),
+  if (!checkpoint) return fullReplay(kind, store);
+  const tail = await readContentFeedTail(
+    kind,
+    checkpoint.manifest.cutoffAt,
+    store,
+  );
+  if (!tail) return fullReplay(kind, store);
+
+  const histories = new Map<string, Event<Content>[]>();
+  for (const event of tail) {
+    const id =
+      kind === "articles"
+        ? (event.data as Article).slug
+        : (event.data as JsonDocument).key;
+    const history = histories.get(id) ?? [];
+    history.push(event);
+    histories.set(id, history);
+  }
+  const ids = new Set([...checkpoint.rows.keys(), ...histories.keys()]);
+  return [...ids]
+    .map((id) =>
+      reduceContent(
+        id,
+        histories.get(id) ?? [],
+        checkpoint.rows.get(id)?.state ?? null,
+      ),
     )
-  ).filter((state): state is RecordState<Content> => !!state);
+    .filter((state): state is RecordState<Content> => !!state);
 }
 
-function checkpointRows(kind: Kind, keys: string[], history: Event<Content>[]) {
+function checkpointRows(
+  kind: Kind,
+  keys: string[],
+  history: Event<Content>[],
+  cutoffAt: string,
+) {
   const groups = eventKeysById(kind, keys);
   const eventsById = new Map(history.map((event) => [event.id, event]));
   const rows: CheckpointRow[] = [];
@@ -476,14 +625,9 @@ function checkpointRows(kind: Kind, keys: string[], history: Event<Content>[]) {
       const event = eventsById.get(eventId);
       return event && eventFromKey(event, key) ? [event] : [];
     });
-    if (!recordEvents.length) continue;
-    const cutoffAt = recordEvents.reduce(
-      (latest, event) => (event.at > latest ? event.at : latest),
-      "",
-    );
     const foldedEvents = recordEvents.filter((event) => event.at < cutoffAt);
     const state = reduceContent(id, foldedEvents);
-    if (state)
+    if (state && foldedEvents.length)
       rows.push({
         id,
         cursor: foldedEvents.at(-1)!.id,
@@ -541,6 +685,39 @@ function sourceKeyGroupsEqual(a: string[], b: string[]) {
   return a.every((key) => right.has(key));
 }
 
+export interface ContentIndexStatus {
+  indexedThrough: string | null;
+  unindexedEvents: number | null;
+  valid: boolean;
+}
+
+export async function contentIndexStatus(
+  kind: Kind,
+  store: Store,
+): Promise<ContentIndexStatus> {
+  const checkpoint = await readCompleteGeneration(kind, store);
+  if (!checkpoint) {
+    const sourceKeys = (await store.list(`${eventPrefix(kind)}/`)).filter(
+      (key) => key.endsWith(".json"),
+    );
+    return {
+      indexedThrough: null,
+      unindexedEvents: sourceKeys.length,
+      valid: true,
+    };
+  }
+  const tail = await readContentFeedTail(
+    kind,
+    checkpoint.manifest.cutoffAt,
+    store,
+  );
+  return {
+    indexedThrough: checkpoint.manifest.cutoffAt,
+    unindexedEvents: tail?.length ?? null,
+    valid: tail !== null,
+  };
+}
+
 /** Builds a derived checkpoint without changing the immutable source event log. */
 export async function rebuildContentCheckpoints(
   kind: Kind,
@@ -548,6 +725,8 @@ export async function rebuildContentCheckpoints(
 ): Promise<CheckpointBuildResult> {
   let failure: CheckpointBuildResult["failure"] = "source-changed";
   for (let attempt = 0; attempt <= checkpointRetries; attempt++) {
+    // The overlap keeps in-flight writes and small clock skew in the replay tail.
+    const cutoffAt = new Date(Date.now() - snapshotOverlapMs).toISOString();
     const sourcePrefix = `${eventPrefix(kind)}/`;
     const sourceKeys = (await store.list(sourcePrefix)).filter((key) =>
       key.endsWith(".json"),
@@ -572,15 +751,30 @@ export async function rebuildContentCheckpoints(
       continue;
     }
 
-    const rows = checkpointRows(kind, sourceKeys, allEvents);
-    if (!rows.length)
-      return {
-        generation: null,
-        records: 0,
-        shards: 0,
-        retries: attempt,
-        complete: true,
-      };
+    const rows = checkpointRows(kind, sourceKeys, allEvents, cutoffAt);
+    await mapBounded(
+      sourceKeys.map((key, index) => ({ key, event: allEvents[index] })),
+      async ({ key, event }) => {
+        const recordId = key.split("/").at(-2)!;
+        const entry: ContentEventFeedEntry = {
+          version: 1,
+          kind,
+          recordId,
+          eventId: event.id,
+          at: event.at,
+          action: event.action,
+        };
+        const feedKey = contentEventFeedKey(kind, event.at, event.id);
+        const existing = await store.get<unknown>(feedKey);
+        if (
+          !isFeedEntry(existing, kind, feedKey) ||
+          existing.recordId !== recordId ||
+          existing.at !== event.at ||
+          existing.action !== event.action
+        )
+          await store.put(feedKey, entry);
+      },
+    );
 
     const generation = `${Date.now().toString().padStart(13, "0")}-${randomUUID()}`;
     const shards = makeShards(kind, generation, rows);
@@ -626,11 +820,19 @@ export async function rebuildContentCheckpoints(
       continue;
     }
 
+    const tail = await readContentFeedTail(kind, cutoffAt, store);
+    if (!tail) {
+      failure = "checkpoint-invalid";
+      continue;
+    }
+
     const manifest: CheckpointManifest = {
       version: checkpointVersion,
       kind,
       generation,
+      cutoffAt,
       records: rows.length,
+      indexedEvents: allEvents.filter((event) => event.at < cutoffAt).length,
       shards: descriptors,
     };
     await store.put(`${base}/manifest.json`, manifest);
@@ -651,6 +853,8 @@ export async function rebuildContentCheckpoints(
       shards: descriptors.length,
       retries: attempt,
       complete: true,
+      indexedEvents: manifest.indexedEvents,
+      unindexedEvents: tail.length,
     };
   }
   return {

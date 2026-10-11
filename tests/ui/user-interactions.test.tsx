@@ -1,8 +1,11 @@
 // @vitest-environment jsdom
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import Select from "@/components/select";
+import { Members } from "@/components/settings/members";
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe("custom select", () => {
   it("opens and changes an option with keyboard input", async () => {
@@ -23,5 +26,39 @@ describe("custom select", () => {
     await user.click(screen.getByRole("combobox", { name: "Color theme" }));
     await user.keyboard("{ArrowDown}{Enter}");
     expect(onValueChange).toHaveBeenCalledWith("light");
+  });
+});
+
+describe("member account and grant status", () => {
+  it("shows disabled accounts separately from inactive project grants", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify([
+            {
+              username: "suspended",
+              disabled: true,
+              accessActive: true,
+              role: "editor",
+            },
+            {
+              username: "former-editor",
+              disabled: false,
+              accessActive: false,
+              role: "editor",
+            },
+          ]),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      ),
+    );
+
+    render(<Members projectId="journal" />);
+
+    expect(await screen.findByText("suspended")).toBeTruthy();
+    expect(await screen.findByText("former-editor")).toBeTruthy();
+    expect(screen.getByText("Disabled")).toBeTruthy();
+    expect(screen.getByText("Inactive")).toBeTruthy();
   });
 });

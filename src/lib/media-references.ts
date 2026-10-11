@@ -16,3 +16,21 @@ export function replaceMediaReferences(
     return id ? resolve(id) : reference;
   });
 }
+
+export function collectMediaReferenceIds(value: unknown): string[] {
+  const references = new Set<string>();
+  function walk(item: unknown) {
+    if (typeof item === "string") {
+      replaceMediaReferences(item, (id) => {
+        references.add(id);
+        return `media:${id}`;
+      });
+    } else if (Array.isArray(item)) {
+      item.forEach(walk);
+    } else if (item && typeof item === "object") {
+      Object.values(item).forEach(walk);
+    }
+  }
+  walk(value);
+  return [...references];
+}

@@ -43,6 +43,7 @@ const stats = {
   listCalls: 0,
   listedKeys: 0,
   listSizes: [] as number[],
+  listedPrefixes: [] as string[],
 };
 const store = new Proxy(target, {
   get(storeTarget, property) {
@@ -52,9 +53,10 @@ const store = new Proxy(target, {
         return storeTarget.get(key);
       };
     if (property === "list")
-      return async (prefix: string) => {
+      return async (prefix: string, marker?: string) => {
         stats.listCalls++;
-        const keys = await storeTarget.list(prefix);
+        stats.listedPrefixes.push(prefix);
+        const keys = await storeTarget.list(prefix, marker);
         stats.listedKeys += keys.length;
         stats.listSizes.push(keys.length);
         return keys;
@@ -69,6 +71,7 @@ function reset() {
   stats.listCalls = 0;
   stats.listedKeys = 0;
   stats.listSizes = [];
+  stats.listedPrefixes = [];
 }
 
 async function measure<T>(operation: () => Promise<T>) {
@@ -84,6 +87,7 @@ async function measure<T>(operation: () => Promise<T>) {
       listCalls: stats.listCalls,
       keysEnumerated: stats.listedKeys,
       keyCountsPerList: [...stats.listSizes],
+      listedPrefixes: [...stats.listedPrefixes],
       estimatedSpacesListPages: stats.listSizes.reduce(
         (total, keyCount) => total + Math.max(1, Math.ceil(keyCount / 1000)),
         0,

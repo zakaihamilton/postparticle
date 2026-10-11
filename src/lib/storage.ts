@@ -39,10 +39,11 @@ import {
 export interface Store {
   get<T>(key: string): Promise<T | null>;
   put(key: string, data: unknown): Promise<void>;
-  list(prefix: string): Promise<string[]>;
+  list(prefix: string, marker?: string): Promise<string[]>;
   remove(key: string): Promise<void>;
   bytes(key: string): Promise<Uint8Array>;
   readPrefix(key: string, length: number): Promise<Uint8Array>;
+  readSuffix(key: string, length: number, size?: number): Promise<Uint8Array>;
   writeBytes(key: string, data: Uint8Array, contentType: string): Promise<void>;
   head(key: string): Promise<{ size: number; contentType: string }>;
   copyPublic(from: string, to: string, contentType: string): Promise<void>;
@@ -125,16 +126,17 @@ export class SpacesStore implements Store {
       }),
     );
   }
-  async list(prefix: string) {
+  async list(prefix: string, marker?: string) {
     checkKey(prefix.replace(/\/$/, ""));
+    if (marker) checkKey(marker.replace(/\/$/, ""));
     const keys: string[] = [];
-    let marker: string | undefined;
+    let nextMarker = marker;
     do {
       const page = await this.client.send(
         new ListObjectsCommand({
           Bucket: this.bucket,
           Prefix: prefix,
-          Marker: marker,
+          Marker: nextMarker,
           MaxKeys: 1000,
         }),
       );
@@ -144,9 +146,9 @@ export class SpacesStore implements Store {
       keys.push(...batch);
       if (!page.IsTruncated) break;
       const next = page.NextMarker ?? batch.at(-1);
-      if (!next || (marker && next <= marker))
+      if (!next || (nextMarker && next <= nextMarker))
         throw new Error("Storage pagination did not advance");
-      marker = next;
+      nextMarker = next;
     } while (true);
     return keys;
   }
@@ -169,6 +171,18 @@ export class SpacesStore implements Store {
       }),
     );
     return (await result.Body!.transformToByteArray()).subarray(0, length);
+  }
+  async readSuffix(key: string, length: number, size?: number) {
+    if (!Number.isInteger(length) || length < 1 || length > 64 * 1024)
+      throw new Error("Invalid storage suffix length");
+    const objectSize = size ?? (await this.head(key)).size;
+    const result = await this.client.send(
+      new GetObjectCommand({
+        ...this.input(key),
+        Range: `bytes=${Math.max(0, objectSize - length)}-${Math.max(0, objectSize - 1)}`,
+      }),
+    );
+    return result.Body!.transformToByteArray();
   }
   async writeBytes(key: string, data: Uint8Array, contentType: string) {
     await this.client.send(
@@ -377,7 +391,7 @@ export class LocalStore implements Store {
       "application/json",
     );
   }
-  async list(prefix: string) {
+  async list(prefix: string, marker?: string) {
     const base = path.join(this.root, this.scope);
     const out: string[] = [];
     async function walk(dir: string) {
@@ -403,7 +417,7 @@ export class LocalStore implements Store {
       }
     }
     await walk(base);
-    return out.sort();
+    return out.filter((key) => !marker || key > marker).sort();
   }
   async remove(key: string) {
     const file = this.file(key);
@@ -423,6 +437,25 @@ export class LocalStore implements Store {
       const prefix = Buffer.alloc(length);
       const { bytesRead } = await file.read(prefix, 0, length, 0);
       return prefix.subarray(0, bytesRead);
+    } finally {
+      await file.close();
+    }
+  }
+  async readSuffix(key: string, length: number, _size?: number) {
+    void _size;
+    if (!Number.isInteger(length) || length < 1 || length > 64 * 1024)
+      throw new Error("Invalid storage suffix length");
+    const file = await open(this.file(key), "r");
+    try {
+      const size = (await file.stat()).size;
+      const suffix = Buffer.alloc(Math.min(length, size));
+      const { bytesRead } = await file.read(
+        suffix,
+        0,
+        suffix.length,
+        Math.max(0, size - length),
+      );
+      return suffix.subarray(0, bytesRead);
     } finally {
       await file.close();
     }
@@ -568,11 +601,14 @@ class NamespacedStore implements Store {
     await this.store.put(this.key(key), data);
   }
 
-  async list(prefix: string) {
+  async list(prefix: string, marker?: string) {
     const checkedPrefix = checkKey(prefix.replace(/\/$/, ""));
     const trailingSlash = prefix.endsWith("/") ? "/" : "";
     const fullPrefix = `${this.objectPrefix}${checkedPrefix}${trailingSlash}`;
-    const keys = await this.store.list(fullPrefix);
+    const fullMarker = marker
+      ? `${this.objectPrefix}${checkKey(marker.replace(/\/$/, ""))}${marker.endsWith("/") ? "/" : ""}`
+      : undefined;
+    const keys = await this.store.list(fullPrefix, fullMarker);
     return keys
       .filter((key) => key.startsWith(this.objectPrefix))
       .map((key) => key.slice(this.objectPrefix.length));
@@ -588,6 +624,10 @@ class NamespacedStore implements Store {
 
   async readPrefix(key: string, length: number) {
     return this.store.readPrefix(this.key(key), length);
+  }
+
+  async readSuffix(key: string, length: number, size?: number) {
+    return this.store.readSuffix(this.key(key), length, size);
   }
 
   async writeBytes(key: string, data: Uint8Array, contentType: string) {

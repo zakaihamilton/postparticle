@@ -17,6 +17,7 @@ interface ProjectRecord {
   production: boolean;
   archived: boolean;
   deleting: boolean;
+  registryConflict?: boolean;
 }
 
 export function ProjectSettings({
@@ -339,6 +340,12 @@ export function ProjectSettings({
                             ? "Active · visible in production"
                             : "Active · excluded from production"}
                     </small>
+                    {project.registryConflict && (
+                      <small role="status">
+                        Concurrent edits were detected. This version is shown;
+                        review it and save a change to resolve the conflict.
+                      </small>
+                    )}
                   </div>
                   <div className={styles.accountUserActions}>
                     {project.deleting ? (

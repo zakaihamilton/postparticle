@@ -17,6 +17,7 @@ import { Status } from "./content-list";
 import styles from "./workspace.module.css";
 import Select from "./select";
 import DatePicker from "./date-picker";
+import { collectMediaReferenceIds } from "@/lib/media-references";
 const blankArticle = (): Article => ({
   title: "",
   slug: "",
@@ -137,6 +138,24 @@ export default function Editor({
         .filter(Boolean),
       ...(!isArticle ? { value: JSON.parse(jsonText) } : {}),
     };
+    const referencedMediaIds = new Set(collectMediaReferenceIds(payload));
+    if (isArticle) {
+      const articlePayload = payload as Article;
+      for (const id of [
+        articlePayload.coverMediaId,
+        articlePayload.socialMediaId,
+      ])
+        if (id) referencedMediaIds.add(id.toLowerCase());
+    }
+    const referencedMediaCount = referencedMediaIds.size;
+    if (
+      publish &&
+      referencedMediaCount > 0 &&
+      !window.confirm(
+        `Publishing will copy ${referencedMediaCount} referenced media ${referencedMediaCount === 1 ? "asset" : "assets"} to public URLs. Anyone with a URL can access those copies, and unpublishing does not revoke them. Continue?`,
+      )
+    )
+      return;
     const result = await api<{ id: string }>(
       savedId ? `${endpoint}/${savedId}` : endpoint,
       { method: savedId ? "PUT" : "POST", body: JSON.stringify(payload) },
@@ -153,7 +172,9 @@ export default function Editor({
       await refresh();
       setMessage(
         publish
-          ? "Published. Your content is available through the API."
+          ? referencedMediaCount
+            ? `Published. Your content and ${referencedMediaCount} referenced media ${referencedMediaCount === 1 ? "asset are" : "assets are"} publicly available through the API.`
+            : "Published. Your content is available through the API."
           : "Draft saved. Your published content stays as it is.",
       );
     }

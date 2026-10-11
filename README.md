@@ -62,7 +62,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Repnix inventories and runs the repository’s configured checks. `npm run health` requires type safety, linting, formatting, tests, accessibility lint rules, and dead-code detection. Browser tests use isolated content storage and a test-only Perminister service stub; they do not claim Spaces compatibility. Use `npm run storage:verify` with real credentials for the private JSON and pagination smoke check.
+Repnix inventories and runs the repository’s configured checks. `npm run health` requires type safety, linting, formatting, tests, accessibility lint rules, and dead-code detection. Browser tests use isolated content storage and a test-only Perminister service stub; they do not claim Spaces compatibility. Verify a Development Space before rollout with `npm run storage:verify -- <project-id> --organization-id "<organization-uuid>" --confirm-non-production`.
 
 ## License
 
