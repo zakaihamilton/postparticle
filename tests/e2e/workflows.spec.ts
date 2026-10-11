@@ -266,7 +266,7 @@ test("login, project selection, article editing, publishing, tags, history, and 
       ).json()
     ).title,
   ).toBe(title);
-  await page.getByRole("button", { name: /Show .* revisions/ }).click();
+  await page.getByRole("button", { name: "Show revision history" }).click();
   await expect(
     page.getByRole("button", { name: "Restore draft" }).first(),
   ).toBeVisible();
@@ -324,12 +324,26 @@ test("media upload and metadata plus JSON publication work", async ({
     .fill("A tiny fixture image");
   await page.getByRole("button", { name: "Save details" }).click();
   await expect(page.getByRole("status")).toContainText("Asset details saved");
+  await page.route("**/api/manage/projects/demo/editor*", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    await route.continue();
+  });
+  const initialEditorData = page.waitForResponse(
+    (response) =>
+      response.url().includes("/api/manage/projects/demo/editor") &&
+      response.url().includes("id=new"),
+  );
   await page.goto("/workspace/demo/documents/new");
   const title = `Browser JSON ${Date.now()}`;
   await page.getByLabel("Title", { exact: true }).fill(title);
   await page
     .getByLabel("JSON content", { exact: true })
     .fill('{"headline":"Hello from JSON","enabled":true}');
+  await initialEditorData;
+  await expect(page.getByLabel("Title", { exact: true })).toHaveValue(title);
+  await expect(page.getByLabel("JSON content", { exact: true })).toHaveValue(
+    '{"headline":"Hello from JSON","enabled":true}',
+  );
   await page.getByRole("button", { name: "Publish", exact: true }).click();
   await expect(page).toHaveURL(/documents\/browser-json-/);
   const key = new URL(page.url()).pathname.split("/").at(-1);

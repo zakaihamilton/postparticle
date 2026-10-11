@@ -1,4 +1,4 @@
-import { requireActor, authorize } from "@/lib/auth";
+import { authorizeResolvedProject, requireAuthContext } from "@/lib/auth";
 import { HttpError, localDriver, organizationIdentifier } from "@/lib/config";
 import { errorResponse } from "@/lib/http";
 import {
@@ -44,10 +44,8 @@ export async function GET(
     if (!/^((public\/media)|(originals))\/[0-9a-f-]{36}\/asset$/.test(key))
       throw new HttpError(404, "Not found");
     if (!key.startsWith("public/")) {
-      const actor = await requireActor();
-      if (actor.organizationId !== organizationId)
-        throw new HttpError(403, "You do not have permission for this action");
-      await authorize(actor, projectId);
+      const authContext = await requireAuthContext();
+      await authorizeResolvedProject(authContext, organizationId, project);
     }
     const store = projectStoreFor(organizationId, project);
     const head = await store.head(key);

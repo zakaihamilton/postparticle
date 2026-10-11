@@ -2,19 +2,22 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type {
-  Article,
-  JsonDocument,
+  ContentListData,
+  ContentListRow,
   Kind,
-  Media,
-  RecordState,
+  WorkspaceDashboard,
 } from "@/lib/types";
 import { api, Empty, Icon, Notice } from "./ui";
 import styles from "./workspace.module.css";
 import Select from "./select";
-function recordTitle(r: RecordState) {
+function recordTitle(r: { draft: { title: string } }) {
   return r.draft.title;
 }
-export function Status({ record }: { record: RecordState }) {
+export function Status({
+  record,
+}: {
+  record: { published: unknown; trashed: boolean };
+}) {
   return (
     <span
       className={`${styles.badge} ${record.published && !record.trashed ? styles.published : ""}`}
@@ -29,7 +32,7 @@ function Table({
   kind,
   projectId,
 }: {
-  rows: RecordState[];
+  rows: ContentListRow[];
   kind: Kind;
   projectId: string;
 }) {
@@ -64,9 +67,7 @@ function Table({
                   <span>
                     <strong>{recordTitle(r)}</strong>
                     <small>
-                      {kind === "articles"
-                        ? (r.draft as Article).author
-                        : (r.draft as JsonDocument).key}
+                      {kind === "articles" ? r.draft.author : r.draft.key}
                     </small>
                   </span>
                 </Link>
@@ -83,7 +84,7 @@ function Table({
               </td>
               <td className={styles.date}>
                 {kind === "articles"
-                  ? (r.draft as Article).articleDate
+                  ? r.draft.articleDate
                   : r.updatedAt.slice(0, 10)}
               </td>
               <td>
@@ -111,33 +112,50 @@ export function ContentList({
   projectId: string;
   canEdit: boolean;
 }) {
-  const [rows, setRows] = useState<RecordState[]>([]);
+  const [rows, setRows] = useState<ContentListRow[]>([]);
+  const [recordCount, setRecordCount] = useState(0);
+  const [activeCount, setActiveCount] = useState(0);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(true);
+  const [searching, setSearching] = useState(false);
   const [q, setQ] = useState("");
   const [tag, setTag] = useState("");
   const [status, setStatus] = useState("active");
   const [order, setOrder] = useState("desc");
   useEffect(() => {
     let active = true;
-    api<RecordState[]>(`/api/manage/projects/${projectId}/${kind}`)
-      .then((data) => {
-        if (active) {
-          setRows(data);
-          setError("");
-          setBusy(false);
-        }
-      })
-      .catch((e) => {
-        if (active) {
-          setError(e.message);
-          setBusy(false);
-        }
-      });
+    const timer = window.setTimeout(
+      () => {
+        setSearching(true);
+        const query = new URLSearchParams({ view: "list", q });
+        api<ContentListData>(
+          `/api/manage/projects/${projectId}/${kind}?${query}`,
+        )
+          .then((data) => {
+            if (active) {
+              setRows(data.rows);
+              setRecordCount(data.recordCount);
+              setActiveCount(data.activeCount);
+              setError("");
+              setBusy(false);
+              setSearching(false);
+            }
+          })
+          .catch((e) => {
+            if (active) {
+              setError(e.message);
+              setBusy(false);
+              setSearching(false);
+            }
+          });
+      },
+      q ? 300 : 0,
+    );
     return () => {
       active = false;
+      window.clearTimeout(timer);
     };
-  }, [projectId, kind]);
+  }, [projectId, kind, q]);
   const filtered = rows
     .filter(
       (r) =>
@@ -146,15 +164,11 @@ export function ContentList({
           : !r.trashed &&
             (status === "active" ||
               (status === "published" ? !!r.published : !r.published))) &&
-        (!q ||
-          `${r.draft.title} ${"body" in r.draft ? r.draft.body : JSON.stringify(r.draft.value)}`
-            .toLowerCase()
-            .includes(q.toLowerCase())) &&
         (!tag || r.draft.tags.includes(tag.toLowerCase())),
     )
     .sort((a, b) => {
-      const x = "articleDate" in a.draft ? a.draft.articleDate : a.updatedAt;
-      const y = "articleDate" in b.draft ? b.draft.articleDate : b.updatedAt;
+      const x = a.draft.articleDate ?? a.updatedAt;
+      const y = b.draft.articleDate ?? b.updatedAt;
       return (
         x.localeCompare(y) * (order === "desc" ? -1 : 1) ||
         a.id.localeCompare(b.id)
@@ -167,9 +181,7 @@ export function ContentList({
           <div className={styles.eyebrow}>YOUR CONTENT</div>
           <h1>
             {kind === "articles" ? "Articles" : "JSON documents"}
-            <span className={styles.headingCount}>
-              {rows.filter((r) => !r.trashed).length}
-            </span>
+            <span className={styles.headingCount}>{activeCount}</span>
           </h1>
           <p className={styles.subtitle}>
             {kind === "articles"
@@ -195,6 +207,7 @@ export function ContentList({
             <input
               aria-label="Search content"
               value={q}
+              aria-busy={searching}
               onChange={(e) => setQ(e.target.value)}
               placeholder={`Search ${kind}…`}
             />
@@ -236,12 +249,12 @@ export function ContentList({
         ) : (
           <Empty
             title={
-              rows.length
+              recordCount
                 ? "No matching content"
                 : `Your first ${kind === "articles" ? "story" : "document"} starts here`
             }
           >
-            {rows.length
+            {recordCount
               ? "Try another search, tag, or status."
               : "Create something new. It will stay private until you publish it."}
           </Empty>
@@ -265,21 +278,13 @@ export function Dashboard({
   username: string;
   canEdit: boolean;
 }) {
-  const [data, setData] = useState<{
-    articles: RecordState[];
-    documents: RecordState[];
-    media: Media[];
-  } | null>(null);
+  const [data, setData] = useState<WorkspaceDashboard | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
     let active = true;
-    Promise.all([
-      api<RecordState[]>(`/api/manage/projects/${projectId}/articles`),
-      api<RecordState[]>(`/api/manage/projects/${projectId}/documents`),
-      api<Media[]>(`/api/manage/projects/${projectId}/media`),
-    ])
-      .then(([articles, documents, media]) => {
-        if (active) setData({ articles, documents, media });
+    api<WorkspaceDashboard>(`/api/manage/projects/${projectId}/dashboard`)
+      .then((summary) => {
+        if (active) setData(summary);
       })
       .catch((e) => {
         if (active) setError(e.message);
@@ -288,8 +293,7 @@ export function Dashboard({
       active = false;
     };
   }, [projectId]);
-  const articles = data?.articles.filter((r) => !r.trashed) ?? [];
-  const published = articles.filter((r) => r.published).length;
+  const articles = data?.recentArticles ?? [];
   return (
     <>
       <div className={styles.pageHeading}>
@@ -315,25 +319,25 @@ export function Dashboard({
         {[
           {
             title: "Total articles",
-            value: data ? articles.length : "—",
+            value: data ? data.articleCount : "—",
             icon: "article",
             sub: "Active articles",
           },
           {
             title: "Published",
-            value: data ? published : "—",
+            value: data ? data.publishedCount : "—",
             icon: "globe",
             sub: "Available through the API",
           },
           {
             title: "Drafts",
-            value: data ? articles.length - published : "—",
+            value: data ? data.articleCount - data.publishedCount : "—",
             icon: "clock",
             sub: "Not yet published",
           },
           {
             title: "Media assets",
-            value: data ? data.media.length : "—",
+            value: data ? data.mediaCount : "—",
             icon: "image",
             sub: "Images and video",
           },
@@ -371,13 +375,7 @@ export function Dashboard({
         {!data && !error ? (
           <div className={styles.loading}>Loading your workspace…</div>
         ) : articles.length ? (
-          <Table
-            rows={[...articles]
-              .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-              .slice(0, 5)}
-            kind="articles"
-            projectId={projectId}
-          />
+          <Table rows={articles} kind="articles" projectId={projectId} />
         ) : (
           <Empty title="No articles yet">
             Create an article to start your content library.

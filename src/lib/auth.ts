@@ -1,8 +1,13 @@
 import "server-only";
 
 import { cookies } from "next/headers";
-import { HttpError, organizationIdentifier } from "./config";
-import { getProject, getProjectRegistry, productionVisible } from "./projects";
+import { HttpError, identifier, organizationIdentifier } from "./config";
+import {
+  getProject,
+  getProjectRegistry,
+  productionVisible,
+  type ProjectRecord,
+} from "./projects";
 import { usernameSchema } from "./username";
 import type { Actor, Role } from "./types";
 import {
@@ -38,6 +43,12 @@ export interface ManagedAccount {
   subjectId: string;
   platformAdmin: boolean;
   disabled: boolean;
+}
+
+export interface AuthContext {
+  actor: Actor;
+  token: string;
+  session: PerministerSession;
 }
 
 export function minimumAccountPasswordLength() {
@@ -269,10 +280,8 @@ export async function revokeProjectGrantsForDeletion(
   );
 }
 
-export async function allowedProjects(actor: Actor) {
-  const token = await requirePerministerToken();
-  const session = await perministerSession(token);
-  if (!session) throw new HttpError(401, "Please sign in");
+export async function allowedProjects(context: AuthContext) {
+  const { actor, token, session } = context;
   const projects = (await getProjectRegistry(actor.organizationId)).filter(
     productionVisible,
   );
@@ -335,69 +344,127 @@ export async function projectMemberAccounts(
   });
 }
 
-async function sessionUser(
-  token: string | undefined,
-  selectedOrganizationId?: string,
-) {
-  if (!token) return null;
-  const session = await perministerSession(token);
-  return session
-    ? actorFromPerministerSession(session, selectedOrganizationId)
-    : null;
-}
-
-export async function currentActor() {
+export async function currentAuthContext(): Promise<AuthContext | null> {
   const jar = await cookies();
   const token = jar.get(cookieName)?.value;
   if (!token) return null;
   const selectedOrganizationId = jar.get(organizationCookieName)?.value;
-  return sessionUser(token, selectedOrganizationId);
+  const session = await perministerSession(token);
+  if (!session) return null;
+  const actor = actorFromPerministerSession(session, selectedOrganizationId);
+  return actor ? { actor, token, session } : null;
+}
+
+export async function requireAuthContext() {
+  const context = await currentAuthContext();
+  if (!context) throw new HttpError(401, "Please sign in");
+  return context;
+}
+
+export async function currentActor() {
+  return (await currentAuthContext())?.actor ?? null;
 }
 
 export async function requireActor() {
-  const actor = await currentActor();
-  if (!actor) throw new HttpError(401, "Please sign in");
-  return actor;
+  return (await requireAuthContext()).actor;
 }
 
-export async function authorize(
-  actor: Actor,
+export async function authorizeProject(
+  context: AuthContext,
   projectId: string,
   write = false,
   admin = false,
 ) {
-  const project = await getProject(actor.organizationId, projectId);
+  const actor = context.actor;
+  const validProjectId = identifier.parse(projectId);
+  const projectResult = getProject(actor.organizationId, validProjectId);
+  const authorizationResult = actor.platformAdmin
+    ? Promise.resolve(true)
+    : perministerAuthorize(
+        context.token,
+        actor.organizationId,
+        validProjectId,
+        admin
+          ? "postparticle:members:manage"
+          : write
+            ? "postparticle:project:write"
+            : "postparticle:project:read",
+      );
+  const [projectOutcome, authorizationOutcome] = await Promise.allSettled([
+    projectResult,
+    authorizationResult,
+  ] as const);
+  if (projectOutcome.status === "rejected") throw projectOutcome.reason;
+  const project = projectOutcome.value;
   if (!productionVisible(project))
     throw new HttpError(404, "Project not found");
-  const token = await requirePerministerToken();
-  const action = admin
-    ? "postparticle:members:manage"
-    : write
-      ? "postparticle:project:write"
-      : "postparticle:project:read";
-  if (
-    !actor.platformAdmin &&
-    !(await perministerAuthorize(
-      token,
-      actor.organizationId,
-      projectId,
-      action,
-    ))
-  ) {
+  if (authorizationOutcome.status === "rejected")
+    throw authorizationOutcome.reason;
+  if (!authorizationOutcome.value) {
     throw new HttpError(403, "You do not have permission for this action");
   }
-  const session = await perministerSession(token);
-  if (!session) throw new HttpError(401, "Please sign in");
-  return (
-    perministerRole(session, actor.organizationId, projectId) ??
-    (actor.platformAdmin
-      ? "admin"
-      : admin
+  return {
+    project,
+    role:
+      perministerRole(context.session, actor.organizationId, validProjectId) ??
+      (actor.platformAdmin
         ? "admin"
-        : write
-          ? "editor"
-          : "viewer")
-  );
+        : admin
+          ? "admin"
+          : write
+            ? "editor"
+            : "viewer"),
+  };
+}
+
+export async function authorizeResolvedProject(
+  context: AuthContext,
+  rawOrganizationId: string,
+  project: ProjectRecord,
+  write = false,
+  admin = false,
+) {
+  const organizationId = organizationIdentifier
+    .parse(rawOrganizationId)
+    .toLowerCase();
+  const actor = context.actor;
+  if (
+    actor.organizationId !== organizationId ||
+    (project.legacyOrganizationId &&
+      project.legacyOrganizationId.toLowerCase() !== organizationId)
+  )
+    throw new HttpError(403, "You do not have permission for this action");
+
+  const projectId = identifier.parse(project.id);
+  if (!productionVisible(project))
+    throw new HttpError(404, "Project not found");
+  const authorized = actor.platformAdmin
+    ? true
+    : await perministerAuthorize(
+        context.token,
+        organizationId,
+        projectId,
+        admin
+          ? "postparticle:members:manage"
+          : write
+            ? "postparticle:project:write"
+            : "postparticle:project:read",
+      );
+  if (!authorized)
+    throw new HttpError(403, "You do not have permission for this action");
+
+  return {
+    project,
+    role:
+      perministerRole(context.session, organizationId, projectId) ??
+      (actor.platformAdmin
+        ? "admin"
+        : admin
+          ? "admin"
+          : write
+            ? "editor"
+            : "viewer"),
+  };
 }
 
 export async function login(username: string, password: string) {
@@ -451,7 +518,10 @@ export async function selectOrganization(rawOrganizationId: string) {
     .parse(rawOrganizationId)
     .toLowerCase();
   const token = await requirePerministerToken();
-  const actor = await sessionUser(token, organizationId);
+  const session = await perministerSession(token);
+  const actor = session
+    ? actorFromPerministerSession(session, organizationId)
+    : null;
   if (!actor || actor.organizationId !== organizationId)
     throw new HttpError(403, "You do not have access to this organization.");
   (await cookies()).set(organizationCookieName, organizationId, {
