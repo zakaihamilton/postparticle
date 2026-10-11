@@ -32,18 +32,21 @@ export const PATCH = manageHandler(
       )
       .parse(await readJson(request));
     let updated: ProjectRecord | undefined;
-    await updateProjectRegistry(actor.organizationId, (projects) =>
-      projects.map((project) => {
-        if (project.id !== projectId) return project;
-        if (project.deleting)
-          throw new HttpError(
-            409,
-            "A project being deleted cannot be changed.",
-          );
-        const next: ProjectRecord = { ...project, ...input };
-        updated = next;
-        return next;
-      }),
+    await updateProjectRegistry(
+      actor.organizationId,
+      (projects) =>
+        projects.map((project) => {
+          if (project.id !== projectId) return project;
+          if (project.deleting)
+            throw new HttpError(
+              409,
+              "A project being deleted cannot be changed.",
+            );
+          const next: ProjectRecord = { ...project, ...input };
+          updated = next;
+          return next;
+        }),
+      { resolveProjectIds: [projectId] },
     );
     if (!updated) throw new HttpError(404, "Project not found");
     return json({ project: updated });
@@ -92,14 +95,20 @@ export const DELETE = manageHandler(
     );
     if (!project.deleting) {
       let marked = false;
-      await updateProjectRegistry(actor.organizationId, (projects) =>
-        projects.map((candidate) => {
-          if (candidate.id !== projectId) return candidate;
-          if (!candidate.archived)
-            throw new HttpError(409, "Archive the project before deleting it.");
-          marked = true;
-          return { ...candidate, deleting: true };
-        }),
+      await updateProjectRegistry(
+        actor.organizationId,
+        (projects) =>
+          projects.map((candidate) => {
+            if (candidate.id !== projectId) return candidate;
+            if (!candidate.archived)
+              throw new HttpError(
+                409,
+                "Archive the project before deleting it.",
+              );
+            marked = true;
+            return { ...candidate, deleting: true };
+          }),
+        { resolveProjectIds: [projectId] },
       );
       if (!marked) throw new HttpError(404, "Project not found");
       project = await getProject(actor.organizationId, projectId, {
@@ -124,8 +133,10 @@ export const DELETE = manageHandler(
     if (!result.done)
       return json({ done: false, deletedObjects: result.deleted });
 
-    await updateProjectRegistry(actor.organizationId, (projects) =>
-      projects.filter((candidate) => candidate.id !== projectId),
+    await updateProjectRegistry(
+      actor.organizationId,
+      (projects) => projects.filter((candidate) => candidate.id !== projectId),
+      { resolveProjectIds: [projectId] },
     );
     return json({ done: true, deletedObjects: result.deleted });
   },

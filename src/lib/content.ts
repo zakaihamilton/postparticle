@@ -3,7 +3,7 @@ import { z } from "zod";
 import { append, events } from "./events";
 import { readContentRecord, readContentRecords } from "./content-state";
 import { HttpError, identifier } from "./config";
-import { replaceMediaReferences } from "./media-references";
+import { collectMediaReferenceIds } from "./media-references";
 import type { Store } from "./storage";
 import type { Article, Content, JsonDocument, Kind } from "./types";
 const tags = z
@@ -102,18 +102,7 @@ export async function restoreRevision(
   await saveContent(kind, actor, old.data, store);
 }
 export function mediaReferences(content: unknown, kind?: Kind): string[] {
-  const refs = new Set<string>();
-  function walk(value: unknown) {
-    if (typeof value === "string") {
-      replaceMediaReferences(value, (id) => {
-        refs.add(id);
-        return `media:${id}`;
-      });
-    } else if (Array.isArray(value)) value.forEach(walk);
-    else if (value && typeof value === "object")
-      Object.values(value).forEach(walk);
-  }
-  walk(content);
+  const refs = new Set(collectMediaReferenceIds(content));
   // Implicit IDs belong only to the article envelope, never arbitrary JSON fields.
   if (kind === "articles") {
     const article = articleSchema.parse(content);

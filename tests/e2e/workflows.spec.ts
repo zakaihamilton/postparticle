@@ -841,7 +841,7 @@ async function chooseFixtureImage(page: Page, name: string) {
       name,
       mimeType: "image/png",
       buffer: Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jVf8AAAAASUVORK5CYII=",
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGP4/x8AAwAB//wl3FEAAAAASUVORK5CYII=",
         "base64",
       ),
     },
@@ -875,7 +875,7 @@ test("media drops accept one supported file and reject unsupported or multiple f
   const image = {
     mimeType: "image/png",
     buffer: Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jVf8AAAAASUVORK5CYII=",
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGP4/x8AAwAB//wl3FEAAAAASUVORK5CYII=",
       "base64",
     ),
   };
@@ -945,16 +945,18 @@ test("a rejected file signature is terminal and does not offer finalization retr
       status: 415,
       contentType: "application/json",
       body: JSON.stringify({
-        error: "Uploaded file does not match its declared content type",
+        error:
+          "Uploaded file is malformed, truncated, or does not match its declared format",
       }),
     });
   });
 
   await chooseFixtureImage(page, `rejected-${info.project.name}.png`);
   await expect(
-    page.getByText("Uploaded file does not match its declared content type", {
-      exact: true,
-    }),
+    page.getByText(
+      "Uploaded file is malformed, truncated, or does not match its declared format",
+      { exact: true },
+    ),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Retry finalization" }),

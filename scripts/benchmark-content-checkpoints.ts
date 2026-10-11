@@ -6,7 +6,11 @@ import path from "node:path";
 import { listPublicArticles, readPublicArticle } from "../src/lib/public";
 import { LocalStore } from "../src/lib/storage";
 import { records } from "../src/lib/content";
-import { rebuildContentCheckpoints } from "../src/lib/content-state";
+import {
+  contentIndexStatus,
+  rebuildContentCheckpoints,
+} from "../src/lib/content-state";
+import { append } from "../src/lib/events";
 import type { Article, Event } from "../src/lib/types";
 
 class CountingStore extends LocalStore {
@@ -14,15 +18,17 @@ class CountingStore extends LocalStore {
   lists = 0;
   listedKeys = 0;
   listSizes: number[] = [];
+  listedPrefixes: string[] = [];
 
   override async get<T>(key: string) {
     this.gets++;
     return super.get<T>(key);
   }
 
-  override async list(prefix: string) {
+  override async list(prefix: string, marker?: string) {
     this.lists++;
-    const keys = await super.list(prefix);
+    this.listedPrefixes.push(prefix);
+    const keys = await super.list(prefix, marker);
     this.listedKeys += keys.length;
     this.listSizes.push(keys.length);
     return keys;
@@ -33,6 +39,7 @@ class CountingStore extends LocalStore {
     this.lists = 0;
     this.listedKeys = 0;
     this.listSizes = [];
+    this.listedPrefixes = [];
   }
 }
 
@@ -122,7 +129,7 @@ async function benchmarkSize(recordsCount: number, revisionsPerRecord: number) {
     assert.ok(manifest);
     assert.equal(manifest.records, recordsCount);
     for (const shard of manifest.shards) {
-      assert.ok(shard.rows <= 1000, "checkpoint shard exceeded the row cap");
+      assert.ok(shard.rows <= 200, "checkpoint shard exceeded the row cap");
       assert.ok(
         shard.bytes <= 4 * 1024 * 1024,
         "checkpoint shard exceeded 4 MiB",
@@ -137,6 +144,10 @@ async function benchmarkSize(recordsCount: number, revisionsPerRecord: number) {
     assert.ok(
       checkpointMetrics.objectGets < baselineMetrics.objectGets / 5,
       `expected fewer than one fifth as many object reads (${checkpointMetrics.objectGets} vs ${baselineMetrics.objectGets})`,
+    );
+    assert.ok(
+      !store.listedPrefixes.includes("content/articles/"),
+      "indexed listing must not enumerate historical content-event keys",
     );
 
     store.reset();
@@ -164,6 +175,39 @@ async function benchmarkSize(recordsCount: number, revisionsPerRecord: number) {
       "single article lookup should fetch fewer event bodies after checkpointing",
     );
 
+    await Promise.all([
+      append(
+        store,
+        "content/articles/story-0000",
+        "benchmark-writer-a",
+        "save",
+        article(0, revisionsPerRecord + 1),
+      ),
+      append(
+        store,
+        "content/articles/story-0001",
+        "benchmark-writer-b",
+        "save",
+        article(1, revisionsPerRecord + 1),
+      ),
+    ]);
+    const tailStatus = await contentIndexStatus("articles", store);
+    assert.equal(tailStatus.valid, true);
+    assert.equal(tailStatus.unindexedEvents, 2);
+    store.reset();
+    started = performance.now();
+    const concurrentFullReplay = await records("articles", store);
+    const concurrentFullReplayMetrics = metrics(store, started);
+    store.reset();
+    started = performance.now();
+    const concurrentIndexed = await records("articles", store);
+    const concurrentIndexedMetrics = metrics(store, started);
+    assert.deepEqual(concurrentIndexed, concurrentFullReplay);
+    assert.ok(
+      !store.listedPrefixes.includes("content/articles/"),
+      "indexed reads after concurrent writes must avoid the historical event prefix",
+    );
+
     return {
       fixture: {
         historicalEvents: recordsCount * revisionsPerRecord,
@@ -173,6 +217,7 @@ async function benchmarkSize(recordsCount: number, revisionsPerRecord: number) {
       checkpoint: {
         buildElapsedMs: checkpointBuildMs,
         shards: built.shards,
+        unindexedTailAfterBuild: built.unindexedEvents,
       },
       recordListing: {
         fullReplay: baselineMetrics,
@@ -185,6 +230,11 @@ async function benchmarkSize(recordsCount: number, revisionsPerRecord: number) {
       publicArticleLookup: {
         fullReplay: baselinePublicArticleMetrics,
         checkpointed: checkpointedPublicArticleMetrics,
+      },
+      concurrentWrites: {
+        unindexedTail: tailStatus.unindexedEvents,
+        fullReplay: concurrentFullReplayMetrics,
+        indexed: concurrentIndexedMetrics,
       },
     };
   } finally {
@@ -205,7 +255,7 @@ console.log(
   JSON.stringify(
     {
       scenarios: results,
-      note: "The local adapter enumerates every matching key. Key counts and estimated Spaces pages expose the remaining history-scan cost; local timings do not simulate remote Spaces latency.",
+      note: "Fixtures contain 1,000, 5,000, and 10,000 historical events. Indexed reads must enumerate checkpoint shards and the recent feed tail, not historical content-event keys. Local timings do not simulate remote Spaces latency.",
     },
     null,
     2,

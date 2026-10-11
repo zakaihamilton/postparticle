@@ -59,28 +59,7 @@ export function Members({ projectId }: { projectId: string }) {
                 method: "POST",
                 body: JSON.stringify({ username, role: addRole }),
               });
-              setMembers((current) => {
-                const existing = current.find(
-                  (member) => member.username === username,
-                );
-                return existing
-                  ? current.map((member) =>
-                      member.username === username
-                        ? { ...member, disabled: false, role: addRole }
-                        : member,
-                    )
-                  : [
-                      ...current,
-                      {
-                        username,
-                        disabled: false,
-                        accessActive: true,
-                        role: addRole,
-                      },
-                    ].sort((left, right) =>
-                      left.username.localeCompare(right.username),
-                    );
-              });
+              setMembers(await api<Member[]>(endpoint));
               setAddUsername("");
               setMessage("Project access updated.");
             } catch (e) {

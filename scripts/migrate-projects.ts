@@ -26,6 +26,6 @@ for (const [organizationId, projects] of grouped) {
     { onlyIfMissing: true },
   );
   console.log(
-    `Migrated ${projects.length} projects to organizations/${organizationId}/projects.json.`,
+    `Migrated ${projects.length} projects to immutable per-project changes under organizations/${organizationId}/project-registry/changes/.`,
   );
 }

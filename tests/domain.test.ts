@@ -41,6 +41,73 @@ const article = {
   seoDescription: "",
   socialMediaId: "",
 };
+
+const pngFixture = () =>
+  new Uint8Array(
+    Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGP4/x8AAwAB//wl3FEAAAAASUVORK5CYII=",
+      "base64",
+    ),
+  );
+
+const jpegFixture = () =>
+  Uint8Array.from([
+    0xff, 0xd8, 0xff, 0xc0, 0, 11, 8, 0, 1, 0, 1, 1, 1, 0x11, 0, 0xff, 0xda, 0,
+    8, 1, 1, 0, 0, 0x3f, 0, 0, 0xff, 0xd9,
+  ]);
+
+const webpFixture = () =>
+  Uint8Array.from([
+    0x52, 0x49, 0x46, 0x46, 40, 0, 0, 0, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50,
+    0x38, 0x58, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x56, 0x50, 0x38,
+    0x20, 10, 0, 0, 0, 0, 0, 0, 0x9d, 0x01, 0x2a, 1, 0, 1, 0,
+  ]);
+
+const gifFixture = () =>
+  Uint8Array.from([
+    0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 1, 0, 1, 0, 0, 0, 0, 0x2c, 0, 0, 0, 0,
+    1, 0, 1, 0, 0, 2, 2, 0x44, 1, 0, 0x3b,
+  ]);
+
+const mp4Fixture = () =>
+  Uint8Array.from([
+    0, 0, 0, 16, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d, 0, 0, 2, 0, 0,
+    0, 0, 9, 0x6d, 0x64, 0x61, 0x74, 0,
+  ]);
+
+const webmFixture = () =>
+  Uint8Array.from([
+    0x1a, 0x45, 0xdf, 0xa3, 0x87, 0x42, 0x82, 0x84, 0x77, 0x65, 0x62, 0x6d,
+    0x18, 0x53, 0x80, 0x67, 0x81, 0,
+  ]);
+
+const mp4LargePrefix = (size: number) =>
+  Uint8Array.from([
+    0,
+    0,
+    0,
+    16,
+    0x66,
+    0x74,
+    0x79,
+    0x70,
+    0x69,
+    0x73,
+    0x6f,
+    0x6d,
+    0,
+    0,
+    2,
+    0,
+    (size - 16) >>> 24,
+    ((size - 16) >>> 16) & 0xff,
+    ((size - 16) >>> 8) & 0xff,
+    (size - 16) & 0xff,
+    0x6d,
+    0x64,
+    0x61,
+    0x74,
+  ]);
 beforeEach(async () => {
   root = await mkdtemp(path.join(tmpdir(), "postparticle-unit-"));
   store = new LocalStore("demo", root);
@@ -235,11 +302,9 @@ describe("media lifecycle", () => {
       contentType: input.contentType,
     });
     vi.spyOn(store, "readPrefix").mockResolvedValue(
-      Buffer.from([
-        0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d,
-        0x00, 0x00, 0x02, 0x00,
-      ]),
+      Buffer.from(mp4LargePrefix(input.size)),
     );
+    vi.spyOn(store, "readSuffix").mockResolvedValue(Buffer.from([0]));
     vi.spyOn(store, "copyPrivate").mockResolvedValue();
     await finishUpload(
       "a",
@@ -254,9 +319,7 @@ describe("media lifecycle", () => {
     expect(await store.get(`uploads/${interrupted.id}.json`)).toBeNull();
   });
   it("seals private uploads, publishes copies and blocks referenced deletion", async () => {
-    const pngSignature = Uint8Array.from([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-    ]);
+    const pngSignature = pngFixture();
     const upload = await startUpload(
       "editor",
       {
@@ -327,21 +390,12 @@ describe("media lifecycle", () => {
   });
   it("accepts the six supported signatures using bounded prefix reads", async () => {
     const fixtures = [
-      ["image/jpeg", Uint8Array.from([0xff, 0xd8, 0xff, 0x00])],
-      [
-        "image/png",
-        Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-      ],
-      ["image/webp", new TextEncoder().encode("RIFFxxxxWEBPVP8 ")],
-      ["image/gif", new TextEncoder().encode("GIF89a")],
-      [
-        "video/mp4",
-        Uint8Array.from([
-          0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f,
-          0x6d, 0x00, 0x00, 0x02, 0x00,
-        ]),
-      ],
-      ["video/webm", Uint8Array.from([0x1a, 0x45, 0xdf, 0xa3])],
+      ["image/jpeg", jpegFixture()],
+      ["image/png", pngFixture()],
+      ["image/webp", webpFixture()],
+      ["image/gif", gifFixture()],
+      ["video/mp4", mp4Fixture()],
+      ["video/webm", webmFixture()],
     ] as const;
 
     for (const [index, [contentType, bytes]] of fixtures.entries()) {
@@ -356,7 +410,11 @@ describe("media lifecycle", () => {
         "demo",
       );
       await store.writeBytes(`incoming/${upload.id}/asset`, bytes, contentType);
-      await finishUpload("editor", upload.id, [], store);
+      try {
+        await finishUpload("editor", upload.id, [], store);
+      } catch (error) {
+        throw new Error(`${contentType}: ${(error as Error).message}`);
+      }
       expect((await getMedia(upload.id, store))?.ready).toBe(true);
     }
   });
@@ -410,6 +468,45 @@ describe("media lifecycle", () => {
       expect(await store.get(`uploads/${upload.id}.json`)).toBeNull();
       expect(await store.list(`incoming/${upload.id}/`)).toEqual([]);
       expect(await getMedia(upload.id, store)).toBeNull();
+    }
+  });
+  it("rejects truncated containers and invalid image or video metadata", async () => {
+    const truncatedPng = pngFixture().slice(0, -12);
+    const metadataOnlyWebp = webpFixture().slice(0, 30);
+    metadataOnlyWebp[4] = 22;
+    const zeroDimensionPng = pngFixture();
+    zeroDimensionPng.fill(0, 16, 20);
+    const oversizedMp4Box = mp4Fixture();
+    oversizedMp4Box.set([0, 0, 1, 0], 16);
+    const invalidWebmDocType = webmFixture();
+    invalidWebmDocType.set(new TextEncoder().encode("matr"), 8);
+    const fixtures = [
+      ["image/png", truncatedPng],
+      ["image/webp", metadataOnlyWebp],
+      ["image/png", zeroDimensionPng],
+      ["video/mp4", oversizedMp4Box],
+      ["video/webm", invalidWebmDocType],
+    ] as const;
+
+    for (const [index, [contentType, bytes]] of fixtures.entries()) {
+      const upload = await startUpload(
+        "editor",
+        {
+          filename: `invalid-metadata-${index}`,
+          contentType,
+          size: bytes.length,
+        },
+        store,
+        "demo",
+      );
+      await store.writeBytes(`incoming/${upload.id}/asset`, bytes, contentType);
+      await expect(
+        finishUpload("editor", upload.id, [], store),
+      ).rejects.toMatchObject({
+        status: 415,
+      });
+      expect(await store.get(`uploads/${upload.id}.json`)).toBeNull();
+      expect(await store.list(`incoming/${upload.id}/`)).toEqual([]);
     }
   });
   it("propagates storage errors without pretending to have saved", async () => {

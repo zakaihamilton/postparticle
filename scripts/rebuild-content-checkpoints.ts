@@ -1,5 +1,8 @@
 import { identifier, organizationIdentifier } from "../src/lib/config";
-import { rebuildContentCheckpoints } from "../src/lib/content-state";
+import {
+  contentIndexStatus,
+  rebuildContentCheckpoints,
+} from "../src/lib/content-state";
 import { getProject, projectStoreFor } from "../src/lib/projects";
 
 const args = process.argv.slice(2);
@@ -20,6 +23,13 @@ const project = await getProject(organizationId, projectId, {
 const store = projectStoreFor(organizationId, project);
 
 for (const kind of ["articles", "documents"] as const) {
+  const before = await contentIndexStatus(kind, store);
+  console.log(
+    `${organizationId}/${projectId}/${kind}: ${before.valid ? before.unindexedEvents : "invalid"} unindexed events before rebuild` +
+      (before.indexedThrough
+        ? ` after ${before.indexedThrough}`
+        : " (no valid snapshot)"),
+  );
   const result = await rebuildContentCheckpoints(kind, store);
   if (!result.complete) {
     const explanation =
@@ -38,6 +48,7 @@ for (const kind of ["articles", "documents"] as const) {
   }
   console.log(
     `${organizationId}/${projectId}/${kind}: ${result.records} records in ${result.shards} shards` +
-      (result.generation ? ` (generation ${result.generation})` : " (empty)"),
+      (result.generation ? ` (generation ${result.generation})` : " (empty)") +
+      `; ${result.indexedEvents ?? 0} events indexed, ${result.unindexedEvents ?? 0} remain in the replay tail`,
   );
 }
