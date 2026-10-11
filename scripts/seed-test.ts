@@ -1,6 +1,5 @@
 import { saveContent, contentAction } from "../src/lib/content";
 import {
-  getProjectRegistry,
   updateProjectRegistry,
   getProject,
   projectStoreFor,
@@ -11,13 +10,8 @@ if (
   !process.env.LOCAL_STORAGE_PATH?.includes("postparticle-test")
 )
   throw new Error("Seeding is restricted to explicit local test directories");
-const registry = await getProjectRegistry(testOrganizationId, {
-  includeArchived: true,
-  includeDeleting: true,
-});
-if (!registry.some((project) => project.id === "demo")) {
-  await updateProjectRegistry(testOrganizationId, (projects) => [
-    ...projects,
+await updateProjectRegistry(testOrganizationId, (projects) => {
+  const fixtureProjects = [
     {
       id: "demo",
       name: "Demo Journal",
@@ -26,8 +20,21 @@ if (!registry.some((project) => project.id === "demo")) {
       archived: false,
       deleting: false,
     },
-  ]);
-}
+    {
+      id: "sentry8",
+      name: "SENTRY8",
+      description: "SENTRY8 content and media.",
+      production: true,
+      archived: false,
+      deleting: false,
+    },
+  ];
+  const existingIds = new Set(projects.map((project) => project.id));
+  return [
+    ...projects,
+    ...fixtureProjects.filter((project) => !existingIds.has(project.id)),
+  ];
+});
 const project = await getProject(testOrganizationId, "demo", {
   includeArchived: true,
 });
