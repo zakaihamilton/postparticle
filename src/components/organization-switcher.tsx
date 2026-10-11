@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Actor } from "@/lib/types";
 import { api } from "./ui";
 import Select from "./select";
@@ -14,21 +14,30 @@ export function OrganizationSwitcher({
   onBeforeChange?: () => Promise<boolean>;
 }) {
   const router = useRouter();
-  const [selected, setSelected] = useState(actor.organizationId);
+  const [selection, setSelection] = useState({
+    organizationId: actor.organizationId,
+    selected: actor.organizationId,
+  });
+  const selected =
+    selection.organizationId === actor.organizationId
+      ? selection.selected
+      : actor.organizationId;
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
-  useEffect(() => {
-    setSelected(actor.organizationId);
-  }, [actor.organizationId]);
-
   async function changeOrganization(organizationId: string) {
-    setSelected(organizationId);
+    setSelection({
+      organizationId: actor.organizationId,
+      selected: organizationId,
+    });
     setError("");
     setPending(true);
     try {
       if (onBeforeChange && !(await onBeforeChange())) {
-        setSelected(actor.organizationId);
+        setSelection({
+          organizationId: actor.organizationId,
+          selected: actor.organizationId,
+        });
         return;
       }
       await api("/api/auth/organization", {
@@ -38,7 +47,10 @@ export function OrganizationSwitcher({
       router.replace("/projects");
       router.refresh();
     } catch (cause) {
-      setSelected(actor.organizationId);
+      setSelection({
+        organizationId: actor.organizationId,
+        selected: actor.organizationId,
+      });
       setError((cause as Error).message);
     } finally {
       setPending(false);
