@@ -1,7 +1,7 @@
 .switcher {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 18px;
   min-width: 0;
 }
 .label,
@@ -10,6 +10,9 @@
   color: var(--muted);
   font-size: 12px;
   white-space: nowrap;
+}
+.label {
+  flex-shrink: 0;
 }
 .single {
   max-width: 220px;

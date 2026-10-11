@@ -282,32 +282,36 @@ export function ProjectSettings({
         </div>
       </div>
       <Notice error={error} message={message} />
-      {legacyProjects.length > 0 && (
-        <section className={styles.panel}>
-          <div className={styles.panelHeading}>
-            <div>
-              <h2>Restore existing content</h2>
-              <p>
-                These legacy projects still have stored content but are missing
-                from this organization’s registry. Restoring them adds the
-                original storage mapping without moving or overwriting content:{" "}
-                {legacyProjects
-                  .map((project) => `${project.name} (${project.id})`)
-                  .join(", ")}
-                .
-              </p>
-            </div>
+      <section className={styles.panel} id="project-recovery">
+        <div className={styles.panelHeading}>
+          <div>
+            <h2>Restore existing content</h2>
+            <p>
+              {loading
+                ? "Checking for legacy projects that are missing from this organization’s registry."
+                : legacyProjects.length
+                  ? "These legacy projects still have stored content but are missing from this organization’s registry. Restoring them adds the original storage mapping without moving or overwriting content: " +
+                    legacyProjects
+                      .map((project) => `${project.name} (${project.id})`)
+                      .join(", ") +
+                    "."
+                  : error
+                    ? "Could not check for legacy projects. Refresh this page to retry."
+                    : "No legacy projects are missing from this organization’s registry."}
+            </p>
           </div>
+        </div>
+        <div className={styles.formSection}>
           <button
             className={styles.secondary}
             type="button"
-            disabled={busy}
+            disabled={busy || loading || legacyProjects.length === 0}
             onClick={() => void restoreLegacyProjects()}
           >
             Restore existing projects
           </button>
-        </section>
-      )}
+        </div>
+      </section>
       <section className={styles.panel}>
         <div className={styles.panelHeading}>
           <div>

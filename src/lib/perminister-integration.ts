@@ -9,6 +9,7 @@ const requestTimeoutMs = 12_000;
 interface PerministerOrganizationAccess {
   organizationId: string;
   organizationName: string;
+  organizationRole?: string;
   productId: string;
   platformAdmin: boolean;
   resourceRoles: Array<{
@@ -33,6 +34,7 @@ export function perministerHasProductAdminAccess(
   organization: PerministerSession["organizations"][number],
 ) {
   if (organization.platformAdmin) return true;
+  if (organization.organizationRole?.toLowerCase() === "owner") return true;
   return organization.resourceRoles.some((grant) => {
     const role = grant.role?.toLowerCase();
     const productScope =

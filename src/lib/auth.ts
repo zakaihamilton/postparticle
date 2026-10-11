@@ -279,6 +279,7 @@ export async function allowedProjects(actor: Actor) {
   const accessible = await Promise.all(
     projects.map(async (project) => {
       if (
+        !actor.platformAdmin &&
         !(await perministerAuthorize(
           token,
           actor.organizationId,
@@ -368,6 +369,7 @@ export async function authorize(
       ? "postparticle:project:write"
       : "postparticle:project:read";
   if (
+    !actor.platformAdmin &&
     !(await perministerAuthorize(
       token,
       actor.organizationId,
