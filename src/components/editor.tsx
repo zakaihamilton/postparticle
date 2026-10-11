@@ -113,7 +113,7 @@ export default function Editor({
     api<EditorData>(editorInitialEndpoint)
       .then((data) => {
         if (!active) return;
-        applyEditorData(data, true);
+        applyEditorData(data, !isNew);
         setLoading(false);
       })
       .catch((e) => {
