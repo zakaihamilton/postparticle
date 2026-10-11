@@ -266,7 +266,7 @@ test("login, project selection, article editing, publishing, tags, history, and 
       ).json()
     ).title,
   ).toBe(title);
-  await page.getByRole("button", { name: /Show .* revisions/ }).click();
+  await page.getByRole("button", { name: "Show revision history" }).click();
   await expect(
     page.getByRole("button", { name: "Restore draft" }).first(),
   ).toBeVisible();
