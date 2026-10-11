@@ -7,6 +7,7 @@ const sizes = [
 ] as const;
 
 test("home page has no WCAG A/AA violations", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await expect(page.locator("main").first()).toBeVisible();
   await page.evaluate(() => {
