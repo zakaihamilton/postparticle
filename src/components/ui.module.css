@@ -28,8 +28,8 @@
   color: var(--on-accent);
 }
 .themeControl {
-  min-width: 110px;
-  width: 110px;
+  min-width: 140px;
+  width: 140px;
 }
 .themeControl > button {
   font-size: 14px;
