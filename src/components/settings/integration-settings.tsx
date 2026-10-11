@@ -1,7 +1,13 @@
 "use client";
 import { GuardedLink as Link } from "../navigation-guard";
 import styles from "../workspace.module.css";
-export function IntegrationSettings({ projectId }: { projectId: string }) {
+export function IntegrationSettings({
+  projectId,
+  organizationId,
+}: {
+  projectId: string;
+  organizationId: string;
+}) {
   return (
     <>
       <div className={styles.pageHeading}>
@@ -24,9 +30,9 @@ export function IntegrationSettings({ projectId }: { projectId: string }) {
             them on your website’s server to render content and SEO metadata.
           </p>
           {[
-            `/api/v1/projects/${projectId}/articles?q=&tag=&order=desc&page=1&pageSize=12`,
-            `/api/v1/projects/${projectId}/articles/{slug}`,
-            `/api/v1/projects/${projectId}/documents/{key}`,
+            `/api/v1/projects/${projectId}/articles?organizationId=${organizationId}&q=&tag=&order=desc&page=1&pageSize=12`,
+            `/api/v1/projects/${projectId}/articles/{slug}?organizationId=${organizationId}`,
+            `/api/v1/projects/${projectId}/documents/{key}?organizationId=${organizationId}`,
           ].map((url) => (
             // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Keyboard users must be able to scroll these API examples.
             <pre className={styles.codeBlock} key={url} tabIndex={0}>

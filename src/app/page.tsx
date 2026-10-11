@@ -278,7 +278,10 @@ export default function Welcome() {
             </div>
             <div className={styles.apiRequest}>
               <span>GET</span>
-              <code>/api/v1/projects/demo/articles</code>
+              <code>
+                /api/v1/projects/demo/articles?organizationId=
+                {"<organization-uuid>"}
+              </code>
               <Icon name="check" size={16} />
             </div>
             <div className={styles.websitePreview}>

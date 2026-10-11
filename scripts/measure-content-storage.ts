@@ -1,9 +1,9 @@
 import { performance } from "node:perf_hooks";
-import registry from "../projects.json";
 import { identifier, organizationIdentifier } from "../src/lib/config";
 import { records } from "../src/lib/content";
 import { listPublicArticles, readPublicArticle } from "../src/lib/public";
-import { projectStore, type Store } from "../src/lib/storage";
+import { getProject, projectStoreFor } from "../src/lib/projects";
+import type { Store } from "../src/lib/storage";
 
 const args = process.argv.slice(2);
 const organizationOption = args.indexOf("--organization-id");
@@ -16,11 +16,12 @@ const projectId = args.find(
 );
 if (
   !projectId ||
+  !rawOrganizationId ||
   !args.includes("--confirm-non-production") ||
   (organizationOption >= 0 && !rawOrganizationId)
 )
   throw new Error(
-    'Usage: npm run storage:measure -- <non-production-project-id> [--organization-id "<organization-uuid>"] --confirm-non-production',
+    'Usage: npm run storage:measure -- <non-production-project-id> --organization-id "<organization-uuid>" --confirm-non-production',
   );
 if (process.env.STORAGE_DRIVER !== "spaces")
   throw new Error("Measurement requires STORAGE_DRIVER=spaces");
@@ -28,21 +29,15 @@ if (process.env.VERCEL_ENV === "production")
   throw new Error("Refusing to measure from a production deployment");
 
 const parsedProjectId = identifier.parse(projectId);
-if (
-  !registry.some(
-    (project) => project.id === parsedProjectId && project.production === false,
-  )
-)
-  throw new Error(
-    "Choose a project explicitly marked production:false in projects.json",
-  );
-
-const organizationId = rawOrganizationId
-  ? organizationIdentifier.parse(rawOrganizationId).toLowerCase()
-  : undefined;
-const target = organizationId
-  ? projectStore(organizationId, parsedProjectId)
-  : projectStore(parsedProjectId);
+const organizationId = organizationIdentifier
+  .parse(rawOrganizationId)
+  .toLowerCase();
+const project = await getProject(organizationId, parsedProjectId, {
+  includeArchived: true,
+});
+if (project.production !== false)
+  throw new Error("Choose a project explicitly marked production:false.");
+const target = projectStoreFor(organizationId, project);
 const stats = {
   gets: 0,
   listCalls: 0,

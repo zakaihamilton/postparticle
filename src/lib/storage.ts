@@ -11,6 +11,9 @@ import {
   UploadPartCommand,
   CompleteMultipartUploadCommand,
   AbortMultipartUploadCommand,
+  ListObjectVersionsCommand,
+  DeleteObjectsCommand,
+  ListMultipartUploadsCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
@@ -27,10 +30,9 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import {
   HttpError,
-  legacyOrganizationIdForProject,
+  identifier,
   localDriver,
   organizationIdentifier,
-  projectById,
   requiredEnv,
 } from "./config";
 
@@ -55,6 +57,7 @@ export interface Store {
     parts: { PartNumber: number; ETag: string }[],
   ): Promise<void>;
   multipartAbort(key: string, uploadId: string): Promise<void>;
+  purgePrefixBatch(prefix: string): Promise<{ done: boolean; deleted: number }>;
   publicUrl(key: string): string;
 }
 export function checkKey(key: string) {
@@ -269,6 +272,72 @@ export class SpacesStore implements Store {
       }),
     );
   }
+  async purgePrefixBatch(prefix: string) {
+    const checkedPrefix = checkKey(prefix.replace(/\/$/, "")) + "/";
+    const page = await this.client.send(
+      new ListObjectVersionsCommand({
+        Bucket: this.bucket,
+        Prefix: checkedPrefix,
+        MaxKeys: 1000,
+      }),
+    );
+    const objects = [
+      ...(page.Versions ?? []).flatMap((item) =>
+        item.Key
+          ? [
+              {
+                Key: item.Key,
+                ...(item.VersionId === undefined
+                  ? {}
+                  : { VersionId: item.VersionId }),
+              },
+            ]
+          : [],
+      ),
+      ...(page.DeleteMarkers ?? []).flatMap((item) =>
+        item.Key
+          ? [
+              {
+                Key: item.Key,
+                ...(item.VersionId === undefined
+                  ? {}
+                  : { VersionId: item.VersionId }),
+              },
+            ]
+          : [],
+      ),
+    ];
+    if (objects.length) {
+      const deleted = await this.client.send(
+        new DeleteObjectsCommand({
+          Bucket: this.bucket,
+          Delete: { Objects: objects, Quiet: true },
+        }),
+      );
+      if (deleted.Errors?.length)
+        throw new Error("Some stored object versions could not be deleted");
+    }
+
+    const uploads = await this.client.send(
+      new ListMultipartUploadsCommand({
+        Bucket: this.bucket,
+        Prefix: checkedPrefix,
+        MaxUploads: 1000,
+      }),
+    );
+    await mapBounded(uploads.Uploads ?? [], async (upload) => {
+      if (upload.Key && upload.UploadId)
+        await this.multipartAbort(upload.Key, upload.UploadId);
+    });
+    return {
+      done:
+        !page.IsTruncated &&
+        !uploads.IsTruncated &&
+        objects.length === 0 &&
+        !uploads.Uploads?.length,
+      deleted: objects.length,
+    };
+  }
   publicUrl(key: string) {
     return `${this.base}/${checkKey(key).split("/").map(encodeURIComponent).join("/")}`;
   }
@@ -410,48 +479,60 @@ export class LocalStore implements Store {
   async multipartAbort() {
     /* No local multipart uploads. */
   }
+  async purgePrefixBatch(prefix: string) {
+    const keys = (await this.list(prefix)).slice(0, 1000);
+    for (const key of keys) await this.remove(key);
+    return { done: keys.length === 0, deleted: keys.length };
+  }
   publicUrl(key: string) {
     return `/api/local-media/${this.scope}/${checkKey(key)}`;
   }
 }
 const stores = new Map<string, Store>();
-export function projectStore(projectId: string): Store;
-export function projectStore(organizationId: string, projectId: string): Store;
+export function contentStore(): Store {
+  return storeFor("__content", "CONTENT");
+}
 export function projectStore(
-  organizationOrProjectId: string,
-  scopedProjectId?: string,
-) {
-  if (scopedProjectId === undefined) {
-    const projectId = organizationOrProjectId;
-    projectById(projectId);
-    if (!legacyOrganizationIdForProject(projectId))
-      throw new HttpError(400, "Organization ID is required for this project");
-    if (localDriver()) return storeFor(projectId, projectId);
-    return new NamespacedStore(
-      storeFor("__content", "CONTENT"),
-      `projects/${projectId}`,
-    );
-  }
-
-  const projectId = scopedProjectId;
+  rawOrganizationId: string,
+  rawProjectId: string,
+  legacy = false,
+  accessGuard?: () => Promise<void>,
+): Store {
   const organizationId = organizationIdentifier
-    .parse(organizationOrProjectId)
+    .parse(rawOrganizationId)
     .toLowerCase();
-  projectById(projectId);
-  if (legacyOrganizationIdForProject(projectId) === organizationId) {
-    if (localDriver()) return storeFor(projectId, projectId);
-    return new NamespacedStore(
-      storeFor("__content", "CONTENT"),
-      `projects/${projectId}`,
-    );
+  const projectId = identifier.parse(rawProjectId);
+  if (legacy) {
+    const store = localDriver()
+      ? storeFor(projectId, projectId)
+      : new NamespacedStore(contentStore(), `projects/${projectId}`);
+    return accessGuard ? withAccessGuard(store, accessGuard) : store;
   }
 
   const namespace = `organizations/${organizationId}/projects/${projectId}`;
   if (localDriver()) {
     const localScope = `${organizationId}/${projectId}`;
-    return storeFor(localScope, localScope);
+    const store = storeFor(localScope, localScope);
+    return accessGuard ? withAccessGuard(store, accessGuard) : store;
   }
-  return new NamespacedStore(storeFor("__content", "CONTENT"), namespace);
+  const store = new NamespacedStore(contentStore(), namespace);
+  return accessGuard ? withAccessGuard(store, accessGuard) : store;
+}
+
+function withAccessGuard(store: Store, accessGuard: () => Promise<void>): Store {
+  return new Proxy(store, {
+    get(target, property) {
+      const member = Reflect.get(target, property, target) as unknown;
+      if (typeof member !== "function") return member;
+      const bound = member.bind(target) as (...args: unknown[]) => unknown;
+      if (property === "purgePrefixBatch" || property === "publicUrl")
+        return bound;
+      return async (...args: unknown[]) => {
+        await accessGuard();
+        return bound(...args);
+      };
+    },
+  });
 }
 function storeFor(scope: string, prefix: string) {
   if (!stores.has(scope))
@@ -548,6 +629,15 @@ class NamespacedStore implements Store {
 
   async multipartAbort(key: string, uploadId: string) {
     await this.store.multipartAbort(this.key(key), uploadId);
+  }
+
+  async purgePrefixBatch(prefix: string) {
+    const normalized = prefix.replace(/^\/+|\/+$/g, "");
+    return this.store.purgePrefixBatch(
+      normalized
+        ? `${this.objectPrefix}${checkKey(normalized)}/`
+        : this.objectPrefix,
+    );
   }
 
   publicUrl(key: string) {

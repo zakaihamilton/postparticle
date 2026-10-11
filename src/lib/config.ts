@@ -1,35 +1,7 @@
 import "server-only";
-import registry from "../../projects.json";
 import { z } from "zod";
-import type { Project } from "./types";
 export const identifier = z.string().regex(/^[a-z0-9][a-z0-9_-]{0,79}$/);
 export const organizationIdentifier = z.string().uuid();
-const projectSchema = z.object({
-  id: identifier,
-  name: z.string().min(1),
-  description: z.string(),
-  production: z.boolean().optional(),
-  legacyOrganizationId: z.string().uuid().optional(),
-});
-const registryProjects = z.array(projectSchema).parse(registry);
-export const projects: Project[] = registryProjects
-  .filter(
-    ({ production }) =>
-      process.env.VERCEL_ENV !== "production" || production !== false,
-  )
-  .map(({ id, name, description }) => ({ id, name, description }));
-if (new Set(projects.map((p) => p.id)).size !== projects.length)
-  throw new Error("Duplicate project IDs");
-export function projectById(id: string): Project {
-  const project = projects.find((p) => p.id === id);
-  if (!project) throw new HttpError(404, "Project not found");
-  return project;
-}
-export function legacyOrganizationIdForProject(id: string): string | null {
-  projectById(id);
-  const project = registryProjects.find((item) => item.id === id);
-  return project?.legacyOrganizationId?.toLowerCase() ?? null;
-}
 export class HttpError extends Error {
   constructor(
     public status: number,

@@ -1,9 +1,14 @@
 import { z } from "zod";
 import { getUser, membership, setMembership } from "@/lib/auth";
-import { HttpError, projects, projectById } from "@/lib/config";
+import { HttpError } from "@/lib/config";
 import { json, readJson } from "@/lib/http";
 import { manageHandler, managePlatformAdmin } from "@/lib/manage-api";
 import { usernameSchema } from "@/lib/username";
+import {
+  getProject,
+  getProjectRegistry,
+  productionVisible,
+} from "@/lib/projects";
 
 type Context = { params: Promise<{ username: string }> };
 
@@ -12,11 +17,16 @@ export const GET = manageHandler(async (request: Request, context: Context) => {
   const username = usernameSchema.parse((await context.params).username);
   const user = await getUser(username);
   if (!user) throw new HttpError(404, "Account not found");
+  const projects = (await getProjectRegistry(actor.organizationId)).filter(
+    productionVisible,
+  );
 
   return json({
     projects: await Promise.all(
       projects.map(async (project) => ({
-        ...project,
+        id: project.id,
+        name: project.name,
+        description: project.description,
         role: user.platformAdmin
           ? ("admin" as const)
           : await membership(username, actor.organizationId, project.id),
@@ -43,7 +53,7 @@ export const POST = manageHandler(
         role: z.enum(["admin", "editor", "viewer"]).nullable(),
       })
       .parse(await readJson(request));
-    projectById(data.projectId);
+    await getProject(actor.organizationId, data.projectId);
     await setMembership(
       username,
       actor.organizationId,

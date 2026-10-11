@@ -1,28 +1,21 @@
 import type { ArticlePage, JsonDocument, PublicArticle } from "./types";
 export class PostparticleClient {
-  private organizationId?: string;
-  private fetcher: typeof fetch;
-
   constructor(
     private baseUrl: string,
     private projectId: string,
-    organizationIdOrFetcher: string | typeof fetch = fetch,
-    fetcher: typeof fetch = fetch,
+    private organizationId: string,
+    private fetcher: typeof fetch = fetch,
   ) {
-    if (typeof organizationIdOrFetcher === "function") {
-      this.fetcher = organizationIdOrFetcher;
-    } else {
-      this.organizationId = organizationIdOrFetcher;
-      this.fetcher = fetcher;
-    }
+    if (!organizationId)
+      throw new Error(
+        "An organization ID is required for Postparticle requests.",
+      );
   }
 
   private async get<T>(path: string, init?: RequestInit): Promise<T> {
     const base = `${this.baseUrl.replace(/\/$/, "")}/api/v1/projects/${encodeURIComponent(this.projectId)}/${path}`;
     const separator = path.includes("?") ? "&" : "?";
-    const url = this.organizationId
-      ? `${base}${separator}organizationId=${encodeURIComponent(this.organizationId)}`
-      : base;
+    const url = `${base}${separator}organizationId=${encodeURIComponent(this.organizationId)}`;
     const response = await this.fetcher(url, init);
     if (!response.ok)
       throw new Error(`Postparticle returned ${response.status}`);

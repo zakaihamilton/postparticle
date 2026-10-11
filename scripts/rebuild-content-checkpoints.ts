@@ -1,29 +1,23 @@
-import {
-  identifier,
-  organizationIdentifier,
-  projectById,
-} from "../src/lib/config";
+import { identifier, organizationIdentifier } from "../src/lib/config";
 import { rebuildContentCheckpoints } from "../src/lib/content-state";
-import { projectStore } from "../src/lib/storage";
+import { getProject, projectStoreFor } from "../src/lib/projects";
 
 const args = process.argv.slice(2);
 const rawProjectId = args[0];
 const organizationOption = args.indexOf("--organization-id");
 const rawOrganizationId =
   organizationOption >= 0 ? args[organizationOption + 1] : undefined;
-if (!rawProjectId || (organizationOption >= 0 && !rawOrganizationId))
+if (!rawProjectId || !rawOrganizationId)
   throw new Error(
-    'Usage: npm run storage:checkpoint -- <project-id> [--organization-id "<organization-uuid>"]',
+    'Usage: npm run storage:checkpoint -- <project-id> --organization-id "<organization-uuid>"',
   );
 
 const projectId = identifier.parse(rawProjectId);
-projectById(projectId);
-const organizationId = rawOrganizationId
-  ? organizationIdentifier.parse(rawOrganizationId)
-  : undefined;
-const store = organizationId
-  ? projectStore(organizationId, projectId)
-  : projectStore(projectId);
+const organizationId = organizationIdentifier.parse(rawOrganizationId);
+const project = await getProject(organizationId, projectId, {
+  includeArchived: true,
+});
+const store = projectStoreFor(organizationId, project);
 
 for (const kind of ["articles", "documents"] as const) {
   const result = await rebuildContentCheckpoints(kind, store);
@@ -37,13 +31,13 @@ for (const kind of ["articles", "documents"] as const) {
             ? "one or more listed source events could not be read consistently"
             : "the source event list changed during checkpoint generation";
     console.error(
-      `${organizationId ? `${organizationId}/` : "legacy/"}${projectId}/${kind}: ${explanation} after ${result.retries} retries; no checkpoint was published. Retry during a quieter period.`,
+      `${organizationId}/${projectId}/${kind}: ${explanation} after ${result.retries} retries; no checkpoint was published. Retry during a quieter period.`,
     );
     process.exitCode = 1;
     continue;
   }
   console.log(
-    `${organizationId ? `${organizationId}/` : "legacy/"}${projectId}/${kind}: ${result.records} records in ${result.shards} shards` +
+    `${organizationId}/${projectId}/${kind}: ${result.records} records in ${result.shards} shards` +
       (result.generation ? ` (generation ${result.generation})` : " (empty)"),
   );
 }

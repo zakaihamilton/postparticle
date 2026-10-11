@@ -185,7 +185,12 @@ function WorkspaceContent({
             <MediaLibrary projectId={project.id} canEdit={canEdit} />
           )}
           {tab === "members" && <Members projectId={project.id} />}
-          {tab === "settings" && <IntegrationSettings projectId={project.id} />}
+          {tab === "settings" && (
+            <IntegrationSettings
+              projectId={project.id}
+              organizationId={actor.organizationId}
+            />
+          )}
         </main>
         <footer className={styles.workspaceFooter}>
           <span>Your content, thoughtfully managed.</span>

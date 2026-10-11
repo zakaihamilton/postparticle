@@ -1,6 +1,6 @@
-import { organizationIdentifier } from "@/lib/config";
+import { HttpError } from "@/lib/config";
 import { errorResponse, json } from "@/lib/http";
-import { projectStore } from "@/lib/storage";
+import { publicProjectStore } from "@/lib/projects";
 import { readPublicDocument } from "@/lib/public";
 export const dynamic = "force-dynamic";
 export async function GET(
@@ -12,12 +12,12 @@ export async function GET(
     const requestedOrganizationId = new URL(request.url).searchParams.get(
       "organizationId",
     );
-    const store = requestedOrganizationId
-      ? projectStore(
-          organizationIdentifier.parse(requestedOrganizationId),
-          projectId,
-        )
-      : projectStore(projectId);
+    if (!requestedOrganizationId)
+      throw new HttpError(400, "organizationId is required");
+    const { store } = await publicProjectStore(
+      requestedOrganizationId,
+      projectId,
+    );
     return json(await readPublicDocument(projectId, key, store));
   } catch (error) {
     return errorResponse(error);

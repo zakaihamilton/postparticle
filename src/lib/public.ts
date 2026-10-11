@@ -3,7 +3,7 @@ import { z } from "zod";
 import { HttpError } from "./config";
 import { getRecord, records } from "./content";
 import { delivery, resolvePublicMedia } from "./media";
-import { projectStore, type Store } from "./storage";
+import type { Store } from "./storage";
 import type {
   Article,
   ArticlePage,
@@ -38,7 +38,7 @@ const querySchema = z.object({
 export async function listPublicArticles(
   projectId: string,
   query: Record<string, string>,
-  store = projectStore(projectId),
+  store: Store,
 ): Promise<ArticlePage> {
   const { q, tag, order, page, pageSize } = querySchema.parse(query);
   const needle = q.toLowerCase();
@@ -66,7 +66,7 @@ export async function listPublicArticles(
 export async function readPublicArticle(
   projectId: string,
   slug: string,
-  store = projectStore(projectId),
+  store: Store,
 ) {
   const record = await getRecord("articles", slug, store);
   if (!record?.published || record.trashed)
@@ -76,7 +76,7 @@ export async function readPublicArticle(
 export async function readPublicDocument(
   projectId: string,
   key: string,
-  store = projectStore(projectId),
+  store: Store,
 ) {
   const record = await getRecord("documents", key, store);
   if (!record?.published || record.trashed)
