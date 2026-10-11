@@ -29,6 +29,20 @@ export interface PerministerSession {
   organizations: PerministerOrganizationAccess[];
 }
 
+export function perministerHasProductAdminAccess(
+  organization: PerministerSession["organizations"][number],
+) {
+  if (organization.platformAdmin) return true;
+  return organization.resourceRoles.some((grant) => {
+    const role = grant.role?.toLowerCase();
+    const productScope =
+      grant.scope.kind === "product" &&
+      (!grant.scope.productId ||
+        grant.scope.productId.toLowerCase() === productId);
+    return productScope && role === "owner";
+  });
+}
+
 export interface PerministerAccount {
   subjectId: string;
   email: string | null;
@@ -350,7 +364,7 @@ export function perministerRoleForProject(
       item.productId === productId,
   );
   if (!organization) return null;
-  if (organization.platformAdmin) return "admin";
+  if (perministerHasProductAdminAccess(organization)) return "admin";
   const grant = organization.resourceRoles.find(
     (item) =>
       item.scope.kind === "project" &&
