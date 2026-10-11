@@ -175,7 +175,8 @@ async function preserveDeletionMarkers(
   projects: ProjectRecord[],
   knownDeletingIds?: Set<string>,
 ) {
-  const deletingIds = knownDeletingIds ?? (await deletingProjectIds(organizationId));
+  const deletingIds =
+    knownDeletingIds ?? (await deletingProjectIds(organizationId));
   return projects.map((project) =>
     deletingIds.has(project.id) ? { ...project, deleting: true } : project,
   );
@@ -243,10 +244,15 @@ export function projectStoreFor(
   const normalizedOrganizationId = parsedOrganizationId(organizationId);
   const legacy =
     project.legacyOrganizationId?.toLowerCase() === normalizedOrganizationId;
-  return projectStore(normalizedOrganizationId, project.id, legacy, async () => {
-    if (await getProjectDeletionMarker(normalizedOrganizationId, project.id))
-      throw new HttpError(404, "Project not found");
-  });
+  return projectStore(
+    normalizedOrganizationId,
+    project.id,
+    legacy,
+    async () => {
+      if (await getProjectDeletionMarker(normalizedOrganizationId, project.id))
+        throw new HttpError(404, "Project not found");
+    },
+  );
 }
 
 export async function publicProjectStore(
@@ -310,9 +316,10 @@ export async function writeProjectRegistry(
       deletingIds,
     );
     const currentIds = new Set(
-      validateProjects((await store.get<unknown>(key)) ?? [], organizationId).map(
-        (project) => project.id,
-      ),
+      validateProjects(
+        (await store.get<unknown>(key)) ?? [],
+        organizationId,
+      ).map((project) => project.id),
     );
     if (
       protectedProjects.some(
@@ -367,8 +374,4 @@ export async function updateProjectRegistry(
       ),
     );
   });
-}
-
-export function invalidateProjectRegistry(rawOrganizationId: string) {
-  cache.delete(parsedOrganizationId(rawOrganizationId));
 }

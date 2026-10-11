@@ -86,7 +86,10 @@ export const DELETE = manageHandler(
     if (!project.archived)
       throw new HttpError(409, "Archive the project before deleting it.");
 
-    const deletion = await beginProjectDeletion(actor.organizationId, projectId);
+    const deletion = await beginProjectDeletion(
+      actor.organizationId,
+      projectId,
+    );
     if (!project.deleting) {
       let marked = false;
       await updateProjectRegistry(actor.organizationId, (projects) =>

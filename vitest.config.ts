@@ -9,5 +9,11 @@ export default defineConfig({
       ),
     },
   },
-  test: { include: ["tests/**/*.test.ts"], environment: "node" },
+  test: {
+    include: ["tests/**/*.test.ts"],
+    environment: "node",
+    env: {
+      POSTPARTICLE_ORGANIZATION_ID: "550e8400-e29b-41d4-a716-446655440000",
+    },
+  },
 });

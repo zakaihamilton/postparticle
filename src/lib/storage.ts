@@ -519,7 +519,10 @@ export function projectStore(
   return accessGuard ? withAccessGuard(store, accessGuard) : store;
 }
 
-function withAccessGuard(store: Store, accessGuard: () => Promise<void>): Store {
+function withAccessGuard(
+  store: Store,
+  accessGuard: () => Promise<void>,
+): Store {
   return new Proxy(store, {
     get(target, property) {
       const member = Reflect.get(target, property, target) as unknown;

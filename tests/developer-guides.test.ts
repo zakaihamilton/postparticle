@@ -51,6 +51,9 @@ describe("documented native fetch helper", () => {
     });
     const [url, options] = fetcher.mock.calls[0];
     const params = new URL(url).searchParams;
+    expect(params.get("organizationId")).toBe(
+      "550e8400-e29b-41d4-a716-446655440000",
+    );
     expect(params.has("q")).toBe(false);
     expect(params.get("tag")).toBe("Field notes");
     expect(params.get("order")).toBe("asc");

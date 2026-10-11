@@ -34,14 +34,13 @@ export function ProjectSettings({
   const deleteDialog = useRef<HTMLElement>(null);
 
   const refresh = useCallback(async () => {
-    setError("");
-    setLoading(true);
     try {
       const result = await api<{ projects: ProjectRecord[] }>(
         "/api/manage/projects/catalog",
         { cache: "no-store" },
       );
       setProjects(result.projects);
+      setError("");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -50,8 +49,27 @@ export function ProjectSettings({
   }, []);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let active = true;
+    async function loadProjects() {
+      try {
+        const result = await api<{ projects: ProjectRecord[] }>(
+          "/api/manage/projects/catalog",
+          { cache: "no-store" },
+        );
+        if (!active) return;
+        setProjects(result.projects);
+        setError("");
+      } catch (e) {
+        if (active) setError((e as Error).message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    void loadProjects();
+    return () => {
+      active = false;
+    };
+  }, [organizationId]);
 
   useEffect(() => {
     if (!deleteTarget) return;
@@ -185,16 +203,13 @@ export function ProjectSettings({
           done: boolean;
           deletedObjects: number;
           retryAfterMs?: number;
-        }>(
-          `/api/manage/projects/catalog/${encodeURIComponent(project.id)}`,
-          {
-            method: "DELETE",
-            body: JSON.stringify({
-              confirmation: project.id,
-              organizationId,
-            }),
-          },
-        );
+        }>(`/api/manage/projects/catalog/${encodeURIComponent(project.id)}`, {
+          method: "DELETE",
+          body: JSON.stringify({
+            confirmation: project.id,
+            organizationId,
+          }),
+        });
         done = result.done;
         deleted += result.deletedObjects;
         if (!done && result.retryAfterMs) {
