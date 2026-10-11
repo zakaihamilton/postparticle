@@ -1,8 +1,11 @@
-import { allowedProjects } from "@/lib/auth";
+import { allowedProjects, requireAuthContext } from "@/lib/auth";
 import { json } from "@/lib/http";
-import { manageActor, manageHandler } from "@/lib/manage-api";
+import { manageHandler } from "@/lib/manage-api";
 
-export const GET = manageHandler(async (request: Request) => {
-  const actor = await manageActor(request);
-  return json({ actor, projects: await allowedProjects(actor) });
+export const GET = manageHandler(async () => {
+  const context = await requireAuthContext();
+  return json({
+    actor: context.actor,
+    projects: await allowedProjects(context),
+  });
 });

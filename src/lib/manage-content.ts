@@ -12,7 +12,59 @@ import {
 import { events } from "./events";
 import { json, readJson } from "./http";
 import { publishMedia } from "./media";
-import type { Article, Content, Kind } from "./types";
+import type {
+  Article,
+  Content,
+  ContentListData,
+  EditorHistoryItem,
+  JsonDocument,
+  Kind,
+} from "./types";
+
+async function contentList(
+  kind: Kind,
+  store: Parameters<typeof records>[1],
+  query: string,
+): Promise<ContentListData> {
+  const all = await records(kind, store);
+  const searchTerm = query.toLowerCase();
+  const rows = all.flatMap((record) => {
+    const draft = record.draft as Article | JsonDocument;
+    if (searchTerm) {
+      const searchable =
+        kind === "articles"
+          ? `${draft.title} ${(draft as Article).body}`
+          : `${draft.title} ${JSON.stringify((draft as JsonDocument).value)}`;
+      if (!searchable.toLowerCase().includes(searchTerm)) return [];
+    }
+    return [
+      {
+        id: record.id,
+        draft:
+          kind === "articles"
+            ? {
+                title: draft.title,
+                tags: draft.tags,
+                author: (draft as Article).author,
+                articleDate: (draft as Article).articleDate,
+              }
+            : {
+                title: draft.title,
+                tags: draft.tags,
+                key: (draft as JsonDocument).key,
+              },
+        published: !!record.published,
+        trashed: record.trashed,
+        updatedAt: record.updatedAt,
+      },
+    ];
+  });
+  return {
+    rows,
+    recordCount: all.length,
+    activeCount: all.filter((record) => !record.trashed).length,
+  };
+}
 
 export async function listOrCreateContent(
   request: Request,
@@ -20,7 +72,14 @@ export async function listOrCreateContent(
   kind: Kind,
 ) {
   const { actor, store } = await manageProject(request, rawProjectId);
-  if (request.method === "GET") return json(await records(kind, store));
+  if (request.method === "GET") {
+    const url = new URL(request.url);
+    if (url.searchParams.get("view") === "list")
+      return json(
+        await contentList(kind, store, url.searchParams.get("q") ?? ""),
+      );
+    return json(await records(kind, store));
+  }
 
   const input = await readJson(request);
   const identity = z
@@ -96,9 +155,15 @@ export async function readContentHistory(
 ) {
   const { store } = await manageProject(request, rawProjectId);
   const id = identifier.parse(rawId);
-  return json(
-    (await events<Content>(store, `content/${kind}/${id}`)).filter(
-      (event) => event.action === "save",
-    ),
-  );
+  const history: EditorHistoryItem[] = (
+    await events<Content>(store, `content/${kind}/${id}`)
+  )
+    .filter((event) => event.action === "save")
+    .map(({ id: revisionId, at, actor, data }) => ({
+      id: revisionId,
+      at,
+      actor,
+      title: data.title,
+    }));
+  return json(history);
 }

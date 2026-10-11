@@ -57,6 +57,37 @@ export interface RecordState<T = Content> {
   trashed: boolean;
   revision: string;
 }
+export interface DashboardArticle {
+  id: string;
+  draft: Pick<Article, "title" | "author" | "tags" | "articleDate">;
+  published: boolean;
+  trashed: boolean;
+  updatedAt: string;
+}
+export interface ContentListRow {
+  id: string;
+  draft: {
+    title: string;
+    tags: string[];
+    author?: string;
+    articleDate?: string;
+    key?: string;
+  };
+  published: boolean;
+  trashed: boolean;
+  updatedAt: string;
+}
+export interface ContentListData {
+  rows: ContentListRow[];
+  recordCount: number;
+  activeCount: number;
+}
+export interface WorkspaceDashboard {
+  articleCount: number;
+  publishedCount: number;
+  mediaCount: number;
+  recentArticles: DashboardArticle[];
+}
 export interface Media {
   id: string;
   filename: string;
@@ -68,6 +99,17 @@ export interface Media {
   createdAt: string;
   ready: boolean;
   deleted: boolean;
+}
+export interface EditorHistoryItem {
+  id: string;
+  at: string;
+  actor: string;
+  title: string;
+}
+export interface EditorData {
+  record: RecordState | null;
+  media?: Media[];
+  mediaError?: string;
 }
 export interface PublicArticle extends Omit<
   Article,

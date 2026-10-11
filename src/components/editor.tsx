@@ -1,11 +1,12 @@
 "use client";
 import { GuardedLink as Link, useUnsavedChanges } from "./navigation-guard";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   Article,
   Content,
-  Event,
+  EditorData,
+  EditorHistoryItem,
   JsonDocument,
   Kind,
   Media,
@@ -37,6 +38,7 @@ const blankDocument = (): JsonDocument => ({
   tags: [],
   value: {},
 });
+const blankJsonText = '{\n  "message": "Hello, world"\n}';
 export default function Editor({
   kind,
   id,
@@ -55,10 +57,12 @@ export default function Editor({
   const [content, setContent] = useState<Content>(
     isArticle ? blankArticle() : blankDocument(),
   );
-  const [jsonText, setJsonText] = useState('{\n  "message": "Hello, world"\n}');
+  const [jsonText, setJsonText] = useState(blankJsonText);
   const [tagText, setTagText] = useState("");
   const [record, setRecord] = useState<RecordState | null>(null);
-  const [history, setHistory] = useState<Event<Content>[]>([]);
+  const [history, setHistory] = useState<EditorHistoryItem[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [media, setMedia] = useState<Media[]>([]);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -68,42 +72,60 @@ export default function Editor({
   const [dirty, setDirty] = useState(false);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const inFlight = useRef(false);
+  const historyRequestVersion = useRef(0);
   useUnsavedChanges(dirty || busy);
   const endpoint = `/api/manage/projects/${projectId}/${kind}`;
+  const editorDataQuery = new URLSearchParams({ kind, id });
+  const editorDataEndpoint = `/api/manage/projects/${projectId}/editor?${editorDataQuery}`;
+  const editorInitialEndpoint = `${editorDataEndpoint}&includeMedia=true`;
+  const applyEditorData = useCallback(
+    (data: EditorData, syncContent = false) => {
+      if (data.media) setMedia(data.media);
+      if (data.mediaError) setError(data.mediaError);
+      if (syncContent) {
+        if (data.record) {
+          setRecord(data.record);
+          setContent(data.record.draft);
+          setTagText(data.record.draft.tags.join(", "));
+          if ("value" in data.record.draft)
+            setJsonText(JSON.stringify(data.record.draft.value, null, 2));
+        } else {
+          setRecord(null);
+          setContent(isArticle ? blankArticle() : blankDocument());
+          setTagText("");
+          setJsonText(blankJsonText);
+        }
+      } else if (data.record) {
+        setRecord(data.record);
+      }
+    },
+    [isArticle],
+  );
   useEffect(() => {
     let active = true;
-    api<Media[]>(`/api/manage/projects/${projectId}/media`)
-      .then((m) => {
-        if (active) setMedia(m);
+    historyRequestVersion.current++;
+    setHistory([]);
+    setHistoryLoaded(false);
+    setHistoryLoading(false);
+    setShowHistory(false);
+    setLoading(!isNew);
+    setError("");
+    api<EditorData>(editorInitialEndpoint)
+      .then((data) => {
+        if (!active) return;
+        applyEditorData(data, true);
+        setLoading(false);
       })
       .catch((e) => {
-        if (active) setError(e.message);
-      });
-    if (!isNew)
-      Promise.all([
-        api<RecordState>(`${endpoint}/${id}`),
-        api<Event<Content>[]>(`${endpoint}/${id}/history`),
-      ])
-        .then(([r, h]) => {
-          if (!active) return;
-          setRecord(r);
-          setContent(r.draft);
-          setTagText(r.draft.tags.join(", "));
-          if ("value" in r.draft)
-            setJsonText(JSON.stringify(r.draft.value, null, 2));
-          setHistory(h);
+        if (active) {
+          setError(e.message);
           setLoading(false);
-        })
-        .catch((e) => {
-          if (active) {
-            setError(e.message);
-            setLoading(false);
-          }
-        });
+        }
+      });
     return () => {
       active = false;
     };
-  }, [endpoint, id, isNew, projectId]);
+  }, [applyEditorData, editorInitialEndpoint, isNew]);
   function update(field: string, value: unknown) {
     if (inFlight.current) return;
     setContent((old) => ({ ...old, [field]: value }));
@@ -124,10 +146,38 @@ export default function Editor({
       setBusy(false);
     }
   }
-  async function refresh() {
-    const r = await api<RecordState>(`${endpoint}/${id}`);
-    setRecord(r);
-    setHistory(await api<Event<Content>[]>(`${endpoint}/${id}/history`));
+  async function refresh(syncContent = false) {
+    const data = await api<EditorData>(editorDataEndpoint);
+    applyEditorData(data, syncContent);
+    if (historyLoaded) await loadHistory();
+  }
+  async function loadHistory() {
+    const requestVersion = ++historyRequestVersion.current;
+    const items = await api<EditorHistoryItem[]>(`${endpoint}/${id}/history`);
+    if (requestVersion !== historyRequestVersion.current) return;
+    setHistory(items);
+    setHistoryLoaded(true);
+  }
+  async function toggleHistory() {
+    if (showHistory) {
+      setShowHistory(false);
+      return;
+    }
+    setShowHistory(true);
+    if (historyLoaded) return;
+    setHistoryLoading(true);
+    const requestVersion = historyRequestVersion.current + 1;
+    try {
+      await loadHistory();
+    } catch (e) {
+      if (requestVersion === historyRequestVersion.current) {
+        setError((e as Error).message);
+        setShowHistory(false);
+      }
+    } finally {
+      if (requestVersion === historyRequestVersion.current)
+        setHistoryLoading(false);
+    }
   }
   async function save(publish = false) {
     const payload: Content = {
@@ -169,7 +219,7 @@ export default function Editor({
       });
     if (isNew) router.replace(`/workspace/${projectId}/${kind}/${result.id}`);
     else {
-      await refresh();
+      await refresh(true);
       setMessage(
         publish
           ? referencedMediaCount
@@ -184,15 +234,8 @@ export default function Editor({
       method: "POST",
       body: JSON.stringify({ action, revision }),
     });
-    if (action === "revision") {
-      const r = await api<RecordState>(`${endpoint}/${id}`);
-      setContent(r.draft);
-      setTagText(r.draft.tags.join(", "));
-      if ("value" in r.draft)
-        setJsonText(JSON.stringify(r.draft.value, null, 2));
-      setDirty(false);
-    }
-    await refresh();
+    await refresh(action === "revision");
+    if (action === "revision") setDirty(false);
     setMessage(
       action === "revision"
         ? "Revision restored as a draft."
@@ -445,10 +488,14 @@ export default function Editor({
                 <h2>Revision history</h2>
                 <button
                   className={styles.ghost}
-                  disabled={readOnly}
-                  onClick={() => setShowHistory(!showHistory)}
+                  disabled={readOnly || historyLoading}
+                  onClick={() => void toggleHistory()}
                 >
-                  {showHistory ? "Hide" : "Show"} {history.length} revisions
+                  {showHistory
+                    ? `Hide ${history.length} revisions`
+                    : historyLoaded
+                      ? `Show ${history.length} revisions`
+                      : "Show revision history"}
                 </button>
               </div>
               {showHistory && (
@@ -456,7 +503,7 @@ export default function Editor({
                   {[...history].reverse().map((r) => (
                     <div key={r.id}>
                       <span>
-                        <strong>{r.data.title}</strong>
+                        <strong>{r.title}</strong>
                         <small>
                           {new Date(r.at).toLocaleString()} · {r.actor}
                         </small>

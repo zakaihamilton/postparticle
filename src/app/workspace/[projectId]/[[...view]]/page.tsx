@@ -1,17 +1,19 @@
 import { notFound, redirect } from "next/navigation";
-import { authorize, currentActor } from "@/lib/auth";
+import { authorizeProject, currentAuthContext } from "@/lib/auth";
 import { HttpError } from "@/lib/config";
-import { getProject } from "@/lib/projects";
 import Workspace from "@/components/workspace";
-import type { Role } from "@/lib/types";
 export default async function WorkspacePage({
   params,
 }: {
   params: Promise<{ projectId: string; view?: string[] }>;
 }) {
-  const actor = await currentActor();
-  if (!actor) redirect("/login");
-  const { projectId, view = [] } = await params;
+  const [context, routeParams] = await Promise.all([
+    currentAuthContext(),
+    params,
+  ]);
+  if (!context) redirect("/login");
+  const { actor } = context;
+  const { projectId, view = [] } = routeParams;
   if (
     view.length > 2 ||
     (view[0] &&
@@ -21,15 +23,20 @@ export default async function WorkspacePage({
     (view.length > 1 && !["articles", "documents"].includes(view[0]))
   )
     notFound();
-  let role: Role;
+  let workspaceAccess: Awaited<ReturnType<typeof authorizeProject>>;
   try {
-    role = await authorize(actor, projectId, false, view[0] === "members");
+    workspaceAccess = await authorizeProject(
+      context,
+      projectId,
+      false,
+      view[0] === "members",
+    );
   } catch (error) {
     if (error instanceof HttpError && [403, 404].includes(error.status))
       redirect("/projects");
     throw error;
   }
-  const project = await getProject(actor.organizationId, projectId);
+  const { role, project } = workspaceAccess;
   return (
     <Workspace
       actor={actor}

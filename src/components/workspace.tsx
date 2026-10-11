@@ -5,15 +5,24 @@ import {
   useNavigationGuard,
 } from "./navigation-guard";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useState, type ComponentProps } from "react";
 import type { Actor, Project, Role } from "@/lib/types";
 import { OrganizationSwitcher } from "./organization-switcher";
 import { api, Brand, Icon, Notice, ThemeSwitch } from "./ui";
 import { ContentList, Dashboard } from "./content-list";
-import Editor from "./editor";
-import MediaLibrary from "./media-library";
-import { Members, IntegrationSettings } from "./settings";
 import styles from "./workspace.module.css";
+
+const Editor = dynamic(() => import("./editor"));
+const MediaLibrary = dynamic(() => import("./media-library"));
+const Members = dynamic(() =>
+  import("./settings/members").then((module) => module.Members),
+);
+const IntegrationSettings = dynamic(() =>
+  import("./settings/integration-settings").then(
+    (module) => module.IntegrationSettings,
+  ),
+);
 const navigation = [
   { id: "", label: "Overview", icon: "grid" },
   { id: "articles", label: "Articles", icon: "article" },
