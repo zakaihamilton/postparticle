@@ -6,7 +6,7 @@ import {
 } from "./navigation-guard";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { useState, type ComponentProps } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import type { Actor, Project, Role } from "@/lib/types";
 import { OrganizationSwitcher } from "./organization-switcher";
 import { api, Brand, Icon, Notice, ThemeSwitch } from "./ui";
@@ -55,14 +55,100 @@ function WorkspaceContent({
   const tab = view[0] || "";
   const [error, setError] = useState("");
   const [menu, setMenu] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const sidebar = useRef<HTMLElement>(null);
   const canEdit = role !== "viewer";
+
+  function closeMenu(restoreFocus = false) {
+    setMenu(false);
+    if (restoreFocus && isMobile) menuButton.current?.focus();
+  }
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 700px)");
+    function updateViewport() {
+      setIsMobile(media.matches);
+      if (!media.matches) setMenu(false);
+    }
+    updateViewport();
+    media.addEventListener("change", updateViewport);
+    return () => media.removeEventListener("change", updateViewport);
+  }, []);
+
+  useEffect(() => {
+    if (!menu || !isMobile) return;
+    const panel = sidebar.current;
+    const selector =
+      'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
+    const focusable = () =>
+      Array.from(panel?.querySelectorAll<HTMLElement>(selector) ?? []).filter(
+        (element) => !element.hasAttribute("hidden"),
+      );
+    focusable()[0]?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMenu(false);
+        menuButton.current?.focus();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const elements = focusable();
+      const first = elements[0];
+      const last = elements.at(-1);
+      if (!first || !last) {
+        event.preventDefault();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      } else if (!panel?.contains(document.activeElement)) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Node;
+      if (!panel?.contains(target) && !menuButton.current?.contains(target)) {
+        if (panel?.contains(document.activeElement))
+          menuButton.current?.focus();
+        setMenu(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isMobile, menu]);
+
   return (
     <div className={styles.shell}>
-      <aside className={`${styles.sidebar} ${menu ? styles.sidebarOpen : ""}`}>
+      <aside
+        ref={sidebar}
+        id="workspace-sidebar"
+        className={`${styles.sidebar} ${menu ? styles.sidebarOpen : ""}`}
+        role={isMobile && menu ? "dialog" : undefined}
+        aria-label={isMobile && menu ? "Workspace navigation" : undefined}
+        aria-modal={isMobile && menu ? true : undefined}
+        aria-hidden={isMobile && !menu ? true : undefined}
+        inert={isMobile && !menu}
+      >
         <div className={styles.sidebarBrand}>
           <Brand href="/projects" />
         </div>
-        <Link href="/projects" className={styles.projectSwitch}>
+        <Link
+          href="/projects"
+          className={styles.projectSwitch}
+          onClick={() => closeMenu(true)}
+        >
           <span className={styles.projectAvatar}>{project.name[0]}</span>
           <span>
             <strong>{project.name}</strong>
@@ -79,7 +165,7 @@ function WorkspaceContent({
               key={n.id}
               href={`${base}/${n.id}`}
               className={`${styles.navItem} ${tab === n.id ? styles.navActive : ""}`}
-              onClick={() => setMenu(false)}
+              onClick={() => closeMenu(true)}
             >
               <Icon name={n.icon} size={18} />
               {n.label}
@@ -90,6 +176,7 @@ function WorkspaceContent({
             <Link
               href={`${base}/members`}
               className={`${styles.navItem} ${tab === "members" ? styles.navActive : ""}`}
+              onClick={() => closeMenu(true)}
             >
               <Icon name="users" size={18} />
               Members
@@ -98,6 +185,7 @@ function WorkspaceContent({
           <Link
             href={`${base}/settings`}
             className={`${styles.navItem} ${tab === "settings" ? styles.navActive : ""}`}
+            onClick={() => closeMenu(true)}
           >
             <Icon name="settings" size={18} />
             Settings & API
@@ -120,6 +208,7 @@ function WorkspaceContent({
               aria-label="Log out"
               className={styles.iconButton}
               onClick={async () => {
+                closeMenu(true);
                 if (!(await confirmNavigation("Log out and discard"))) return;
                 try {
                   await api("/api/auth/logout", { method: "POST" });
@@ -135,13 +224,24 @@ function WorkspaceContent({
           </div>
         </div>
       </aside>
+      {isMobile && menu && (
+        <button
+          type="button"
+          className={styles.sidebarBackdrop}
+          aria-label="Close workspace navigation"
+          tabIndex={-1}
+          onClick={() => closeMenu(true)}
+        />
+      )}
       <div className={styles.contentArea}>
         <header className={styles.topbar}>
           <div>
             <button
               className={styles.mobileMenu}
-              aria-label="Toggle workspace navigation"
+              ref={menuButton}
+              aria-label={`${menu ? "Close" : "Open"} workspace navigation`}
               aria-expanded={menu}
+              aria-controls="workspace-sidebar"
               onClick={() => setMenu(!menu)}
             >
               <Icon name="menu" size={20} />

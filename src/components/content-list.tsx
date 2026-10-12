@@ -36,71 +36,123 @@ function Table({
   kind: Kind;
   projectId: string;
 }) {
+  const dateLabel = kind === "articles" ? "Article date" : "Updated";
   return (
-    <div className={styles.tableScroll}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>{kind === "articles" ? "ARTICLE" : "DOCUMENT"}</th>
-            <th>STATUS</th>
-            <th>TAGS</th>
-            <th>{kind === "articles" ? "ARTICLE DATE" : "UPDATED"}</th>
-            <th>
-              <span className={styles.srOnly}>Open</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.id}>
-              <td>
-                <Link
-                  href={`/workspace/${projectId}/${kind}/${r.id}`}
-                  className={styles.recordTitle}
-                >
-                  <span className={styles.recordIcon}>
-                    <Icon
-                      name={kind === "articles" ? "article" : "code"}
-                      size={18}
-                    />
-                  </span>
-                  <span>
-                    <strong>{recordTitle(r)}</strong>
-                    <small>
-                      {kind === "articles" ? r.draft.author : r.draft.key}
-                    </small>
-                  </span>
-                </Link>
-              </td>
-              <td>
-                <Status record={r} />
-              </td>
-              <td>
-                <div className={styles.tags}>
-                  {r.draft.tags.slice(0, 3).map((tag) => (
-                    <span key={tag}>{tag}</span>
-                  ))}
-                </div>
-              </td>
-              <td className={styles.date}>
-                {kind === "articles"
-                  ? r.draft.articleDate
-                  : r.updatedAt.slice(0, 10)}
-              </td>
-              <td>
-                <Link
-                  aria-label={`Open ${recordTitle(r)}`}
-                  href={`/workspace/${projectId}/${kind}/${r.id}`}
-                  className={styles.rowArrow}
-                >
-                  <Icon name="arrow-up-right" size={17} />
-                </Link>
-              </td>
+    <>
+      <div
+        className={`${styles.tableScroll} ${styles.contentListTableScroll}`}
+      >
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>{kind === "articles" ? "ARTICLE" : "DOCUMENT"}</th>
+              <th>STATUS</th>
+              <th>TAGS</th>
+              <th>{kind === "articles" ? "ARTICLE DATE" : "UPDATED"}</th>
+              <th>
+                <span className={styles.srOnly}>Open</span>
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id}>
+                <td>
+                  <Link
+                    href={`/workspace/${projectId}/${kind}/${r.id}`}
+                    className={styles.recordTitle}
+                  >
+                    <span className={styles.recordIcon}>
+                      <Icon
+                        name={kind === "articles" ? "article" : "code"}
+                        size={18}
+                      />
+                    </span>
+                    <span>
+                      <strong>{recordTitle(r)}</strong>
+                      <small>
+                        {kind === "articles" ? r.draft.author : r.draft.key}
+                      </small>
+                    </span>
+                  </Link>
+                </td>
+                <td>
+                  <Status record={r} />
+                </td>
+                <td>
+                  <div className={styles.tags}>
+                    {r.draft.tags.slice(0, 3).map((tag) => (
+                      <span key={tag}>{tag}</span>
+                    ))}
+                  </div>
+                </td>
+                <td className={styles.date}>
+                  {kind === "articles"
+                    ? r.draft.articleDate
+                    : r.updatedAt.slice(0, 10)}
+                </td>
+                <td>
+                  <Link
+                    aria-label={`Open ${recordTitle(r)}`}
+                    href={`/workspace/${projectId}/${kind}/${r.id}`}
+                    className={styles.rowArrow}
+                  >
+                    <Icon name="arrow-up-right" size={17} />
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <ul
+        className={styles.mobileRecordList}
+        aria-label={kind === "articles" ? "Articles" : "JSON documents"}
+      >
+        {rows.map((r) => (
+          <li className={styles.mobileRecordCard} key={r.id}>
+            <div className={styles.mobileRecordTop}>
+              <Link
+                href={`/workspace/${projectId}/${kind}/${r.id}`}
+                className={styles.mobileRecordTitle}
+              >
+                <strong>{recordTitle(r)}</strong>
+                <small>
+                  {kind === "articles" ? r.draft.author : r.draft.key}
+                </small>
+              </Link>
+              <Status record={r} />
+            </div>
+            <div className={styles.mobileRecordMeta}>
+              {!!r.draft.tags.length && (
+                <div className={styles.mobileRecordMetaRow}>
+                  <span className={styles.mobileRecordLabel}>Tags</span>
+                  <div className={styles.tags}>
+                    {r.draft.tags.slice(0, 3).map((tag) => (
+                      <span key={tag}>{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className={styles.mobileRecordMetaRow}>
+                <span className={styles.mobileRecordLabel}>{dateLabel}</span>
+                <time
+                  dateTime={
+                    kind === "articles"
+                      ? r.draft.articleDate
+                      : r.updatedAt.slice(0, 10)
+                  }
+                >
+                  {kind === "articles"
+                    ? r.draft.articleDate
+                    : r.updatedAt.slice(0, 10)}
+                </time>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 export function ContentList({

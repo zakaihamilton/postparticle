@@ -429,6 +429,68 @@ a.secondary:hover {
 .tableScroll {
   overflow-x: auto;
 }
+.contentListTableScroll {
+  min-width: 0;
+}
+.mobileRecordList {
+  display: none;
+}
+.mobileRecordCard {
+  list-style: none;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+.mobileRecordTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.mobileRecordTitle {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+}
+.mobileRecordTitle strong {
+  display: block;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.mobileRecordTitle small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.mobileRecordTitle:hover strong {
+  color: var(--accent-ink);
+}
+.mobileRecordMeta {
+  display: grid;
+  gap: 10px;
+  font-size: 13px;
+}
+.mobileRecordMetaRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.mobileRecordLabel {
+  width: 74px;
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+.mobileRecordMetaRow .tags {
+  flex-wrap: wrap;
+}
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -1392,13 +1454,27 @@ a.secondary:hover {
 @media (max-width: 700px) {
   .sidebar {
     transform: translateX(-100%);
-    transition: transform 0.25s;
+    visibility: hidden;
+    transition:
+      transform 0.25s,
+      visibility 0s linear 0.25s;
     width: 248px;
     box-shadow: var(--shadow);
   }
   .sidebarOpen {
     transform: translateX(0);
     top: 65px;
+    visibility: visible;
+    transition-delay: 0s;
+  }
+  .sidebarBackdrop {
+    position: fixed;
+    inset: 65px 0 0;
+    z-index: 9;
+    border: 0;
+    padding: 0;
+    background: var(--overlay);
+    cursor: default;
   }
   .contentArea {
     margin-left: 0;
@@ -1435,6 +1511,15 @@ a.secondary:hover {
     background: none;
     color: var(--text);
     padding: 7px;
+  }
+  .contentListTableScroll {
+    display: none;
+  }
+  .mobileRecordList {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 14px;
   }
   .main {
     padding: 26px 18px;
