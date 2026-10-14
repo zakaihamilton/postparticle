@@ -39,9 +39,7 @@ function Table({
   const dateLabel = kind === "articles" ? "Article date" : "Updated";
   return (
     <>
-      <div
-        className={`${styles.tableScroll} ${styles.contentListTableScroll}`}
-      >
+      <div className={`${styles.tableScroll} ${styles.contentListTableScroll}`}>
         <table className={styles.table}>
           <thead>
             <tr>
