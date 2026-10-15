@@ -69,10 +69,10 @@ API responses use `Cache-Control: no-store`. Your website chooses its server-sid
 Start Postparticle, publish an article, and run the example from the repository root:
 
 ```sh
-POSTPARTICLE_URL=http://localhost:3000 POSTPARTICLE_PROJECT=demo POSTPARTICLE_ORGANIZATION_ID="<organization-uuid>" WEBSITE_URL=http://localhost:3001 npm run example:dev -- --port 3001
+POSTPARTICLE_URL=http://localhost:3000 POSTPARTICLE_PROJECT=demo POSTPARTICLE_ORGANIZATION_ID="<organization-uuid>" WEBSITE_URL=http://localhost:3001 pnpm run example:dev -- --port 3001
 ```
 
-Set `POSTPARTICLE_URL` to the base URL of your Postparticle deployment, `POSTPARTICLE_PROJECT` to your project ID, `POSTPARTICLE_ORGANIZATION_ID` to the owning organization UUID, and `WEBSITE_URL` to the base URL of your public website without a trailing slash. Build with `npm run example:build`.
+Set `POSTPARTICLE_URL` to the base URL of your Postparticle deployment, `POSTPARTICLE_PROJECT` to your project ID, `POSTPARTICLE_ORGANIZATION_ID` to the owning organization UUID, and `WEBSITE_URL` to the base URL of your public website without a trailing slash. Build with `pnpm run example:build`.
 
 To deploy the example separately, set the project root to `examples/next-blog` and copy the shared client and types into that project. Do not pass Spaces credentials to the website.
 

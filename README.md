@@ -8,17 +8,17 @@ The public welcome page is `/`; its login button leads to `/login`. After authen
 
 ## Getting started
 
-Use Node.js 24 and npm.
+Use Node.js 24 and pnpm 10.33.0.
 
 ```sh
-npm ci
+pnpm install --frozen-lockfile
 cp .env.example .env.local
 ```
 
 Configure the Perminister URL, organization ID, consumer client ID, and client secret in `.env.local`. Create or enable the account and grant PostParticle access in Perminister. For persistent content, configure the Content Spaces values from `.env.example`; to work without Spaces, use the local content adapter described below. Then start the app:
 
 ```sh
-npm run dev
+pnpm run dev
 ```
 
 PostParticle does not store local passwords, accounts, or sessions. Open [localhost:3000](http://localhost:3000).
@@ -52,17 +52,17 @@ If you forget your password, use the recovery process configured in Perminister 
 ## Development
 
 ```sh
-npm run typecheck
-npm run lint
-npm test
-npm run format:check
-npm run health
-npm run build
-npx playwright install chromium
-npm run test:e2e
+pnpm run typecheck
+pnpm run lint
+pnpm test
+pnpm run format:check
+pnpm run health
+pnpm run build
+pnpm exec playwright install chromium
+pnpm run test:e2e
 ```
 
-Repnix inventories and runs the repository’s configured checks. `npm run health` requires type safety, linting, formatting, tests, accessibility lint rules, and dead-code detection. Browser tests use isolated content storage and a test-only Perminister service stub; they do not claim Spaces compatibility. Verify a Development Space before rollout with `npm run storage:verify -- <project-id> --organization-id "<organization-uuid>" --confirm-non-production`.
+Repnix inventories and runs the repository’s configured checks. `pnpm run health` requires type safety, linting, formatting, tests, accessibility lint rules, and dead-code detection. Browser tests use isolated content storage and a test-only Perminister service stub; they do not claim Spaces compatibility. Verify a Development Space before rollout with `pnpm run storage:verify -- <project-id> --organization-id "<organization-uuid>" --confirm-non-production`.
 
 ## License
 

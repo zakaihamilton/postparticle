@@ -81,19 +81,19 @@ and does not prune existing snapshots.
 Build checkpoints for one project's active organization namespace using the shared content storage credentials. Always supply the owning organization UUID, including for a project in the legacy namespace:
 
 ```sh
-npm run storage:checkpoint -- demo --organization-id "<organization-uuid>"
+pnpm run storage:checkpoint -- demo --organization-id "<organization-uuid>"
 ```
 
 Run this operator command after bulk imports and whenever the feed tail reaches 1,000 events. It
 reports the pre-build unindexed-event count, rebuilds both content snapshots and feed backfill for
 articles and documents, and reports the post-build tail count. It never removes source events.
-`npm run benchmark:content` creates disposable local histories of 1,000, 5,000, and 10,000 events;
+`pnpm run benchmark:content` creates disposable local histories of 1,000, 5,000, and 10,000 events;
 checks full-replay parity, including concurrent appends; and reports elapsed time, object reads,
 list calls, keys enumerated, and estimated 1,000-key Spaces list pages for record listing, public
 article listing, and single-article lookup. It also checks shard size limits. Local timings do not
 model Spaces pagination latency.
 
-For read-only measurements against an isolated development or preview Space, run `npm run storage:measure -- <project-id> --organization-id "<organization-uuid>" --confirm-non-production`. The command reports record counts and read/list metrics for record listing, public article listing, and a published-article lookup; it does not print content or write objects. Do not point it at production credentials. Compare those timings and list-page counts with the local benchmark.
+For read-only measurements against an isolated development or preview Space, run `pnpm run storage:measure -- <project-id> --organization-id "<organization-uuid>" --confirm-non-production`. The command reports record counts and read/list metrics for record listing, public article listing, and a published-article lookup; it does not print content or write objects. Do not point it at production credentials. Compare those timings and list-page counts with the local benchmark.
 
 Media becomes ready only after successful finalization. Multipart completion is checkpointed in its private upload ticket. Retrying finalization resumes validation and sealing; if a completion response or checkpoint was lost, the application checks for the completed staging object before proceeding. A committed asset is returned idempotently without overwriting its metadata. Cleanup can also be retried. Finalization checks file size, declared content type, container structure, required image dimensions or video container metadata, and bounded header/trailer data before sealing a private original. It rejects malformed or truncated files; it does not fully decode media or establish that a file is safe. No antivirus scanning or transcoding is provided. Publish copies assets to public delivery paths before writing the publication event, and the editor confirms this when media is attached. A failed publish can leave unused public copies; the content stays unpublished. Unpublishing removes content from the API but does not erase previously distributed media URLs or guarantee CDN recall. Never publish confidential media.
 
