@@ -114,6 +114,11 @@ function WorkspaceContent({
 
     function handlePointerDown(event: PointerEvent) {
       const target = event.target as Node;
+      if (
+        target instanceof Element &&
+        target.closest("[data-navigation-guard-overlay]")
+      )
+        return;
       if (!panel?.contains(target) && !menuButton.current?.contains(target)) {
         if (panel?.contains(document.activeElement))
           menuButton.current?.focus();
@@ -208,8 +213,8 @@ function WorkspaceContent({
               aria-label="Log out"
               className={styles.iconButton}
               onClick={async () => {
-                closeMenu(true);
                 if (!(await confirmNavigation("Log out and discard"))) return;
+                closeMenu(true);
                 try {
                   await api("/api/auth/logout", { method: "POST" });
                   router.push("/login");
