@@ -120,7 +120,7 @@ export function NavigationGuardProvider({ children }: { children: ReactNode }) {
     <NavigationGuard.Provider value={guard}>
       {children}
       {prompt && (
-        <div className={styles.overlay}>
+        <div className={styles.overlay} data-navigation-guard-overlay>
           <button
             type="button"
             className={styles.backdrop}

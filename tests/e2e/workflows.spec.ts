@@ -25,6 +25,9 @@ async function signIn(page: Page, username = "admin") {
   await page.getByRole("button", { name: "Log in", exact: true }).click();
   await expect(page).toHaveURL(/\/projects$/);
 }
+function workspaceNavigationToggle(page: Page) {
+  return page.locator('button[aria-controls="workspace-sidebar"]');
+}
 test("email usernames support account creation, resets, membership, and sign-in", async ({
   page,
 }, info) => {
@@ -459,10 +462,12 @@ test("workspace dropdowns work inside panels and preserve viewer permissions", a
   await role.click();
   await page.getByRole("option", { name: "Viewer", exact: true }).click();
   await expect(role).toBeEnabled();
-  const navigation = page.getByRole("button", {
-    name: "Toggle workspace navigation",
-  });
-  if (await navigation.isVisible()) await navigation.click();
+  const navigation = workspaceNavigationToggle(page);
+  if (
+    (await navigation.isVisible()) &&
+    (await navigation.getAttribute("aria-expanded")) !== "true"
+  )
+    await navigation.click();
   await page.getByRole("button", { name: "Log out" }).click();
   await signIn(page, "viewer");
   await page.goto("/workspace/demo/articles/a-little-room");
@@ -586,10 +591,12 @@ test("unsaved editor changes block internal links until explicitly discarded", a
   await expect(allArticles).toBeFocused();
   await expect(page).toHaveURL(/articles\/a-little-room$/);
   await expect(title).toHaveValue("Unsaved navigation draft");
-  const menu = page.getByRole("button", {
-    name: "Toggle workspace navigation",
-  });
-  if (await menu.isVisible()) await menu.click();
+  const menu = workspaceNavigationToggle(page);
+  if (
+    (await menu.isVisible()) &&
+    (await menu.getAttribute("aria-expanded")) !== "true"
+  )
+    await menu.click();
   await page
     .getByRole("navigation", { name: "Workspace" })
     .getByRole("link", { name: "Articles", exact: true })
@@ -622,9 +629,7 @@ test("logout uses the custom unsaved-changes dialog", async ({ page }) => {
   await page.goto("/workspace/demo/articles/a-little-room");
   await page.getByLabel("Title", { exact: true }).fill("Draft before logout");
 
-  const menu = page.getByRole("button", {
-    name: "Toggle workspace navigation",
-  });
+  const menu = workspaceNavigationToggle(page);
   if (
     (await menu.isVisible()) &&
     (await menu.getAttribute("aria-expanded")) !== "true"
@@ -875,13 +880,17 @@ test("media drops accept one supported file and reject unsupported or multiple f
   });
   await signIn(page);
   await page.goto("/workspace/demo/media");
-  await expect(page.locator('input[type="file"]')).toHaveCount(0);
+  const fileInput = page.locator('input[type="file"]');
+  await expect(fileInput).toHaveCount(1);
+  await expect(fileInput).toHaveAttribute("aria-hidden", "true");
+  await expect(fileInput).toHaveAttribute("tabindex", "-1");
+  await expect(fileInput).toHaveCSS("clip-path", "inset(50%)");
 
   await dropFixtureFiles(page, [
     { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("text") },
   ]);
   await expect(
-    page.getByText("Drop a JPEG, PNG, WebP, GIF, MP4, or WebM file.", {
+    page.getByText("Use a JPEG, PNG, WebP, GIF, MP4, or WebM file.", {
       exact: true,
     }),
   ).toBeVisible();
