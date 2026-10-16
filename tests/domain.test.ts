@@ -356,6 +356,60 @@ describe("media lifecycle", () => {
     ).toContain("/public/media/");
     expect(await store.get(`uploads/${upload.id}.json`)).toBeNull();
   });
+  it.each(["originals", "public/media"])(
+    "retries deletion cleanup when removing the %s object fails",
+    async (failedPrefix) => {
+      const id = randomUUID();
+      const objectKeys = [`originals/${id}/asset`, `public/media/${id}/asset`];
+      await append(store, `media/${id}`, "editor", "upload", {
+        id,
+        filename: "delete-me.png",
+        contentType: "image/png",
+        size: 1,
+        alt: "",
+        caption: "",
+        metadata: {},
+        createdAt: new Date().toISOString(),
+        ready: true,
+        deleted: false,
+      });
+      await Promise.all(
+        objectKeys.map((key) =>
+          store.writeBytes(key, new Uint8Array([1]), "image/png"),
+        ),
+      );
+
+      const failedKey = `${failedPrefix}/${id}/asset`;
+      const removeObject = store.remove.bind(store);
+      let failOnce = true;
+      const remove = vi
+        .spyOn(store, "remove")
+        .mockImplementation(async (key) => {
+          if (key === failedKey && failOnce) {
+            failOnce = false;
+            throw new Error("temporary storage failure");
+          }
+          await removeObject(key);
+        });
+
+      await expect(deleteMedia("editor", id, store)).rejects.toThrow(
+        "temporary storage failure",
+      );
+      expect((await getMedia(id, store))?.deleted).toBe(true);
+      expect(remove).toHaveBeenCalledTimes(2);
+
+      await expect(deleteMedia("editor", id, store)).resolves.toBeUndefined();
+      await expect(deleteMedia("editor", id, store)).resolves.toBeUndefined();
+      expect(remove).toHaveBeenCalledTimes(6);
+      expect(await store.list(`media/${id}/`)).toHaveLength(2);
+      await expect(store.head(objectKeys[0])).rejects.toMatchObject({
+        status: 404,
+      });
+      await expect(store.head(objectKeys[1])).rejects.toMatchObject({
+        status: 404,
+      });
+    },
+  );
   it("rejects invalid file types, mismatched sizes, and unavailable references", async () => {
     await expect(
       startUpload(

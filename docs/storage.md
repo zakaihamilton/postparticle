@@ -97,7 +97,7 @@ For read-only measurements against an isolated development or preview Space, run
 
 Media becomes ready only after successful finalization. Multipart completion is checkpointed in its private upload ticket. Retrying finalization resumes validation and sealing; if a completion response or checkpoint was lost, the application checks for the completed staging object before proceeding. A committed asset is returned idempotently without overwriting its metadata. Cleanup can also be retried. Finalization checks file size, declared content type, container structure, required image dimensions or video container metadata, and bounded header/trailer data before sealing a private original. It rejects malformed or truncated files; it does not fully decode media or establish that a file is safe. No antivirus scanning or transcoding is provided. Publish copies assets to public delivery paths before writing the publication event, and the editor confirms this when media is attached. A failed publish can leave unused public copies; the content stays unpublished. Unpublishing removes content from the API but does not erase previously distributed media URLs or guarantee CDN recall. Never publish confidential media.
 
-Deletion checks current draft and published references, including trashed drafts. Historical-only references are not protected: if you remove an asset no longer referenced by current content, an old revision referencing it cannot be republished without replacing that reference. Race conditions between deletion and another editor's save/publish are possible without transactions; failures remain visible and recoverable from backups.
+Deletion checks current draft and published references, including trashed drafts. Historical-only references are not protected: if you remove an asset no longer referenced by current content, an old revision referencing it cannot be republished without replacing that reference. The deletion event is recorded before origin objects are removed; if cleanup fails, retry the same DELETE request to finish removing the private original and public delivery object. Removing the origin object does not purge copies already cached by a CDN. Race conditions between deletion and another editor's save/publish are possible without transactions; failures remain visible and recoverable from backups.
 
 Perminister owns password verification, session storage, account disabling, password resets, and
 session revocation. The old control bucket may contain password verifiers and session records; keep
@@ -106,12 +106,76 @@ the current app.
 
 ## Backups and restoration
 
-Spaces does not provide built-in backups. Keep the single shared content Space private and enable object versioning if desired, but maintain independent backups. The application credential is scoped to that one bucket, while application organization/project scoping is enforced by key construction and authorization; a compromised application credential can read, overwrite, or delete every private object in that Space. Object ACLs keep ordinary objects private; only published media delivery copies receive `public-read`. Use an administrative tool such as rclone with encrypted credentials to copy the Space to a separate private backup bucket or encrypted offline location. Keep administrative and app credentials separate. Never put credentials in command arguments or commit them. Schedule regular copies and test restores; choose retention according to your needs.
+Spaces does not provide built-in backups. Keep the single shared content Space private and enable
+object versioning if desired, but maintain independent backups. The application credential is
+scoped to that one bucket, while application organization/project scoping is enforced by key
+construction and authorization; a compromised application credential can read, overwrite, or delete
+every private object in that Space. Keep administrative and app credentials separate. Never put
+credentials in command arguments or commit them.
 
-Restore content into a fresh private bucket, configure its key in a non-production environment,
-and run verification. Check article history, published responses, and representative originals.
-Authentication is managed in Perminister and is not restored from the retired control bucket. Public
-media URLs may change when buckets/CDN domains change; republish content and invalidate website
-caches accordingly.
+### Create and check a backup
+
+1. Configure separate `rclone` remotes for the source and backup locations on an operator-managed
+   machine. Keep the backup destination private and its credentials outside the application
+   environment.
+2. Copy the entire content bucket into a new, uniquely named backup prefix. For example:
+
+   ```sh
+   rclone copy spaces-prod:content-bucket spaces-backup:backup-bucket/postparticle/run-20261016-120000 --metadata --progress
+   ```
+
+   `rclone copy` does not remove destination-only objects. Use a new run prefix for each full
+   snapshot, and do not substitute `rclone sync` for this procedure. See the [rclone copy
+   reference](https://rclone.org/commands/rclone_copy/).
+
+3. Compare the source and backup. For a full byte comparison during a restore rehearsal, use
+   `rclone check` with `--download`; it reads both copies and can take time and bandwidth:
+
+   ```sh
+   rclone check spaces-prod:content-bucket spaces-backup:backup-bucket/postparticle/run-20261016-120000 --download
+   ```
+
+   See the [rclone check reference](https://rclone.org/commands/rclone_check/). Retain the command
+   output, run ID, source and destination names, and copy start/end times with the backup record.
+
+4. A bucket-wide copy is not an atomic point-in-time snapshot. For a controlled rehearsal, schedule
+   the copy while editors are not making changes. Record the copy interval and treat changes made
+   during it as potentially outside the recovered set.
+
+### Restore and rehearse
+
+1. Create a fresh, private non-production content Space. Copy one selected backup prefix into its
+   root with `rclone copy`; do not restore into a bucket containing live or unrelated content.
+2. Keep restored objects private by default. Spaces permissions apply to objects, not folder-like
+   prefixes. Configure `s3cmd` on the operator machine with the restored Space's endpoint and
+   operator credentials stored in its protected config file. Then make only the delivery objects
+   public, using the prefix or prefixes present in this Space:
+
+   ```sh
+   s3cmd setacl --acl-public --recursive "s3://<restored-bucket>/projects/<project-id>/public/media/"
+   s3cmd setacl --acl-public --recursive "s3://<restored-bucket>/organizations/<organization-uuid>/projects/<project-id>/public/media/"
+   ```
+
+   These commands update object ACLs under each supplied key prefix; do not run them against the
+   bucket root. Keep file listing private and do not set a bucket-wide public ACL. Preserve object
+   content types and metadata. See DigitalOcean's [recursive file permission instructions](https://docs.digitalocean.com/products/spaces/reference/s3cmd-usage/#make-files-public-recursively).
+3. Configure the non-production app to use the restored Space. Run
+   `pnpm run storage:verify -- <project-id> --organization-id "<organization-uuid>" --confirm-non-production`
+   against a project marked `production: false`.
+4. Through the restored app and its public API, verify representative article and document histories,
+   published responses, private media originals, and public delivery objects. Confirm an anonymous
+   request can read a published delivery object and that ordinary private objects remain private.
+   If the restored bucket uses a different CDN or domain, configure the matching media base URL and
+   verify the returned links there.
+5. Record the last known source event recovered, copy start/end, restore start/end, and any missing
+   objects or repair steps. Use measured backup lag and restore duration to choose an RPO, RTO,
+   backup cadence, and retention policy. Do not publish recovery targets before this rehearsal.
+
+After bulk imports, run `storage:checkpoint` for each project to backfill feeds and rebuild snapshots;
+monitor the reported unindexed-event count and run it again when a feed tail reaches 1,000 events.
+Use `storage:measure` against a non-production Space to compare read/list behavior with the local
+benchmark. Authentication is managed in Perminister and is not restored from the retired control
+bucket. Public media URLs may change when buckets or CDN domains change; republish content and
+invalidate website caches accordingly.
 
 Application deployment rollback does not roll back content. Restore an article revision through its editor and explicitly publish it, or restore objects from a reviewed backup. Do not edit historical event JSON directly.
