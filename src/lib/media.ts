@@ -637,35 +637,44 @@ export async function editMedia(
 export async function deleteMedia(actor: string, id: string, store: Store) {
   const normalizedId = parsedId(id);
   const media = await getMedia(normalizedId, store);
-  if (!media || media.deleted) throw new HttpError(404, "Media not found");
-  const all = [
-    ...(await records("articles", store)).map((record) => ({
-      record,
-      kind: "articles" as const,
-    })),
-    ...(await records("documents", store)).map((record) => ({
-      record,
-      kind: "documents" as const,
-    })),
-  ];
-  if (
-    all.some(
-      ({ record: r, kind }) =>
-        mediaReferences(r.draft, kind).includes(normalizedId) ||
-        (r.published &&
-          mediaReferences(r.published, kind).includes(normalizedId)),
+  if (!media) throw new HttpError(404, "Media not found");
+  if (!media.deleted) {
+    const all = [
+      ...(await records("articles", store)).map((record) => ({
+        record,
+        kind: "articles" as const,
+      })),
+      ...(await records("documents", store)).map((record) => ({
+        record,
+        kind: "documents" as const,
+      })),
+    ];
+    if (
+      all.some(
+        ({ record: r, kind }) =>
+          mediaReferences(r.draft, kind).includes(normalizedId) ||
+          (r.published &&
+            mediaReferences(r.published, kind).includes(normalizedId)),
+      )
     )
-  )
-    throw new HttpError(
-      409,
-      "This asset is referenced by content. Remove those references first.",
-    );
-  await append(store, `media/${media.id}`, actor, "delete", {
-    ...media,
-    deleted: true,
-  });
-  await store.remove(original(normalizedId));
-  await store.remove(delivery(normalizedId));
+      throw new HttpError(
+        409,
+        "This asset is referenced by content. Remove those references first.",
+      );
+    await append(store, `media/${media.id}`, actor, "delete", {
+      ...media,
+      deleted: true,
+    });
+  }
+
+  // Keep cleanup retryable after the tombstone is written. Attempt both objects
+  // even if one removal fails, then let the caller retry the DELETE request.
+  const removals = await Promise.allSettled([
+    store.remove(original(normalizedId)),
+    store.remove(delivery(normalizedId)),
+  ]);
+  const failure = removals.find((result) => result.status === "rejected");
+  if (failure?.status === "rejected") throw failure.reason;
 }
 export async function previewMedia(id: string, store: Store) {
   const media = await getMedia(id, store);
