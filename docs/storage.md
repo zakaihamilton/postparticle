@@ -159,6 +159,7 @@ credentials in command arguments or commit them.
    These commands update object ACLs under each supplied key prefix; do not run them against the
    bucket root. Keep file listing private and do not set a bucket-wide public ACL. Preserve object
    content types and metadata. See DigitalOcean's [recursive file permission instructions](https://docs.digitalocean.com/products/spaces/reference/s3cmd-usage/#make-files-public-recursively).
+
 3. Configure the non-production app to use the restored Space. Run
    `pnpm run storage:verify -- <project-id> --organization-id "<organization-uuid>" --confirm-non-production`
    against a project marked `production: false`.
