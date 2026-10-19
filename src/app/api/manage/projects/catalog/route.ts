@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { HttpError, identifier } from "@/lib/config";
 import { json, readJson } from "@/lib/http";
-import { manageHandler, managePlatformAdmin } from "@/lib/manage-api";
+import {
+  manageAuthenticatedContext,
+  manageHandler,
+  managePlatformAdmin,
+} from "@/lib/manage-api";
 import {
   getProjectRegistry,
   updateProjectRegistry,
@@ -19,7 +23,8 @@ export const GET = manageHandler(async (request: Request) => {
 });
 
 export const POST = manageHandler(async (request: Request) => {
-  const actor = await managePlatformAdmin(request);
+  const context = await manageAuthenticatedContext(request);
+  const { actor } = context;
   const input = z
     .object({
       id: identifier,
@@ -35,6 +40,8 @@ export const POST = manageHandler(async (request: Request) => {
       throw new HttpError(409, "A project with this ID already exists.");
     const project: ProjectRecord = {
       ...input,
+      production: actor.platformAdmin ? input.production : true,
+      createdBySubjectId: context.session.account.subjectId,
       archived: false,
       deleting: false,
     };

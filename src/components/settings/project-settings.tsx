@@ -9,6 +9,7 @@ import {
 } from "react";
 import { api, Notice } from "../ui";
 import styles from "../workspace.module.css";
+import { ProjectCreationForm } from "./project-creation-form";
 
 interface ProjectRecord {
   id: string;
@@ -117,26 +118,6 @@ export function ProjectSettings({
     } finally {
       setBusy(false);
     }
-  }
-
-  async function createProject(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    await run(async () => {
-      await api("/api/manage/projects/catalog", {
-        method: "POST",
-        body: JSON.stringify({
-          id: data.get("id"),
-          name: data.get("name"),
-          description: data.get("description"),
-          production: data.get("production") === "on",
-        }),
-      });
-      form.reset();
-      setMessage("Project created.");
-      await refresh();
-    });
   }
 
   async function updateProject(
@@ -255,55 +236,7 @@ export function ProjectSettings({
         </div>
       </div>
       <Notice error={error} message={message} />
-      <section className={styles.panel}>
-        <div className={styles.panelHeading}>
-          <div>
-            <h2>Create a project</h2>
-            <p>New projects are visible in production by default.</p>
-          </div>
-        </div>
-        <form className={styles.formSection} onSubmit={createProject}>
-          <label>
-            Project ID
-            <input
-              name="id"
-              required
-              pattern="[a-z0-9][a-z0-9_-]{0,79}"
-              maxLength={80}
-              autoCapitalize="none"
-              autoCorrect="off"
-              disabled={busy}
-            />
-            <small>Lowercase letters, numbers, hyphens, and underscores.</small>
-            <small>IDs of permanently deleted projects stay retired.</small>
-          </label>
-          <label>
-            Name
-            <input name="name" required maxLength={120} disabled={busy} />
-          </label>
-          <label>
-            Description
-            <textarea
-              name="description"
-              maxLength={1000}
-              rows={3}
-              disabled={busy}
-            />
-          </label>
-          <label className={styles.projectProductionToggle}>
-            <input
-              name="production"
-              type="checkbox"
-              defaultChecked
-              disabled={busy}
-            />
-            Visible in production
-          </label>
-          <button className={styles.primary} disabled={busy}>
-            Create project
-          </button>
-        </form>
-      </section>
+      <ProjectCreationForm isPlatformAdmin onCreated={refresh} />
 
       <section className={styles.panel}>
         <div className={styles.panelHeading}>

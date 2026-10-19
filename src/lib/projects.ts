@@ -22,6 +22,7 @@ const projectRecordSchema = z.object({
   name: z.string().trim().min(1).max(120),
   description: z.string().max(1000),
   production: z.boolean().default(true),
+  createdBySubjectId: z.string().min(1).optional(),
   legacyOrganizationId: organizationIdentifier.optional(),
   archived: z.boolean().default(false),
   deleting: z.boolean().default(false),
@@ -40,6 +41,7 @@ interface ProjectRegistryChange {
 
 export interface ProjectRecord extends Project {
   production: boolean;
+  createdBySubjectId?: string;
   legacyOrganizationId?: string;
   archived: boolean;
   deleting: boolean;

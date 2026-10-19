@@ -72,17 +72,17 @@ export function AccountArea({
             <Icon name="settings" size={18} />
             Your account
           </Link>
+          <Link
+            href="/account/projects"
+            aria-current={activeSection === "projects" ? "page" : undefined}
+            className={`${styles.navItem} ${activeSection === "projects" ? styles.navActive : ""}`}
+            onClick={() => setMenu(false)}
+          >
+            <Icon name="grid" size={18} />
+            Projects
+          </Link>
           {actor.platformAdmin && (
             <>
-              <Link
-                href="/account/projects"
-                aria-current={activeSection === "projects" ? "page" : undefined}
-                className={`${styles.navItem} ${activeSection === "projects" ? styles.navActive : ""}`}
-                onClick={() => setMenu(false)}
-              >
-                <Icon name="grid" size={18} />
-                Projects
-              </Link>
               <Link
                 href="/account/platform-accounts"
                 aria-current={
