@@ -115,6 +115,23 @@ function perministerRole(
   return perministerRoleForProject(session, organizationId, projectId);
 }
 
+function roleForProject(
+  context: AuthContext,
+  project: ProjectRecord,
+  write = false,
+  admin = false,
+): Role {
+  const { actor, session } = context;
+  const grantedRole = perministerRole(
+    session,
+    actor.organizationId,
+    project.id,
+  );
+  if (actor.platformAdmin || grantedRole === "admin") return "admin";
+  if (project.createdBySubjectId === session.account.subjectId) return "editor";
+  return grantedRole ?? (admin ? "admin" : write ? "editor" : "viewer");
+}
+
 function matchesPerministerMember(
   member: { username: string | null; email: string | null },
   username: string,
@@ -281,14 +298,17 @@ export async function revokeProjectGrantsForDeletion(
 }
 
 export async function allowedProjects(context: AuthContext) {
-  const { actor, token, session } = context;
+  const { actor, token } = context;
   const projects = (await getProjectRegistry(actor.organizationId)).filter(
     productionVisible,
   );
   const accessible = await Promise.all(
     projects.map(async (project) => {
+      const createdByActor =
+        project.createdBySubjectId === context.session.account.subjectId;
       if (
         !actor.platformAdmin &&
+        !createdByActor &&
         !(await perministerAuthorize(
           token,
           actor.organizationId,
@@ -302,9 +322,7 @@ export async function allowedProjects(context: AuthContext) {
         id: project.id,
         name: project.name,
         description: project.description,
-        role:
-          perministerRole(session, actor.organizationId, project.id) ??
-          (actor.platformAdmin ? ("admin" as const) : ("viewer" as const)),
+        role: roleForProject(context, project),
       };
     }),
   );
@@ -377,43 +395,30 @@ export async function authorizeProject(
 ) {
   const actor = context.actor;
   const validProjectId = identifier.parse(projectId);
-  const projectResult = getProject(actor.organizationId, validProjectId);
-  const authorizationResult = actor.platformAdmin
-    ? Promise.resolve(true)
-    : perministerAuthorize(
-        context.token,
-        actor.organizationId,
-        validProjectId,
-        admin
-          ? "postparticle:members:manage"
-          : write
-            ? "postparticle:project:write"
-            : "postparticle:project:read",
-      );
-  const [projectOutcome, authorizationOutcome] = await Promise.allSettled([
-    projectResult,
-    authorizationResult,
-  ] as const);
-  if (projectOutcome.status === "rejected") throw projectOutcome.reason;
-  const project = projectOutcome.value;
+  const project = await getProject(actor.organizationId, validProjectId);
   if (!productionVisible(project))
     throw new HttpError(404, "Project not found");
-  if (authorizationOutcome.status === "rejected")
-    throw authorizationOutcome.reason;
-  if (!authorizationOutcome.value) {
+  const createdByActor =
+    project.createdBySubjectId === context.session.account.subjectId;
+  const authorized =
+    actor.platformAdmin || (createdByActor && !admin)
+      ? true
+      : await perministerAuthorize(
+          context.token,
+          actor.organizationId,
+          validProjectId,
+          admin
+            ? "postparticle:members:manage"
+            : write
+              ? "postparticle:project:write"
+              : "postparticle:project:read",
+        );
+  if (!authorized) {
     throw new HttpError(403, "You do not have permission for this action");
   }
   return {
     project,
-    role:
-      perministerRole(context.session, actor.organizationId, validProjectId) ??
-      (actor.platformAdmin
-        ? "admin"
-        : admin
-          ? "admin"
-          : write
-            ? "editor"
-            : "viewer"),
+    role: roleForProject(context, project, write, admin),
   };
 }
 
@@ -438,32 +443,27 @@ export async function authorizeResolvedProject(
   const projectId = identifier.parse(project.id);
   if (!productionVisible(project))
     throw new HttpError(404, "Project not found");
-  const authorized = actor.platformAdmin
-    ? true
-    : await perministerAuthorize(
-        context.token,
-        organizationId,
-        projectId,
-        admin
-          ? "postparticle:members:manage"
-          : write
-            ? "postparticle:project:write"
-            : "postparticle:project:read",
-      );
+  const createdByActor =
+    project.createdBySubjectId === context.session.account.subjectId;
+  const authorized =
+    actor.platformAdmin || (createdByActor && !admin)
+      ? true
+      : await perministerAuthorize(
+          context.token,
+          organizationId,
+          projectId,
+          admin
+            ? "postparticle:members:manage"
+            : write
+              ? "postparticle:project:write"
+              : "postparticle:project:read",
+        );
   if (!authorized)
     throw new HttpError(403, "You do not have permission for this action");
 
   return {
     project,
-    role:
-      perministerRole(context.session, organizationId, projectId) ??
-      (actor.platformAdmin
-        ? "admin"
-        : admin
-          ? "admin"
-          : write
-            ? "editor"
-            : "viewer"),
+    role: roleForProject(context, project, write, admin),
   };
 }
 

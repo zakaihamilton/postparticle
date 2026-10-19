@@ -1,7 +1,7 @@
 import "server-only";
 import { errorResponse } from "./http";
 import { HttpError, identifier } from "./config";
-import { authorizeProject, requireActor, requireAuthContext } from "./auth";
+import { authorizeProject, requireAuthContext } from "./auth";
 import { sameOrigin } from "./http";
 import { projectStoreFor } from "./projects";
 
@@ -17,13 +17,13 @@ export function manageHandler<Args extends unknown[]>(
   };
 }
 
-async function manageActor(request: Request) {
+export async function manageAuthenticatedContext(request: Request) {
   if (request.method !== "GET") sameOrigin(request);
-  return requireActor();
+  return requireAuthContext();
 }
 
 export async function managePlatformAdmin(request: Request) {
-  const actor = await manageActor(request);
+  const { actor } = await manageAuthenticatedContext(request);
   if (!actor.platformAdmin)
     throw new HttpError(403, "Platform administrator access required");
   return actor;

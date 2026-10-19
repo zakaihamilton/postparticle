@@ -18,6 +18,9 @@ export default function ProjectPicker({
         <p className={styles.subtitle}>
           Choose a project to continue writing and publishing.
         </p>
+        <Link className={styles.primary} href="/account/projects">
+          Create a project
+        </Link>
         <div className={styles.projectGrid}>
           {projects.map((p) => (
             <Link
@@ -42,8 +45,8 @@ export default function ProjectPicker({
         </div>
         {!projects.length && (
           <Empty title="No projects yet">
-            Your administrator can give you access to a project. Your account is
-            ready.
+            Create a project for your organization, or ask an administrator to
+            grant you access to an existing one.
           </Empty>
         )}
         <div className={styles.pickerNote}>
