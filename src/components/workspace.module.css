@@ -1246,6 +1246,9 @@ a.secondary:hover {
   font-size: 38px;
   margin-top: 16px;
 }
+.pickerMain > .subtitle {
+  margin-bottom: 16px;
+}
 .projectGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
