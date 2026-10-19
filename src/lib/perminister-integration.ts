@@ -34,14 +34,19 @@ export function perministerHasProductAdminAccess(
   organization: PerministerSession["organizations"][number],
 ) {
   if (organization.platformAdmin) return true;
-  if (organization.organizationRole?.toLowerCase() === "owner") return true;
+  if (
+    ["admin", "owner"].includes(
+      organization.organizationRole?.toLowerCase() ?? "",
+    )
+  )
+    return true;
   return organization.resourceRoles.some((grant) => {
     const role = grant.role?.toLowerCase();
     const productScope =
       grant.scope.kind === "product" &&
       (!grant.scope.productId ||
         grant.scope.productId.toLowerCase() === productId);
-    return productScope && role === "owner";
+    return productScope && (role === "admin" || role === "owner");
   });
 }
 
