@@ -99,7 +99,7 @@ export function IntegrationSettings({
         </div>
       </div>
       <section
-        className={styles.panel}
+        className={`${styles.panel} ${styles.panelWithTooltip}`}
         aria-labelledby="integration-parameters-heading"
       >
         <div className={styles.panelHeading}>

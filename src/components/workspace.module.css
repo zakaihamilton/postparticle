@@ -400,6 +400,11 @@ a.secondary:hover {
   margin-bottom: 22px;
   overflow: hidden;
 }
+.panelWithTooltip {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
 .panelHeading {
   display: flex;
   align-items: center;
