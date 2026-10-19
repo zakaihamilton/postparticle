@@ -45,13 +45,13 @@ export default function ProjectPicker({
         </div>
         {!projects.length && (
           <Empty title="No projects yet">
-            Create a project for your organization, or ask an administrator to
-            grant you access to an existing one.
+            Create a project for your organization to start writing and
+            publishing.
           </Empty>
         )}
         <div className={styles.pickerNote}>
-          <Icon name="lock" size={16} /> Only projects you have access to appear
-          here.
+          <Icon name="lock" size={16} /> Projects are shared with your
+          organization. Your role determines what you can do.
         </div>
       </div>
     </AccountArea>

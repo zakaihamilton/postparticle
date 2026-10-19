@@ -132,6 +132,33 @@ function roleForProject(
   return grantedRole ?? (admin ? "admin" : write ? "editor" : "viewer");
 }
 
+async function canAccessProject(
+  context: AuthContext,
+  project: ProjectRecord,
+  write = false,
+  admin = false,
+) {
+  const { actor, session, token } = context;
+  const createdByActor =
+    project.createdBySubjectId === session.account.subjectId;
+  if (actor.platformAdmin || (createdByActor && !admin)) return true;
+
+  // Every member of an organization that has PostParticle can discover and
+  // read its projects. Changes and project administration still use grants.
+  if (!write && !admin) return true;
+
+  return perministerAuthorize(
+    token,
+    actor.organizationId,
+    project.id,
+    admin
+      ? "postparticle:members:manage"
+      : write
+        ? "postparticle:project:write"
+        : "postparticle:project:read",
+  );
+}
+
 function matchesPerministerMember(
   member: { username: string | null; email: string | null },
   username: string,
@@ -298,35 +325,16 @@ export async function revokeProjectGrantsForDeletion(
 }
 
 export async function allowedProjects(context: AuthContext) {
-  const { actor, token } = context;
+  const { actor } = context;
   const projects = (await getProjectRegistry(actor.organizationId)).filter(
     productionVisible,
   );
-  const accessible = await Promise.all(
-    projects.map(async (project) => {
-      const createdByActor =
-        project.createdBySubjectId === context.session.account.subjectId;
-      if (
-        !actor.platformAdmin &&
-        !createdByActor &&
-        !(await perministerAuthorize(
-          token,
-          actor.organizationId,
-          project.id,
-          "postparticle:project:read",
-        ))
-      ) {
-        return null;
-      }
-      return {
-        id: project.id,
-        name: project.name,
-        description: project.description,
-        role: roleForProject(context, project),
-      };
-    }),
-  );
-  return accessible.filter((project) => project !== null);
+  return projects.map((project) => ({
+    id: project.id,
+    name: project.name,
+    description: project.description,
+    role: roleForProject(context, project),
+  }));
 }
 
 export async function projectMemberAccounts(
@@ -398,21 +406,7 @@ export async function authorizeProject(
   const project = await getProject(actor.organizationId, validProjectId);
   if (!productionVisible(project))
     throw new HttpError(404, "Project not found");
-  const createdByActor =
-    project.createdBySubjectId === context.session.account.subjectId;
-  const authorized =
-    actor.platformAdmin || (createdByActor && !admin)
-      ? true
-      : await perministerAuthorize(
-          context.token,
-          actor.organizationId,
-          validProjectId,
-          admin
-            ? "postparticle:members:manage"
-            : write
-              ? "postparticle:project:write"
-              : "postparticle:project:read",
-        );
+  const authorized = await canAccessProject(context, project, write, admin);
   if (!authorized) {
     throw new HttpError(403, "You do not have permission for this action");
   }
@@ -440,24 +434,10 @@ export async function authorizeResolvedProject(
   )
     throw new HttpError(403, "You do not have permission for this action");
 
-  const projectId = identifier.parse(project.id);
+  identifier.parse(project.id);
   if (!productionVisible(project))
     throw new HttpError(404, "Project not found");
-  const createdByActor =
-    project.createdBySubjectId === context.session.account.subjectId;
-  const authorized =
-    actor.platformAdmin || (createdByActor && !admin)
-      ? true
-      : await perministerAuthorize(
-          context.token,
-          organizationId,
-          projectId,
-          admin
-            ? "postparticle:members:manage"
-            : write
-              ? "postparticle:project:write"
-              : "postparticle:project:read",
-        );
+  const authorized = await canAccessProject(context, project, write, admin);
   if (!authorized)
     throw new HttpError(403, "You do not have permission for this action");
 
