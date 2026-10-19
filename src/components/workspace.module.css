@@ -763,6 +763,94 @@ a.secondary:hover {
 .formSection > button {
   align-self: flex-start;
 }
+.integrationCopyControl {
+  position: relative;
+  flex-shrink: 0;
+}
+.integrationCopyButton {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted);
+}
+.integrationCopyButton:hover {
+  border-color: var(--accent-ink);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+.integrationCopyButton:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+.integrationCopyTooltip {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 2;
+  width: max-content;
+  max-width: min(220px, calc(100vw - 80px));
+  padding: 7px 10px;
+  border-radius: 5px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(3px);
+  transition:
+    opacity var(--motion-fast),
+    transform var(--motion-fast),
+    visibility var(--motion-fast);
+  pointer-events: none;
+}
+.integrationCopyTooltip::after {
+  position: absolute;
+  right: 15px;
+  bottom: -3px;
+  width: 7px;
+  height: 7px;
+  background: var(--text);
+  content: "";
+  transform: rotate(45deg);
+}
+.integrationCopyControl:hover .integrationCopyTooltip,
+.integrationCopyButton:focus-visible + .integrationCopyTooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.integrationWebsiteField code {
+  margin-left: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 400;
+}
+.integrationWebsiteField input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--text);
+}
+.integrationWebsiteField input:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+.integrationWebsiteField input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+.formSection label .integrationWebsiteError {
+  color: var(--danger);
+}
 .twoColumns {
   display: grid;
   grid-template-columns: 1fr 1fr;

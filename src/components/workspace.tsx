@@ -266,7 +266,7 @@ function WorkspaceContent({
                 confirmNavigation("Switch organization and discard")
               }
             />
-            <span className={styles.projectType}>CONTENT WORKSPACE</span>
+            <span className={styles.projectType}>Content Workspace</span>
             <ThemeSwitch />
           </div>
         </header>
