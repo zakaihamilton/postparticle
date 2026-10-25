@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { Check, Copy } from "lucide-react";
 import { GuardedLink as Link } from "../navigation-guard";
 import styles from "../workspace.module.css";
@@ -29,6 +29,18 @@ function integrationParameters(
   ].join("\n");
 }
 
+function subscribeToLocationOrigin() {
+  return () => {};
+}
+
+function getLocationOrigin() {
+  return window.location.origin;
+}
+
+function getServerLocationOrigin() {
+  return "";
+}
+
 export function IntegrationSettings({
   projectId,
   organizationId,
@@ -36,16 +48,16 @@ export function IntegrationSettings({
   projectId: string;
   organizationId: string;
 }) {
-  const [postparticleUrl, setPostparticleUrl] = useState("");
+  const postparticleUrl = useSyncExternalStore(
+    subscribeToLocationOrigin,
+    getLocationOrigin,
+    getServerLocationOrigin,
+  );
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [copyState, setCopyState] = useState<
     "idle" | "copied" | "error" | "website-required" | "website-invalid"
   >("idle");
   const websiteUrlInput = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setPostparticleUrl(window.location.origin);
-  }, []);
 
   const normalizedWebsiteUrl = normalizeWebsiteUrl(websiteUrl);
   const promptDetails = integrationParameters(
@@ -188,6 +200,7 @@ export function IntegrationSettings({
                   : "Use the base URL readers will visit, without a trailing slash."}
             </small>
           </label>
+          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Focus enables keyboard scrolling of integration parameters. */}
           <pre className={styles.codeBlock} tabIndex={0}>
             {promptDetails}
           </pre>
