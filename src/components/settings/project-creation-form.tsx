@@ -29,9 +29,7 @@ export function ProjectCreationForm({
           id: data.get("id"),
           name: data.get("name"),
           description: data.get("description"),
-          production: isPlatformAdmin
-            ? data.get("production") === "on"
-            : true,
+          production: isPlatformAdmin ? data.get("production") === "on" : true,
         }),
       });
       form.reset();
