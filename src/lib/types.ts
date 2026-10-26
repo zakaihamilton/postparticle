@@ -79,7 +79,6 @@ export interface WorkspaceDashboard {
   articleCount: number;
   publishedCount: number;
   mediaCount: number;
-  publicArticleMetadataIndex: PublicArticleMetadataIndexStatus;
   recentArticles: {
     id: string;
     draft: Pick<Article, "title" | "author" | "tags" | "articleDate">;

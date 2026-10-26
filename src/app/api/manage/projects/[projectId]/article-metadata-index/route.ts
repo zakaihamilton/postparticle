@@ -7,6 +7,14 @@ import { json } from "@/lib/http";
 
 type Context = { params: Promise<{ projectId: string }> };
 
+export const GET = manageHandler(async (request: Request, context: Context) => {
+  const { projectId } = await context.params;
+  const { store } = await manageProject(request, projectId);
+  return json({
+    publicArticleMetadataIndex: await publicArticleMetadataIndexStatus(store),
+  });
+});
+
 export const POST = manageHandler(
   async (request: Request, context: Context) => {
     const { projectId } = await context.params;

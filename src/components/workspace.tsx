@@ -278,7 +278,6 @@ function WorkspaceContent({
               projectId={project.id}
               username={actor.username}
               canEdit={canEdit}
-              canAdmin={role === "admin"}
             />
           )}
           {["articles", "documents"].includes(tab) &&
@@ -305,6 +304,7 @@ function WorkspaceContent({
             <IntegrationSettings
               projectId={project.id}
               organizationId={actor.organizationId}
+              canAdmin={role === "admin"}
             />
           )}
         </main>
