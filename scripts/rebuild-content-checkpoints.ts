@@ -3,7 +3,7 @@ import {
   contentIndexStatus,
   rebuildContentCheckpoints,
 } from "../src/lib/content-state";
-import { ensurePublicArticleMetadataIndex } from "../src/lib/article-metadata-index";
+import { rebuildPublicArticleMetadataIndex } from "../src/lib/article-metadata-index";
 import { getProject, projectStoreFor } from "../src/lib/projects";
 
 const args = process.argv.slice(2);
@@ -54,7 +54,7 @@ for (const kind of ["articles", "documents"] as const) {
   );
 }
 
-await ensurePublicArticleMetadataIndex(store);
+const metadataIndex = await rebuildPublicArticleMetadataIndex(store);
 console.log(
-  `${organizationId}/${projectId}/articles: public metadata index ready`,
+  `${organizationId}/${projectId}/articles: public metadata index ready; ${metadataIndex.total} published records in ${metadataIndex.pageShards} page shards after ${metadataIndex.retries} retries`,
 );

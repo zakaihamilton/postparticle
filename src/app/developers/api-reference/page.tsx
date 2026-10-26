@@ -160,10 +160,10 @@ export default function ApiReference() {
           </li>
         </ul>
         <p>
-          The API responds with <code>Cache-Control: no-store</code>. Your
-          website chooses whether to cache server-rendered results and how to
-          refresh them. A 60-second revalidation interval does not guarantee an
-          update exactly 60 seconds after publication; see the{" "}
+          The article metadata endpoint uses a 45-second public edge cache, with
+          up to 15 seconds of stale-while-revalidate. Other API responses and
+          errors use <code>Cache-Control: no-store</code>. Your website can add
+          its own cache; see the{" "}
           <Link href="/developers/nextjs/metadata-and-caching#freshness">
             cache freshness guide
           </Link>

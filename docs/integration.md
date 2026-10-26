@@ -70,7 +70,7 @@ const story = await client.article("a-little-room");
 const banner = await client.document<{ headline: string }>("homepage-banner");
 ```
 
-API responses use `Cache-Control: no-store`. Your website chooses its server-side cache policy. The example revalidates after 60 seconds, but the next request triggers revalidation; browser router and CDN caches can extend the delay. Avoid build-only fetching if content must update without rebuilding the website.
+The article metadata endpoint uses a public edge cache with a 45-second freshness window and up to 15 seconds of stale-while-revalidate. Other API responses and errors use `Cache-Control: no-store`. Your website can add its own server-side cache; downstream caches can extend the time before a published change appears. Avoid build-only fetching if content must update without rebuilding the website.
 
 ## Runnable Next.js example
 

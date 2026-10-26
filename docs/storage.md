@@ -87,6 +87,17 @@ pnpm run storage:checkpoint -- demo --organization-id "<organization-uuid>"
 Run this operator command after bulk imports and whenever the feed tail reaches 1,000 events. It
 reports the pre-build unindexed-event count, rebuilds both content snapshots and feed backfill for
 articles and documents, and reports the post-build tail count. It never removes source events.
+It also builds the public article metadata snapshot used by the body-free listing endpoint. Run it
+for each existing project before deploying metadata index version 2. The public endpoint does not
+rebuild a missing or outdated index; it returns a retryable 503 until this command rebuilds the
+snapshot. Publish, unpublish, and trash mutations atomically replace the metadata manifest, keeping
+the total and first 100 items in the same snapshot. Later pages read at most two bounded page
+shards. Failed index updates invalidate the manifest so a partial snapshot is not served; rerun
+`storage:checkpoint` to recover from source content events. Mutations update canonical per-slug
+entries tagged with the latest source event ID; unpublish and trash keep null-metadata tombstones so
+a delayed older publish cannot restore stale metadata. Writers recheck source state after swapping
+the manifest and retry if another instance changed an entry; repeated conflicts invalidate the
+manifest and make reads fail closed.
 `pnpm run benchmark:content` creates disposable local histories of 1,000, 5,000, and 10,000 events;
 checks full-replay parity, including concurrent appends; and reports elapsed time, object reads,
 list calls, keys enumerated, and estimated 1,000-key Spaces list pages for record listing, public

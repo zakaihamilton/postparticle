@@ -366,19 +366,22 @@ export default async function DeveloperGuide({
           <section id="freshness">
             <h2>Choose a cache policy</h2>
             <p>
-              The API sends <code>Cache-Control: no-store</code>. The example
-              sets its server-side fetch cache with{" "}
+              The article metadata endpoint is edge-cached for 45 seconds, with
+              up to 15 seconds of stale-while-revalidate. Other API responses
+              use <code>Cache-Control: no-store</code>. The example sets its
+              server-side fetch cache with{" "}
               <code>next: &#123; revalidate: 60 &#125;</code>. After publishing
               or unpublishing, a cached page can continue to show the previous
               content until the cache refreshes. Revalidation occurs on a later
               request; 60 seconds is an interval, not a delivery guarantee.
             </p>
             <p>
-              Browser router caches and CDN caches can extend the delay. Use{" "}
-              <code>&#123; cache: &quot;no-store&quot; &#125;</code> instead of{" "}
-              <code>next.revalidate</code> if each server request must fetch
-              current content. Do not combine the options. Avoid build-only
-              fetching if content must update without a redeployment.
+              Browser router caches and your website’s CDN can extend the delay.
+              Use <code>&#123; cache: &quot;no-store&quot; &#125;</code> to
+              bypass your website’s fetch cache; it does not bypass the metadata
+              endpoint’s 45-second freshness window or its 15-second
+              stale-while-revalidate window. Do not combine the options. Avoid
+              build-only fetching if content must update without a redeployment.
             </p>
             <p>
               Unpublishing removes the article from the API. Previously cached
