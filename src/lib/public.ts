@@ -3,13 +3,13 @@ import { z } from "zod";
 import { HttpError } from "./config";
 import { getRecord, records } from "./content";
 import { delivery, resolvePublicMedia } from "./media";
+import { listIndexedPublicArticleMetadata } from "./article-metadata-index";
 import type { Store } from "./storage";
 import type {
   Article,
   ArticlePage,
   JsonDocument,
   ArticleMetadataPage,
-  PublicArticleMetadata,
   PublicArticle,
   RecordState,
 } from "./types";
@@ -72,55 +72,12 @@ export async function listPublicArticles(
     pageSize,
   };
 }
-function publicArticleMetadata(
-  record: RecordState,
-  store: Store,
-): PublicArticleMetadata {
-  const article = record.published as Article;
-  return {
-    title: article.title,
-    slug: article.slug,
-    excerpt: article.excerpt,
-    author: article.author,
-    tags: article.tags,
-    articleDate: article.articleDate,
-    seoTitle: article.seoTitle,
-    seoDescription: article.seoDescription,
-    createdAt: record.createdAt,
-    updatedAt: record.publishedAt!,
-    publishedAt: record.publishedAt!,
-    coverUrl: article.coverMediaId
-      ? store.publicUrl(delivery(article.coverMediaId))
-      : null,
-    socialImageUrl: article.socialMediaId
-      ? store.publicUrl(delivery(article.socialMediaId))
-      : null,
-  };
-}
 export async function listPublicArticleMetadata(
   query: Record<string, string>,
   store: Store,
 ): Promise<ArticleMetadataPage> {
   const { order, page, pageSize } = metadataQuerySchema.parse(query);
-  const published = (await records("articles", store))
-    .filter((record) => record.published && !record.trashed)
-    .sort((a, b) => {
-      const first = a.published as Article;
-      const second = b.published as Article;
-      const dates =
-        first.articleDate.localeCompare(second.articleDate) *
-        (order === "asc" ? 1 : -1);
-      return dates || first.slug.localeCompare(second.slug);
-    });
-  const start = (page - 1) * pageSize;
-  return {
-    items: published
-      .slice(start, start + pageSize)
-      .map((record) => publicArticleMetadata(record, store)),
-    total: published.length,
-    page,
-    pageSize,
-  };
+  return listIndexedPublicArticleMetadata({ order, page, pageSize }, store);
 }
 export async function readPublicArticle(
   projectId: string,

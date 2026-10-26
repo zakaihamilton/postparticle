@@ -3,6 +3,7 @@ import {
   contentIndexStatus,
   rebuildContentCheckpoints,
 } from "../src/lib/content-state";
+import { ensurePublicArticleMetadataIndex } from "../src/lib/article-metadata-index";
 import { getProject, projectStoreFor } from "../src/lib/projects";
 
 const args = process.argv.slice(2);
@@ -52,3 +53,8 @@ for (const kind of ["articles", "documents"] as const) {
       `; ${result.indexedEvents ?? 0} events indexed, ${result.unindexedEvents ?? 0} remain in the replay tail`,
   );
 }
+
+await ensurePublicArticleMetadataIndex(store);
+console.log(
+  `${organizationId}/${projectId}/articles: public metadata index ready`,
+);
