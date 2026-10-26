@@ -2,6 +2,7 @@ import { manageHandler, manageProject } from "@/lib/manage-api";
 import { records } from "@/lib/content";
 import { json } from "@/lib/http";
 import { listMedia } from "@/lib/media";
+import { publicArticleMetadataIndexStatus } from "@/lib/article-metadata-index";
 import type { Article } from "@/lib/types";
 
 type Context = { params: Promise<{ projectId: string }> };
@@ -9,10 +10,13 @@ type Context = { params: Promise<{ projectId: string }> };
 export const GET = manageHandler(async (request: Request, context: Context) => {
   const { projectId } = await context.params;
   const { store } = await manageProject(request, projectId);
-  const [articleRecords, media] = await Promise.all([
-    records("articles", store),
-    listMedia(store),
-  ]);
+  const [articleRecords, media, publicArticleMetadataIndex] = await Promise.all(
+    [
+      records("articles", store),
+      listMedia(store),
+      publicArticleMetadataIndexStatus(store),
+    ],
+  );
   const articles = articleRecords.filter((record) => !record.trashed);
   const recentArticles = [...articles]
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
@@ -33,6 +37,7 @@ export const GET = manageHandler(async (request: Request, context: Context) => {
     articleCount: articles.length,
     publishedCount: articles.filter((record) => record.published).length,
     mediaCount: media.length,
+    publicArticleMetadataIndex,
     recentArticles,
   });
 });

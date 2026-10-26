@@ -79,6 +79,7 @@ export interface WorkspaceDashboard {
   articleCount: number;
   publishedCount: number;
   mediaCount: number;
+  publicArticleMetadataIndex: PublicArticleMetadataIndexStatus;
   recentArticles: {
     id: string;
     draft: Pick<Article, "title" | "author" | "tags" | "articleDate">;
@@ -86,6 +87,11 @@ export interface WorkspaceDashboard {
     trashed: boolean;
     updatedAt: string;
   }[];
+}
+export interface PublicArticleMetadataIndexStatus {
+  ready: boolean;
+  total: number | null;
+  builtAt: string | null;
 }
 export interface Media {
   id: string;

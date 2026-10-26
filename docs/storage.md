@@ -87,10 +87,12 @@ pnpm run storage:checkpoint -- demo --organization-id "<organization-uuid>"
 Run this operator command after bulk imports and whenever the feed tail reaches 1,000 events. It
 reports the pre-build unindexed-event count, rebuilds both content snapshots and feed backfill for
 articles and documents, and reports the post-build tail count. It never removes source events.
-It also builds the public article metadata snapshot used by the body-free listing endpoint. Run it
-for each existing project before deploying metadata index version 2. The public endpoint does not
-rebuild a missing or outdated index; it returns a retryable 503 until this command rebuilds the
-snapshot. Publish, unpublish, and trash mutations atomically replace the metadata manifest, keeping
+It also builds the public article metadata snapshot used by the body-free listing endpoint. The
+project overview includes an admin-only Build/Rebuild index action. Use it after deploying metadata
+index version 2 to prepare an existing project without running a command. Until the build succeeds,
+the public endpoint returns a retryable 503. The `storage:checkpoint` command remains available for
+pre-deployment or scripted rebuilds. Publish, unpublish, and trash mutations atomically replace the
+metadata manifest, keeping
 the total and first 100 items in the same snapshot. Later pages read at most two bounded page
 shards. Failed index updates invalidate the manifest so a partial snapshot is not served; rerun
 `storage:checkpoint` to recover from source content events. Mutations update canonical per-slug
