@@ -83,7 +83,6 @@ export default function MediaLibrary({
           setItems(page.items);
           setTotal(page.total);
           setNextOffset(page.nextOffset);
-          setError("");
           setPreviewUrls({});
           setFailedPreviews(new Set());
           previewRetries.current.clear();
@@ -448,6 +447,7 @@ export default function MediaLibrary({
             value={q}
             onChange={(e) => {
               queryRef.current = e.target.value;
+              setError("");
               setQ(e.target.value);
             }}
           />

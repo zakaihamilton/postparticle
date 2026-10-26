@@ -23,6 +23,7 @@ function pngDimensions(image: Buffer) {
 }
 
 test("branded app assets and metadata are available without changing noindex", async ({
+  page,
   request,
 }) => {
   const home = await request.get("/");
@@ -129,8 +130,8 @@ test("branded app assets and metadata are available without changing noindex", a
       purpose: "any",
     }),
   ]);
-  const signedOutLaunch = await request.get("/projects");
-  expect(signedOutLaunch.url()).toMatch(/\/login$/);
+  await page.goto("/projects");
+  await expect(page).toHaveURL(/\/login$/);
 
   for (const [path, expectedSize] of [
     ["/icons/postparticle-192.png", 192],
