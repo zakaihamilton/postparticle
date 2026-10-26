@@ -1,4 +1,9 @@
-import type { ArticlePage, JsonDocument, PublicArticle } from "./types";
+import type {
+  ArticleMetadataPage,
+  ArticlePage,
+  JsonDocument,
+  PublicArticle,
+} from "./types";
 export class PostparticleClient {
   constructor(
     private baseUrl: string,
@@ -36,6 +41,20 @@ export class PostparticleClient {
       if (value !== undefined) params.set(key, String(value));
     }
     return this.get<ArticlePage>(`articles?${params}`, init);
+  }
+  articleMetadataPage(
+    query: {
+      order?: "asc" | "desc";
+      page?: number;
+      pageSize?: number;
+    } = {},
+    init?: RequestInit,
+  ) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined) params.set(key, String(value));
+    }
+    return this.get<ArticleMetadataPage>(`articles/metadata?${params}`, init);
   }
   article(slug: string, init?: RequestInit) {
     return this.get<PublicArticle>(

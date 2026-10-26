@@ -154,8 +154,8 @@ export const guideSearchIndex: GuideSearchEntry[] = [
     page: "API reference",
     section: "Base URL and endpoints",
     id: "endpoints",
-    text: "Public GET endpoints for published articles listing, article slug, and published JSON document key. Base path /api/v1/projects/{projectId}. Encode project ID, slug, document key.",
-    code: "GET /api/v1/projects/{projectId}/articles?organizationId={organizationId}\nGET /api/v1/projects/{projectId}/articles/{slug}?organizationId={organizationId}\nGET /api/v1/projects/{projectId}/documents/{key}?organizationId={organizationId}",
+    text: "Public GET endpoints for full published article listings, body-free article metadata listings, an article slug, and a published JSON document key. Base path /api/v1/projects/{projectId}. Encode project ID, slug, document key.",
+    code: "GET /api/v1/projects/{projectId}/articles?organizationId={organizationId}\nGET /api/v1/projects/{projectId}/articles/metadata?organizationId={organizationId}&page=1&pageSize=12&order=desc\nGET /api/v1/projects/{projectId}/articles/{slug}?organizationId={organizationId}\nGET /api/v1/projects/{projectId}/documents/{key}?organizationId={organizationId}",
   },
   {
     href: "/developers/api-reference",
@@ -164,6 +164,14 @@ export const guideSearchIndex: GuideSearchEntry[] = [
     id: "listing-parameters",
     text: "q case-insensitive search title excerpt body max 200. tag exact case-insensitive match max 60. order asc desc articleDate; slug breaks ties. page 1 to 100000, pageSize 1 to 100 default 12. Listing response items total page pageSize.",
     code: "?q=journey&tag=journal&order=desc&page=1&pageSize=12",
+  },
+  {
+    href: "/developers/api-reference",
+    page: "API reference",
+    section: "Article metadata listing",
+    id: "metadata-listing",
+    text: "Use /articles/metadata for article cards when Markdown body is unnecessary. Returns paginated article metadata without the body. Supports order, page 1 to 100000, and pageSize 1 to 100 default 12. No full-text search or tag filters.",
+    code: "GET /api/v1/projects/demo/articles/metadata?organizationId={organizationId}&page=1&pageSize=12&order=desc",
   },
   {
     href: "/developers/api-reference",

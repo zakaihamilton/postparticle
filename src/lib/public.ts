@@ -8,6 +8,8 @@ import type {
   Article,
   ArticlePage,
   JsonDocument,
+  ArticleMetadataPage,
+  PublicArticleMetadata,
   PublicArticle,
   RecordState,
 } from "./types";
@@ -35,6 +37,13 @@ const querySchema = z.object({
   page: z.coerce.number().int().min(1).max(100000).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(12),
 });
+const metadataQuerySchema = z
+  .object({
+    order: z.enum(["asc", "desc"]).default("desc"),
+    page: z.coerce.number().int().min(1).max(100000).default(1),
+    pageSize: z.coerce.number().int().min(1).max(100).default(12),
+  })
+  .strict();
 export async function listPublicArticles(
   projectId: string,
   query: Record<string, string>,
@@ -59,6 +68,56 @@ export async function listPublicArticles(
   return {
     items: items.slice((page - 1) * pageSize, page * pageSize),
     total: items.length,
+    page,
+    pageSize,
+  };
+}
+function publicArticleMetadata(
+  record: RecordState,
+  store: Store,
+): PublicArticleMetadata {
+  const article = record.published as Article;
+  return {
+    title: article.title,
+    slug: article.slug,
+    excerpt: article.excerpt,
+    author: article.author,
+    tags: article.tags,
+    articleDate: article.articleDate,
+    seoTitle: article.seoTitle,
+    seoDescription: article.seoDescription,
+    createdAt: record.createdAt,
+    updatedAt: record.publishedAt!,
+    publishedAt: record.publishedAt!,
+    coverUrl: article.coverMediaId
+      ? store.publicUrl(delivery(article.coverMediaId))
+      : null,
+    socialImageUrl: article.socialMediaId
+      ? store.publicUrl(delivery(article.socialMediaId))
+      : null,
+  };
+}
+export async function listPublicArticleMetadata(
+  query: Record<string, string>,
+  store: Store,
+): Promise<ArticleMetadataPage> {
+  const { order, page, pageSize } = metadataQuerySchema.parse(query);
+  const published = (await records("articles", store))
+    .filter((record) => record.published && !record.trashed)
+    .sort((a, b) => {
+      const first = a.published as Article;
+      const second = b.published as Article;
+      const dates =
+        first.articleDate.localeCompare(second.articleDate) *
+        (order === "asc" ? 1 : -1);
+      return dates || first.slug.localeCompare(second.slug);
+    });
+  const start = (page - 1) * pageSize;
+  return {
+    items: published
+      .slice(start, start + pageSize)
+      .map((record) => publicArticleMetadata(record, store)),
+    total: published.length,
     page,
     pageSize,
   };

@@ -14,7 +14,7 @@ import {
   restoreRevision,
   saveContent,
 } from "@/lib/content";
-import { listPublicArticles } from "@/lib/public";
+import { listPublicArticleMetadata, listPublicArticles } from "@/lib/public";
 import {
   abortUpload,
   deleteMedia,
@@ -240,6 +240,34 @@ describe("publishing and revisions", () => {
     expect(
       (await listPublicArticles("demo", { tag: "absent" }, store)).total,
     ).toBe(0);
+    expect(page.items[0]).not.toHaveProperty("coverMediaId");
+  });
+  it("returns body-free metadata for only the requested article page", async () => {
+    for (const [slug, date] of [
+      ["older", "2025-01-01"],
+      ["newer", "2026-01-01"],
+      ["same-date", "2026-01-01"],
+    ]) {
+      await saveContent(
+        "articles",
+        "a",
+        { ...article, slug, articleDate: date, body: "A long article body." },
+        store,
+      );
+      await contentAction("articles", slug, "a", "publish", store);
+    }
+    const page = await listPublicArticleMetadata(
+      { order: "desc", page: "1", pageSize: "2" },
+      store,
+    );
+    expect(page).toMatchObject({ total: 3, page: 1, pageSize: 2 });
+    expect(page.items.map((item) => item.slug)).toEqual(["newer", "same-date"]);
+    expect(page.items[0]).toMatchObject({
+      title: article.title,
+      excerpt: article.excerpt,
+      articleDate: "2026-01-01",
+    });
+    expect(page.items[0]).not.toHaveProperty("body");
     expect(page.items[0]).not.toHaveProperty("coverMediaId");
   });
   it("validates calendar dates and supports schemaless JSON", async () => {
