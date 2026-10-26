@@ -6,10 +6,7 @@ import { isDevelopmentLoopbackOrigin } from "./origin";
 export function sameOrigin(request: Request) {
   const expected = new URL(requiredEnv("APP_ORIGIN")).origin;
   const origin = request.headers.get("origin");
-  if (
-    !origin ||
-    (origin !== expected && !isDevelopmentLoopbackOrigin(origin))
-  )
+  if (!origin || (origin !== expected && !isDevelopmentLoopbackOrigin(origin)))
     throw new HttpError(403, "Request origin is not allowed");
 }
 export async function readBytes(

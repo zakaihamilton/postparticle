@@ -40,7 +40,7 @@ const incoming = (id: string) => `incoming/${parsedId(id)}/asset`;
 const ticket = (id: string) => `uploads/${parsedId(id)}.json`;
 const thumbnailJobs = new WeakMap<Store, Map<string, Promise<string>>>();
 
-export interface MediaLibraryItem extends Media {
+interface MediaLibraryItem extends Media {
   previewUrl: string | null;
 }
 
