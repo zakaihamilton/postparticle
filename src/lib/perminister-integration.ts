@@ -308,9 +308,15 @@ export async function perministerExchangeAuthorizationCode(
 
 export async function perministerSession(
   token: string,
+  selectedOrganizationId?: string,
 ): Promise<PerministerSession | null> {
   try {
-    const payload = await request(authPath("session"), {
+    const sessionPath = selectedOrganizationId
+      ? `${authPath("session")}?${new URLSearchParams({
+          organization_id: selectedOrganizationId,
+        })}`
+      : authPath("session");
+    const payload = await request(sessionPath, {
       token,
       purpose: "session",
     });

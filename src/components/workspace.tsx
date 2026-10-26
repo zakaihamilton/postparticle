@@ -7,7 +7,12 @@ import {
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState, type ComponentProps } from "react";
-import type { Actor, Project, Role } from "@/lib/types";
+import type {
+  Actor,
+  Project,
+  Role,
+  WorkspaceDashboardResult,
+} from "@/lib/types";
 import { OrganizationSwitcher } from "./organization-switcher";
 import { api, Brand, Icon, Notice, ThemeSwitch } from "./ui";
 import { ContentList, Dashboard } from "./content-list";
@@ -43,11 +48,13 @@ function WorkspaceContent({
   role,
   project,
   view,
+  initialDashboard,
 }: {
   actor: Actor;
   role: Role;
   project: Project;
   view: string[];
+  initialDashboard: Promise<WorkspaceDashboardResult>;
 }) {
   const router = useRouter();
   const { confirmNavigation } = useNavigationGuard();
@@ -278,6 +285,7 @@ function WorkspaceContent({
               projectId={project.id}
               username={actor.username}
               canEdit={canEdit}
+              initialDashboard={initialDashboard}
             />
           )}
           {["articles", "documents"].includes(tab) &&

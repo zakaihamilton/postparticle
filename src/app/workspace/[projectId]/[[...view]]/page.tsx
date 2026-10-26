@@ -1,6 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { authorizeProject, currentAuthContext } from "@/lib/auth";
 import { HttpError } from "@/lib/config";
+import { projectStoreFor } from "@/lib/projects";
+import { readWorkspaceDashboardResult } from "@/lib/workspace-dashboard";
 import Workspace from "@/components/workspace";
 export default async function WorkspacePage({
   params,
@@ -37,6 +39,12 @@ export default async function WorkspacePage({
     throw error;
   }
   const { role, project } = workspaceAccess;
+  const initialDashboard =
+    view.length === 0
+      ? readWorkspaceDashboardResult(
+          projectStoreFor(actor.organizationId, project),
+        )
+      : Promise.resolve({ data: null, error: "" });
   return (
     <Workspace
       actor={actor}
@@ -47,6 +55,7 @@ export default async function WorkspacePage({
         description: project.description,
       }}
       view={view}
+      initialDashboard={initialDashboard}
     />
   );
 }

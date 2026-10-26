@@ -14,6 +14,7 @@ import type {
   JsonDocument,
   Kind,
   RecordState,
+  WorkspaceDashboardArticle,
 } from "./types";
 
 const checkpointVersion = 2;
@@ -39,6 +40,22 @@ interface CheckpointShard {
   rows: CheckpointRow[];
 }
 
+interface DashboardCheckpointShard {
+  version: 1;
+  kind: "articles";
+  generation: string;
+  rows: WorkspaceDashboardArticle[];
+}
+
+interface DashboardShardDescriptor {
+  key: string;
+  firstId: string;
+  lastId: string;
+  rows: number;
+  bytes: number;
+  sha256: string;
+}
+
 interface CheckpointManifest {
   version: number;
   kind: Kind;
@@ -55,6 +72,8 @@ interface CheckpointManifest {
     bytes: number;
     sha256: string;
   }>;
+  /** Compact article rows used by the workspace overview. */
+  dashboardShards?: DashboardShardDescriptor[];
 }
 
 export interface CheckpointBuildResult {
@@ -207,6 +226,28 @@ function isCheckpointRow(value: unknown): value is CheckpointRow {
   );
 }
 
+function isDashboardArticle(
+  value: unknown,
+): value is WorkspaceDashboardArticle {
+  if (!value || typeof value !== "object") return false;
+  const row = value as Partial<WorkspaceDashboardArticle>;
+  const draft = row.draft as
+    Partial<WorkspaceDashboardArticle["draft"]> | undefined;
+  return (
+    typeof row.id === "string" &&
+    !!draft &&
+    typeof draft.title === "string" &&
+    typeof draft.author === "string" &&
+    Array.isArray(draft.tags) &&
+    draft.tags.every((tag) => typeof tag === "string") &&
+    typeof draft.articleDate === "string" &&
+    typeof row.published === "boolean" &&
+    typeof row.trashed === "boolean" &&
+    typeof row.updatedAt === "string" &&
+    Number.isFinite(Date.parse(row.updatedAt))
+  );
+}
+
 function isManifest(
   value: unknown,
   kind: Kind,
@@ -214,6 +255,30 @@ function isManifest(
 ): value is CheckpointManifest {
   if (!value || typeof value !== "object") return false;
   const manifest = value as Partial<CheckpointManifest>;
+  const dashboardShardsValid =
+    manifest.dashboardShards === undefined ||
+    (kind === "articles" &&
+      Array.isArray(manifest.dashboardShards) &&
+      manifest.dashboardShards.every(
+        (shard, index) =>
+          !!shard &&
+          shard.key ===
+            `${checkpointPrefix(kind)}/${generation}/dashboard-shard-${String(index).padStart(5, "0")}.json` &&
+          typeof shard.firstId === "string" &&
+          typeof shard.lastId === "string" &&
+          shard.firstId <= shard.lastId &&
+          Number.isInteger(shard.rows) &&
+          shard.rows > 0 &&
+          shard.rows <= maxShardRows &&
+          Number.isInteger(shard.bytes) &&
+          shard.bytes > 0 &&
+          shard.bytes <= maxShardBytes &&
+          /^[a-f0-9]{64}$/.test(shard.sha256),
+      ) &&
+      manifest.dashboardShards.reduce(
+        (count, shard) => count + shard.rows,
+        0,
+      ) === manifest.records);
   return (
     manifest.version === checkpointVersion &&
     manifest.kind === kind &&
@@ -242,7 +307,8 @@ function isManifest(
         /^[a-f0-9]{64}$/.test(shard.sha256),
     ) &&
     manifest.shards.reduce((count, shard) => count + shard.rows, 0) ===
-      manifest.records
+      manifest.records &&
+    dashboardShardsValid
   );
 }
 
@@ -321,6 +387,64 @@ async function readShard(
   )
     return null;
   return rows;
+}
+
+async function readDashboardShard(
+  manifest: CheckpointManifest,
+  descriptor: DashboardShardDescriptor,
+  store: Store,
+) {
+  let value: unknown;
+  try {
+    value = await store.get<unknown>(descriptor.key);
+  } catch (error) {
+    if (error instanceof SyntaxError) return null;
+    throw error;
+  }
+  if (!value || typeof value !== "object") return null;
+  const shard = value as Partial<DashboardCheckpointShard>;
+  if (
+    shard.version !== 1 ||
+    shard.kind !== "articles" ||
+    shard.generation !== manifest.generation ||
+    !Array.isArray(shard.rows) ||
+    shard.rows.length !== descriptor.rows ||
+    !shard.rows.every(isDashboardArticle)
+  )
+    return null;
+  const serialized = JSON.stringify(value);
+  if (
+    Buffer.byteLength(serialized) !== descriptor.bytes ||
+    sha256(serialized) !== descriptor.sha256
+  )
+    return null;
+  const rows = shard.rows as WorkspaceDashboardArticle[];
+  if (
+    rows[0]?.id !== descriptor.firstId ||
+    rows.at(-1)?.id !== descriptor.lastId ||
+    rows.some((row, index) => index > 0 && rows[index - 1].id >= row.id)
+  )
+    return null;
+  return rows;
+}
+
+async function readCompleteDashboardGeneration(store: Store) {
+  for (const candidate of await checkpointManifests("articles", store)) {
+    const manifest = await readManifest("articles", store, candidate);
+    if (!manifest?.dashboardShards) continue;
+    const shards = await mapBounded(manifest.dashboardShards, (descriptor) =>
+      readDashboardShard(manifest, descriptor, store),
+    );
+    if (shards.some((rows) => !rows)) continue;
+    const rows = (shards as WorkspaceDashboardArticle[][]).flat();
+    if (
+      rows.length !== manifest.records ||
+      new Set(rows.map((row) => row.id)).size !== rows.length
+    )
+      continue;
+    return { manifest, rows: new Map(rows.map((row) => [row.id, row])) };
+  }
+  return null;
 }
 
 async function readCompleteGeneration(kind: Kind, store: Store) {
@@ -545,6 +669,58 @@ function reduceContent<T extends Content>(
   };
 }
 
+function dashboardArticleFromState(
+  state: RecordState<Content>,
+): WorkspaceDashboardArticle {
+  const draft = state.draft as Article;
+  return {
+    id: state.id,
+    draft: {
+      title: draft.title,
+      author: draft.author,
+      tags: draft.tags,
+      articleDate: draft.articleDate,
+    },
+    published: !!state.published,
+    trashed: state.trashed,
+    updatedAt: state.updatedAt,
+  };
+}
+
+function reduceDashboardArticle(
+  id: string,
+  history: Event<Content>[],
+  initial: WorkspaceDashboardArticle | null,
+): WorkspaceDashboardArticle | null {
+  let draft = initial?.draft ?? null;
+  let published = initial?.published ?? false;
+  let trashed = initial?.trashed ?? false;
+  let updatedAt = initial?.updatedAt ?? "";
+  for (const event of [...history].sort((a, b) =>
+    a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
+  )) {
+    if (event.action === "save") {
+      const article = event.data as Article;
+      draft = {
+        title: article.title,
+        author: article.author,
+        tags: article.tags,
+        articleDate: article.articleDate,
+      };
+      updatedAt = event.at;
+    }
+    if (event.action === "publish") published = true;
+    if (event.action === "unpublish") published = false;
+    if (event.action === "trash") {
+      trashed = true;
+      published = false;
+    }
+    if (event.action === "restore") trashed = false;
+  }
+  if (!draft) return null;
+  return { id, draft, published, trashed, updatedAt };
+}
+
 async function stateFromKeys(
   id: string,
   keys: string[],
@@ -610,6 +786,38 @@ export async function readContentRecords(kind: Kind, store: Store) {
     .filter((state): state is RecordState<Content> => !!state);
 }
 
+/** Returns null until a compact checkpoint exists or if its recent feed tail is invalid. */
+export async function readWorkspaceDashboardArticles(
+  store: Store,
+): Promise<WorkspaceDashboardArticle[] | null> {
+  const checkpoint = await readCompleteDashboardGeneration(store);
+  if (!checkpoint) return null;
+  const tail = await readContentFeedTail(
+    "articles",
+    checkpoint.manifest.cutoffAt,
+    store,
+  );
+  if (!tail) return null;
+
+  const histories = new Map<string, Event<Content>[]>();
+  for (const event of tail) {
+    const id = (event.data as Article).slug;
+    const history = histories.get(id) ?? [];
+    history.push(event);
+    histories.set(id, history);
+  }
+  const ids = new Set([...checkpoint.rows.keys(), ...histories.keys()]);
+  return [...ids]
+    .map((id) =>
+      reduceDashboardArticle(
+        id,
+        histories.get(id) ?? [],
+        checkpoint.rows.get(id) ?? null,
+      ),
+    )
+    .filter((state): state is WorkspaceDashboardArticle => !!state);
+}
+
 function checkpointRows(
   kind: Kind,
   keys: string[],
@@ -673,6 +881,50 @@ function makeShards(kind: Kind, generation: string, rows: CheckpointRow[]) {
     shards.push({
       version: checkpointVersion,
       kind,
+      generation,
+      rows: current,
+    });
+  return shards;
+}
+
+function makeDashboardShards(
+  generation: string,
+  rows: WorkspaceDashboardArticle[],
+) {
+  const shards: DashboardCheckpointShard[] = [];
+  let current: WorkspaceDashboardArticle[] = [];
+  const envelope = {
+    version: 1,
+    kind: "articles",
+    generation,
+    rows: [],
+  } satisfies DashboardCheckpointShard;
+  const envelopeBytes = Buffer.byteLength(JSON.stringify(envelope));
+  let currentBytes = envelopeBytes;
+  for (const row of rows) {
+    const rowBytes = Buffer.byteLength(JSON.stringify(row));
+    const nextBytes = currentBytes + rowBytes + (current.length ? 1 : 0);
+    if (
+      current.length &&
+      (current.length + 1 > maxShardRows || nextBytes > maxShardBytes)
+    ) {
+      shards.push({
+        version: 1,
+        kind: "articles",
+        generation,
+        rows: current,
+      });
+      current = [row];
+      currentBytes = envelopeBytes + rowBytes;
+    } else {
+      current.push(row);
+      currentBytes = nextBytes;
+    }
+  }
+  if (current.length)
+    shards.push({
+      version: 1,
+      kind: "articles",
       generation,
       rows: current,
     });
@@ -752,6 +1004,10 @@ export async function rebuildContentCheckpoints(
     }
 
     const rows = checkpointRows(kind, sourceKeys, allEvents, cutoffAt);
+    const dashboardRows =
+      kind === "articles"
+        ? rows.map((row) => dashboardArticleFromState(row.state))
+        : [];
     await mapBounded(
       sourceKeys.map((key, index) => ({ key, event: allEvents[index] })),
       async ({ key, event }) => {
@@ -778,8 +1034,15 @@ export async function rebuildContentCheckpoints(
 
     const generation = `${Date.now().toString().padStart(13, "0")}-${randomUUID()}`;
     const shards = makeShards(kind, generation, rows);
+    const dashboardShards =
+      kind === "articles" ? makeDashboardShards(generation, dashboardRows) : [];
     if (
       shards.some(
+        (shard) =>
+          shard.rows.length > maxShardRows ||
+          Buffer.byteLength(JSON.stringify(shard)) > maxShardBytes,
+      ) ||
+      dashboardShards.some(
         (shard) =>
           shard.rows.length > maxShardRows ||
           Buffer.byteLength(JSON.stringify(shard)) > maxShardBytes,
@@ -795,6 +1058,7 @@ export async function rebuildContentCheckpoints(
       };
     const base = `${checkpointPrefix(kind)}/${generation}`;
     const descriptors: CheckpointManifest["shards"] = [];
+    const dashboardDescriptors: DashboardShardDescriptor[] = [];
     for (const [index, shard] of shards.entries()) {
       const key = `${base}/shard-${String(index).padStart(5, "0")}.json`;
       const serialized = JSON.stringify(shard);
@@ -809,13 +1073,31 @@ export async function rebuildContentCheckpoints(
         sha256: sha256(serialized),
       });
     }
+    for (const [index, shard] of dashboardShards.entries()) {
+      const key = `${base}/dashboard-shard-${String(index).padStart(5, "0")}.json`;
+      const serialized = JSON.stringify(shard);
+      const bytes = Buffer.byteLength(serialized);
+      await store.put(key, shard);
+      dashboardDescriptors.push({
+        key,
+        firstId: shard.rows[0].id,
+        lastId: shard.rows.at(-1)!.id,
+        rows: shard.rows.length,
+        bytes,
+        sha256: sha256(serialized),
+      });
+    }
 
     // Events written during the read or shard write invalidate this generation.
     const finalKeys = (await store.list(sourcePrefix)).filter((key) =>
       key.endsWith(".json"),
     );
     if (!sourceKeyGroupsEqual(sourceKeys, finalKeys)) {
-      await Promise.all(descriptors.map(({ key }) => store.remove(key)));
+      await Promise.all(
+        [...descriptors, ...dashboardDescriptors].map(({ key }) =>
+          store.remove(key),
+        ),
+      );
       failure = "source-changed";
       continue;
     }
@@ -834,10 +1116,17 @@ export async function rebuildContentCheckpoints(
       records: rows.length,
       indexedEvents: allEvents.filter((event) => event.at < cutoffAt).length,
       shards: descriptors,
+      ...(kind === "articles" ? { dashboardShards: dashboardDescriptors } : {}),
     };
     await store.put(`${base}/manifest.json`, manifest);
     const candidate = { key: `${base}/manifest.json`, generation };
-    if (!(await readGeneration(kind, store, candidate)))
+    const dashboardGeneration =
+      kind === "articles" ? await readCompleteDashboardGeneration(store) : null;
+    if (
+      !(await readGeneration(kind, store, candidate)) ||
+      (kind === "articles" &&
+        dashboardGeneration?.manifest.generation !== generation)
+    )
       return {
         generation: null,
         records: 0,

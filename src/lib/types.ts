@@ -75,17 +75,22 @@ export interface ContentListData {
   recordCount: number;
   activeCount: number;
 }
+export interface WorkspaceDashboardArticle {
+  id: string;
+  draft: Pick<Article, "title" | "author" | "tags" | "articleDate">;
+  published: boolean;
+  trashed: boolean;
+  updatedAt: string;
+}
 export interface WorkspaceDashboard {
   articleCount: number;
   publishedCount: number;
   mediaCount: number;
-  recentArticles: {
-    id: string;
-    draft: Pick<Article, "title" | "author" | "tags" | "articleDate">;
-    published: boolean;
-    trashed: boolean;
-    updatedAt: string;
-  }[];
+  recentArticles: WorkspaceDashboardArticle[];
+}
+export interface WorkspaceDashboardResult {
+  data: WorkspaceDashboard | null;
+  error: string;
 }
 export interface PublicArticleMetadataIndexStatus {
   ready: boolean;

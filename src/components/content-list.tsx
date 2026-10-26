@@ -1,11 +1,11 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, use, useEffect, useState } from "react";
 import type {
   ContentListData,
   ContentListRow,
   Kind,
-  WorkspaceDashboard,
+  WorkspaceDashboardResult,
 } from "@/lib/types";
 import { api, Empty, Icon, Notice } from "./ui";
 import styles from "./workspace.module.css";
@@ -323,27 +323,13 @@ export function Dashboard({
   projectId,
   username,
   canEdit,
+  initialDashboard,
 }: {
   projectId: string;
   username: string;
   canEdit: boolean;
+  initialDashboard: Promise<WorkspaceDashboardResult>;
 }) {
-  const [data, setData] = useState<WorkspaceDashboard | null>(null);
-  const [error, setError] = useState("");
-  useEffect(() => {
-    let active = true;
-    api<WorkspaceDashboard>(`/api/manage/projects/${projectId}/dashboard`)
-      .then((summary) => {
-        if (active) setData(summary);
-      })
-      .catch((e) => {
-        if (active) setError(e.message);
-      });
-    return () => {
-      active = false;
-    };
-  }, [projectId]);
-  const articles = data?.recentArticles ?? [];
   return (
     <>
       <div className={styles.pageHeading}>
@@ -364,6 +350,69 @@ export function Dashboard({
           </Link>
         )}
       </div>
+      <Suspense
+        fallback={
+          <div className={styles.loading} role="status">
+            Loading workspace stats…
+          </div>
+        }
+      >
+        <DashboardStats initialDashboard={initialDashboard} />
+      </Suspense>
+      <div className={styles.dashboardBanner}>
+        <div>
+          <span className={styles.bannerEyebrow}>YOUR PUBLISHING WORKFLOW</span>
+          <h2>Write privately. Publish when ready.</h2>
+          <p>
+            Changes to published articles stay in a private draft until you
+            publish the next version.
+          </p>
+        </div>
+      </div>
+      <Suspense
+        fallback={
+          <section className={styles.panel} aria-busy="true">
+            <div className={styles.loading} role="status">
+              Loading recent articles…
+            </div>
+          </section>
+        }
+      >
+        <DashboardRecent
+          projectId={projectId}
+          initialDashboard={initialDashboard}
+        />
+      </Suspense>
+      <div className={styles.quickLinks}>
+        <Link href={`/workspace/${projectId}/media`}>
+          <Icon name="image" />
+          <div>
+            <strong>Media library</strong>
+            <span>Organize images, video, and metadata</span>
+          </div>
+          <Icon name="arrow" size={16} />
+        </Link>
+        <Link href={`/workspace/${projectId}/settings`}>
+          <Icon name="code" />
+          <div>
+            <strong>Connect your website</strong>
+            <span>Find your API endpoints and integration guides</span>
+          </div>
+          <Icon name="arrow" size={16} />
+        </Link>
+      </div>
+    </>
+  );
+}
+
+function DashboardStats({
+  initialDashboard,
+}: {
+  initialDashboard: Promise<WorkspaceDashboardResult>;
+}) {
+  const { data, error } = use(initialDashboard);
+  return (
+    <>
       <Notice error={error} />
       <div className={styles.stats}>
         {[
@@ -391,65 +440,52 @@ export function Dashboard({
             icon: "image",
             sub: "Images and video",
           },
-        ].map((s) => (
-          <div className={styles.stat} key={s.title}>
+        ].map((stat) => (
+          <div className={styles.stat} key={stat.title}>
             <div>
-              <span>{s.title}</span>
-              <Icon name={s.icon} size={19} />
+              <span>{stat.title}</span>
+              <Icon name={stat.icon} size={19} />
             </div>
-            <strong>{s.value}</strong>
-            <small>{s.sub}</small>
+            <strong>{stat.value}</strong>
+            <small>{stat.sub}</small>
           </div>
         ))}
       </div>
-      <div className={styles.dashboardBanner}>
-        <div>
-          <span className={styles.bannerEyebrow}>YOUR PUBLISHING WORKFLOW</span>
-          <h2>Write privately. Publish when ready.</h2>
-          <p>
-            Changes to published articles stay in a private draft until you
-            publish the next version.
-          </p>
-        </div>
-      </div>
-      <section className={styles.panel}>
-        <div className={styles.panelHeading}>
-          <div>
-            <h2>Recent articles</h2>
-            <p>Your five most recently updated articles.</p>
-          </div>
-          <Link href={`/workspace/${projectId}/articles`}>
-            View all articles <Icon name="arrow" size={15} />
-          </Link>
-        </div>
-        {!data && !error ? (
-          <div className={styles.loading}>Loading your workspace…</div>
-        ) : articles.length ? (
-          <Table rows={articles} kind="articles" projectId={projectId} />
-        ) : (
-          <Empty title="No articles yet">
-            Create an article to start your content library.
-          </Empty>
-        )}
-      </section>
-      <div className={styles.quickLinks}>
-        <Link href={`/workspace/${projectId}/media`}>
-          <Icon name="image" />
-          <div>
-            <strong>Media library</strong>
-            <span>Organize images, video, and metadata</span>
-          </div>
-          <Icon name="arrow" size={16} />
-        </Link>
-        <Link href={`/workspace/${projectId}/settings`}>
-          <Icon name="code" />
-          <div>
-            <strong>Connect your website</strong>
-            <span>Find your API endpoints and integration guides</span>
-          </div>
-          <Icon name="arrow" size={16} />
-        </Link>
-      </div>
     </>
+  );
+}
+
+function DashboardRecent({
+  projectId,
+  initialDashboard,
+}: {
+  projectId: string;
+  initialDashboard: Promise<WorkspaceDashboardResult>;
+}) {
+  const { data, error } = use(initialDashboard);
+  const articles = data?.recentArticles ?? [];
+  return (
+    <section className={styles.panel}>
+      <div className={styles.panelHeading}>
+        <div>
+          <h2>Recent articles</h2>
+          <p>Your five most recently updated articles.</p>
+        </div>
+        <Link href={`/workspace/${projectId}/articles`}>
+          View all articles <Icon name="arrow" size={15} />
+        </Link>
+      </div>
+      {data && articles.length ? (
+        <Table rows={articles} kind="articles" projectId={projectId} />
+      ) : data ? (
+        <Empty title="No articles yet">
+          Create an article to start your content library.
+        </Empty>
+      ) : (
+        <div className={styles.loading} role="status">
+          {error || "Workspace summary is unavailable."}
+        </div>
+      )}
+    </section>
   );
 }

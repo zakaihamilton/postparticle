@@ -444,13 +444,24 @@ export function projectStoreFor(
   const normalizedOrganizationId = parsedOrganizationId(organizationId);
   const legacy =
     project.legacyOrganizationId?.toLowerCase() === normalizedOrganizationId;
+  let deletionMarkerCheck: Promise<ProjectDeletionMarker | null> | undefined;
   return projectStore(
     normalizedOrganizationId,
     project.id,
     legacy,
-    async () => {
-      if (await getProjectDeletionMarker(normalizedOrganizationId, project.id))
-        throw new HttpError(404, "Project not found");
+    async (operation) => {
+      // A request can reuse read checks; every write still rechecks deletion.
+      const marker =
+        operation === "get" || operation === "list"
+          ? await (deletionMarkerCheck ??= getProjectDeletionMarker(
+              normalizedOrganizationId,
+              project.id,
+            ))
+          : await getProjectDeletionMarker(
+              normalizedOrganizationId,
+              project.id,
+            );
+      if (marker) throw new HttpError(404, "Project not found");
     },
   );
 }
