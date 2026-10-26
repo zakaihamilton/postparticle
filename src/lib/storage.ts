@@ -529,7 +529,7 @@ export function projectStore(
   rawOrganizationId: string,
   rawProjectId: string,
   legacy = false,
-  accessGuard?: () => Promise<void>,
+  accessGuard?: (operation: keyof Store) => Promise<void>,
 ): Store {
   const organizationId = organizationIdentifier
     .parse(rawOrganizationId)
@@ -554,7 +554,7 @@ export function projectStore(
 
 function withAccessGuard(
   store: Store,
-  accessGuard: () => Promise<void>,
+  accessGuard: (operation: keyof Store) => Promise<void>,
 ): Store {
   return new Proxy(store, {
     get(target, property) {
@@ -564,7 +564,7 @@ function withAccessGuard(
       if (property === "purgePrefixBatch" || property === "publicUrl")
         return bound;
       return async (...args: unknown[]) => {
-        await accessGuard();
+        await accessGuard(property as keyof Store);
         return bound(...args);
       };
     },

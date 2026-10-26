@@ -367,7 +367,7 @@ export async function currentAuthContext(): Promise<AuthContext | null> {
   const token = jar.get(cookieName)?.value;
   if (!token) return null;
   const selectedOrganizationId = jar.get(organizationCookieName)?.value;
-  const session = await perministerSession(token);
+  const session = await perministerSession(token, selectedOrganizationId);
   if (!session) return null;
   const actor = actorFromPerministerSession(session, selectedOrganizationId);
   return actor ? { actor, token, session } : null;
@@ -518,7 +518,7 @@ export async function selectOrganization(rawOrganizationId: string) {
     .parse(rawOrganizationId)
     .toLowerCase();
   const token = await requirePerministerToken();
-  const session = await perministerSession(token);
+  const session = await perministerSession(token, organizationId);
   const actor = session
     ? actorFromPerministerSession(session, organizationId)
     : null;

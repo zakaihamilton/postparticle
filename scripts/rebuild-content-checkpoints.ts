@@ -47,10 +47,13 @@ for (const kind of ["articles", "documents"] as const) {
     process.exitCode = 1;
     continue;
   }
+  const dashboardSummary =
+    kind === "articles" ? "; compact dashboard summary ready" : "";
   console.log(
     `${organizationId}/${projectId}/${kind}: ${result.records} records in ${result.shards} shards` +
       (result.generation ? ` (generation ${result.generation})` : " (empty)") +
-      `; ${result.indexedEvents ?? 0} events indexed, ${result.unindexedEvents ?? 0} remain in the replay tail`,
+      `; ${result.indexedEvents ?? 0} events indexed, ${result.unindexedEvents ?? 0} remain in the replay tail` +
+      dashboardSummary,
   );
 }
 
