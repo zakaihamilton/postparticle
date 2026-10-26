@@ -101,17 +101,17 @@ export default function Troubleshooting() {
       <section id="stale-content">
         <h2>Content does not update after publish</h2>
         <p>
-          Publishing changes the public API response. The API itself sends{" "}
-          <code>Cache-Control: no-store</code>, but the website may cache its
-          server-rendered route, browser router response, or CDN output.
+          The article metadata endpoint uses a 45-second edge freshness window
+          and up to 15 seconds of stale-while-revalidate. The website may also
+          cache its server-rendered route, browser router response, or CDN
+          output.
         </p>
         <p>
           Check the website’s fetch policy and CDN configuration. Next.js
           revalidation refreshes on a later request; it is not an immediate
-          purge or a precise update deadline. Use{" "}
-          <code>cache: &quot;no-store&quot;</code>
-          when each server request must read current content, or configure
-          provider-specific cache invalidation.
+          purge. Use <code>cache: &quot;no-store&quot;</code> to bypass the
+          website’s fetch cache; it does not bypass the metadata endpoint’s edge
+          freshness or stale-while-revalidate windows.
         </p>
       </section>
       <section id="media-troubleshooting">

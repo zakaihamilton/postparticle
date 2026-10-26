@@ -47,10 +47,14 @@ export async function readJson(request: Request) {
     throw new HttpError(400, "Invalid JSON");
   }
 }
-export function json(data: unknown, status = 200) {
+export function json(
+  data: unknown,
+  status = 200,
+  headers: Record<string, string> = {},
+) {
   return NextResponse.json(data, {
     status,
-    headers: { "Cache-Control": "no-store" },
+    headers: { "Cache-Control": "no-store", ...headers },
   });
 }
 export function errorResponse(error: unknown) {

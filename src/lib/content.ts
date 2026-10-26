@@ -92,7 +92,7 @@ export async function contentAction(
     data,
   );
   if (kind === "articles" && action !== "restore") {
-    const previous = state.published as Article | null;
+    const previous = state.trashed ? null : (state.published as Article | null);
     const next =
       action === "publish"
         ? {

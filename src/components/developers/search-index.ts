@@ -146,8 +146,8 @@ export const guideSearchIndex: GuideSearchEntry[] = [
     page: "Metadata and caching",
     section: "Cache freshness",
     id: "freshness",
-    text: "API Cache-Control no-store. Example Next.js server fetch revalidate 60 seconds. Revalidate is interval, later request triggers it, not a delivery guarantee. Browser router and CDN caching can extend delay. Use cache no-store for each current server request; do not combine cache no-store and next.revalidate. Unpublish removes API article but cached pages and public media can remain.",
-    code: '{ next: { revalidate: 60 } } { cache: "no-store" } Cache-Control: no-store',
+    text: "Article metadata endpoint uses a public edge cache for 45 seconds plus up to 15 seconds stale-while-revalidate. Other API responses and errors use Cache-Control no-store. Example Next.js server fetch revalidates after 60 seconds. Browser router and CDN caching can extend delay. cache no-store bypasses the website fetch cache but not Postparticle's 45-second freshness or 15-second stale-while-revalidate windows; do not combine it with next.revalidate. Unpublish removes API article but cached pages and public media can remain.",
+    code: '{ next: { revalidate: 60 } } { cache: "no-store" } Cache-Control: public, max-age=0, s-maxage=45, stale-while-revalidate=15',
   },
   {
     href: "/developers/api-reference",
@@ -200,8 +200,8 @@ export const guideSearchIndex: GuideSearchEntry[] = [
     page: "API reference",
     section: "Errors and caching",
     id: "errors-and-cache",
-    text: "404 missing or unpublished content. 400 invalid request. 503 storage or configuration failures. API sends Cache-Control no-store. Website selects its own server cache policy.",
-    code: "Cache-Control: no-store",
+    text: "404 missing or unpublished content. 400 invalid request. 503 storage or configuration failures. Article metadata uses a public 45-second edge cache with 15 seconds stale-while-revalidate; other responses and errors use Cache-Control no-store. Website may add its own server cache.",
+    code: "Cache-Control: public, max-age=0, s-maxage=45, stale-while-revalidate=15",
   },
   {
     href: "/developers/troubleshooting",
@@ -236,7 +236,7 @@ export const guideSearchIndex: GuideSearchEntry[] = [
     page: "Troubleshooting",
     section: "Content does not update after publish",
     id: "stale-content",
-    text: "API response uses Cache-Control no-store, but website may cache server render, Next.js route, browser router, or CDN. Revalidation interval is not immediate purge; later request triggers revalidation. Choose cache no-store for each request or configure cache invalidation in hosting.",
+    text: "Article metadata API response uses a public edge cache for 45 seconds plus up to 15 seconds stale-while-revalidate. Other API responses use Cache-Control no-store. Website may also cache server render, Next.js route, browser router, or CDN. Revalidation interval is not immediate purge; later request triggers revalidation. cache no-store on the website does not bypass Postparticle's edge cache.",
   },
   {
     href: "/developers/troubleshooting",
