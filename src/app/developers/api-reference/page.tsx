@@ -18,6 +18,7 @@ export default function ApiReference() {
       sections={[
         { id: "endpoints", title: "Base URL and endpoints" },
         { id: "listing-parameters", title: "Article listing parameters" },
+        { id: "metadata-listing", title: "Article metadata listing" },
         { id: "article-response", title: "Article response fields" },
         { id: "documents", title: "Document response and visibility" },
         { id: "media", title: "Media references" },
@@ -35,7 +36,7 @@ export default function ApiReference() {
         <CodeBlock
           filename="HTTP — public endpoints"
           code={
-            "GET /api/v1/projects/{projectId}/articles?organizationId={organizationId}\nGET /api/v1/projects/{projectId}/articles/{slug}?organizationId={organizationId}\nGET /api/v1/projects/{projectId}/documents/{key}?organizationId={organizationId}"
+            "GET /api/v1/projects/{projectId}/articles?organizationId={organizationId}\nGET /api/v1/projects/{projectId}/articles/metadata?organizationId={organizationId}&page=1&pageSize=12&order=desc\nGET /api/v1/projects/{projectId}/articles/{slug}?organizationId={organizationId}\nGET /api/v1/projects/{projectId}/documents/{key}?organizationId={organizationId}"
           }
         />
         <p>
@@ -44,6 +45,20 @@ export default function ApiReference() {
           by slug. The document endpoint returns a named published JSON
           document.
         </p>
+      </section>
+      <section id="metadata-listing">
+        <h2>Article metadata listing</h2>
+        <p>
+          Use this endpoint for article cards when the Markdown body is not
+          needed. It returns the same pagination envelope as the full listing,
+          but omits <code>body</code> from every item. It accepts{" "}
+          <code>order</code>, <code>page</code>, and <code>pageSize</code>; it
+          does not support full-text search or tag filters.
+        </p>
+        <CodeBlock
+          filename="HTTP — article card metadata"
+          code="GET /api/v1/projects/demo/articles/metadata?organizationId={organizationId}&page=1&pageSize=12&order=desc"
+        />
       </section>
       <section id="listing-parameters">
         <h2>Article listing parameters</h2>

@@ -126,3 +126,10 @@ export interface ArticlePage {
   page: number;
   pageSize: number;
 }
+export type PublicArticleMetadata = Omit<PublicArticle, "body">;
+export interface ArticleMetadataPage {
+  items: PublicArticleMetadata[];
+  total: number;
+  page: number;
+  pageSize: number;
+}

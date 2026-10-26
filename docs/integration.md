@@ -17,6 +17,7 @@ The public guides require no login or Spaces credentials. Start at `/developers`
 
 ```text
 GET /api/v1/projects/{projectId}/articles?organizationId={organizationId}
+GET /api/v1/projects/{projectId}/articles/metadata?organizationId={organizationId}&page=1&pageSize=12&order=desc
 GET /api/v1/projects/{projectId}/articles/{slug}?organizationId={organizationId}
 GET /api/v1/projects/{projectId}/documents/{key}?organizationId={organizationId}
 ```
@@ -29,6 +30,11 @@ The article listing accepts these query parameters:
 - `page` starts at 1. `pageSize` accepts 1–100 and defaults to 12.
 
 Listing responses have the shape `{ items, total, page, pageSize }`. Article dates use `YYYY-MM-DD`; event timestamps are UTC ISO strings.
+
+Use the article metadata endpoint for listing cards when the Markdown body is
+not needed. It accepts `order=asc|desc`, `page`, and `pageSize` (1–100), and
+returns the same pagination fields with article metadata but without `body`.
+It does not accept full-text search or tag filters.
 
 ## Response fields and visibility
 
@@ -54,6 +60,10 @@ const client = new PostparticleClient(
 );
 const latest = await client.articles(
   { tag: "journal", pageSize: 3 },
+  { next: { revalidate: 60 } },
+);
+const latestCards = await client.articleMetadataPage(
+  { page: 1, pageSize: 12, order: "desc" },
   { next: { revalidate: 60 } },
 );
 const story = await client.article("a-little-room");
