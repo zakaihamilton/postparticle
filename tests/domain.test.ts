@@ -388,7 +388,11 @@ describe("media lifecycle", () => {
     "retries deletion cleanup when removing the %s object fails",
     async (failedPrefix) => {
       const id = randomUUID();
-      const objectKeys = [`originals/${id}/asset`, `public/media/${id}/asset`];
+      const objectKeys = [
+        `originals/${id}/asset`,
+        `public/media/${id}/asset`,
+        `previews/${id}/thumbnail.webp`,
+      ];
       await append(store, `media/${id}`, "editor", "upload", {
         id,
         filename: "delete-me.png",
@@ -424,16 +428,19 @@ describe("media lifecycle", () => {
         "temporary storage failure",
       );
       expect((await getMedia(id, store))?.deleted).toBe(true);
-      expect(remove).toHaveBeenCalledTimes(2);
+      expect(remove).toHaveBeenCalledTimes(3);
 
       await expect(deleteMedia("editor", id, store)).resolves.toBeUndefined();
       await expect(deleteMedia("editor", id, store)).resolves.toBeUndefined();
-      expect(remove).toHaveBeenCalledTimes(6);
+      expect(remove).toHaveBeenCalledTimes(9);
       expect(await store.list(`media/${id}/`)).toHaveLength(2);
       await expect(store.head(objectKeys[0])).rejects.toMatchObject({
         status: 404,
       });
       await expect(store.head(objectKeys[1])).rejects.toMatchObject({
+        status: 404,
+      });
+      await expect(store.head(objectKeys[2])).rejects.toMatchObject({
         status: 404,
       });
     },
