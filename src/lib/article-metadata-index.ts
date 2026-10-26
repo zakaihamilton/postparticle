@@ -6,6 +6,7 @@ import type {
   Article,
   Content,
   PublicArticleMetadata,
+  PublicArticleMetadataIndexStatus,
   RecordState,
 } from "./types";
 import { readContentRecord, readContentRecords } from "./content-state";
@@ -215,6 +216,17 @@ function isPageShard(
 async function readManifest(store: Store) {
   const value = await store.get<unknown>(manifestKey);
   return isManifest(value) ? value : null;
+}
+
+export async function publicArticleMetadataIndexStatus(
+  store: Store,
+): Promise<PublicArticleMetadataIndexStatus> {
+  const manifest = await readManifest(store);
+  return {
+    ready: !!manifest,
+    total: manifest?.total ?? null,
+    builtAt: manifest?.builtAt ?? null,
+  };
 }
 
 async function removeGeneration(

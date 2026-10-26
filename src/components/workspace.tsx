@@ -274,9 +274,11 @@ function WorkspaceContent({
           <Notice error={error} />
           {!tab && (
             <Dashboard
+              key={project.id}
               projectId={project.id}
               username={actor.username}
               canEdit={canEdit}
+              canAdmin={role === "admin"}
             />
           )}
           {["articles", "documents"].includes(tab) &&
