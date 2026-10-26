@@ -88,7 +88,7 @@ Run this operator command after bulk imports and whenever the feed tail reaches 
 reports the pre-build unindexed-event count, rebuilds both content snapshots and feed backfill for
 articles and documents, and reports the post-build tail count. It never removes source events.
 It also builds the public article metadata snapshot used by the body-free listing endpoint. The
-project overview includes an admin-only Build/Rebuild index action. Use it after deploying metadata
+Settings & API page includes an admin-only Build/Rebuild index action. Use it after deploying metadata
 index version 2 to prepare an existing project without running a command. Until the build succeeds,
 the public endpoint returns a retryable 503. The `storage:checkpoint` command remains available for
 pre-deployment or scripted rebuilds. Publish, unpublish, and trash mutations atomically replace the

@@ -1,7 +1,9 @@
 "use client";
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Check, Copy } from "lucide-react";
+import type { PublicArticleMetadataIndexStatus } from "@/lib/types";
 import { GuardedLink as Link } from "../navigation-guard";
+import { api, Notice } from "../ui";
 import styles from "../workspace.module.css";
 
 function normalizeWebsiteUrl(value: string) {
@@ -41,12 +43,119 @@ function getServerLocationOrigin() {
   return "";
 }
 
+function PublicArticleMetadataIndexSettings({
+  projectId,
+  canAdmin,
+}: {
+  projectId: string;
+  canAdmin: boolean;
+}) {
+  const [status, setStatus] = useState<PublicArticleMetadataIndexStatus | null>(
+    null,
+  );
+  const [statusError, setStatusError] = useState("");
+  const [indexMessage, setIndexMessage] = useState("");
+  const [indexError, setIndexError] = useState("");
+  const [buildingIndex, setBuildingIndex] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    api<{ publicArticleMetadataIndex: PublicArticleMetadataIndexStatus }>(
+      `/api/manage/projects/${projectId}/article-metadata-index`,
+    )
+      .then((result) => {
+        if (active) setStatus(result.publicArticleMetadataIndex);
+      })
+      .catch((error) => {
+        if (active)
+          setStatusError(
+            error instanceof Error
+              ? error.message
+              : "Could not load the public article index status.",
+          );
+      });
+    return () => {
+      active = false;
+    };
+  }, [projectId]);
+
+  async function buildIndex() {
+    setBuildingIndex(true);
+    setIndexError("");
+    setIndexMessage("");
+    try {
+      const result = await api<{
+        publicArticleMetadataIndex: PublicArticleMetadataIndexStatus;
+      }>(`/api/manage/projects/${projectId}/article-metadata-index`, {
+        method: "POST",
+      });
+      setStatusError("");
+      setStatus(result.publicArticleMetadataIndex);
+      const total = result.publicArticleMetadataIndex.total ?? 0;
+      setIndexMessage(
+        `Index ready for ${total} published article${total === 1 ? "" : "s"}.`,
+      );
+    } catch (error) {
+      setIndexError(
+        error instanceof Error
+          ? error.message
+          : "Could not build the public article index.",
+      );
+    } finally {
+      setBuildingIndex(false);
+    }
+  }
+
+  const description = status
+    ? status.ready
+      ? `${status.total ?? 0} published article${status.total === 1 ? "" : "s"} are indexed.`
+      : "Build the index once to make existing published articles available through the metadata API."
+    : "Check whether published articles are available through the metadata API.";
+
+  return (
+    <section className={styles.panel} aria-busy={buildingIndex}>
+      <div className={styles.panelHeading}>
+        <div>
+          <h2>Public article index</h2>
+          <p>{description}</p>
+        </div>
+        {canAdmin && (
+          <button
+            type="button"
+            className={styles.secondary}
+            disabled={buildingIndex}
+            onClick={buildIndex}
+          >
+            {buildingIndex
+              ? "Building index…"
+              : status
+                ? status.ready
+                  ? "Rebuild index"
+                  : "Build index"
+                : "Build/Rebuild index"}
+          </button>
+        )}
+      </div>
+      {statusError ? (
+        <Notice error={statusError} />
+      ) : !status?.ready && !canAdmin ? (
+        <Notice message="Ask a project admin to build this index once." />
+      ) : null}
+      {indexError || indexMessage ? (
+        <Notice error={indexError} message={indexMessage} />
+      ) : null}
+    </section>
+  );
+}
+
 export function IntegrationSettings({
   projectId,
   organizationId,
+  canAdmin,
 }: {
   projectId: string;
   organizationId: string;
+  canAdmin: boolean;
 }) {
   const postparticleUrl = useSyncExternalStore(
     subscribeToLocationOrigin,
@@ -251,6 +360,10 @@ export function IntegrationSettings({
           </p>
         </div>
       </section>
+      <PublicArticleMetadataIndexSettings
+        projectId={projectId}
+        canAdmin={canAdmin}
+      />
       <section className={styles.panel}>
         <div className={styles.panelHeading}>
           <h2>Project storage</h2>

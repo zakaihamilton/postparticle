@@ -5,7 +5,6 @@ import type {
   ContentListData,
   ContentListRow,
   Kind,
-  PublicArticleMetadataIndexStatus,
   WorkspaceDashboard,
 } from "@/lib/types";
 import { api, Empty, Icon, Notice } from "./ui";
@@ -324,20 +323,13 @@ export function Dashboard({
   projectId,
   username,
   canEdit,
-  canAdmin,
 }: {
   projectId: string;
   username: string;
   canEdit: boolean;
-  canAdmin: boolean;
 }) {
   const [data, setData] = useState<WorkspaceDashboard | null>(null);
   const [error, setError] = useState("");
-  const [updatedIndexStatus, setUpdatedIndexStatus] =
-    useState<PublicArticleMetadataIndexStatus | null>(null);
-  const [indexMessage, setIndexMessage] = useState("");
-  const [indexError, setIndexError] = useState("");
-  const [buildingIndex, setBuildingIndex] = useState(false);
   useEffect(() => {
     let active = true;
     api<WorkspaceDashboard>(`/api/manage/projects/${projectId}/dashboard`)
@@ -351,34 +343,7 @@ export function Dashboard({
       active = false;
     };
   }, [projectId]);
-  async function buildIndex() {
-    setBuildingIndex(true);
-    setIndexError("");
-    setIndexMessage("");
-    try {
-      const result = await api<{
-        publicArticleMetadataIndex: PublicArticleMetadataIndexStatus;
-      }>(`/api/manage/projects/${projectId}/article-metadata-index`, {
-        method: "POST",
-      });
-      setUpdatedIndexStatus(result.publicArticleMetadataIndex);
-      const total = result.publicArticleMetadataIndex.total ?? 0;
-      setIndexMessage(
-        `Index ready for ${total} published article${total === 1 ? "" : "s"}.`,
-      );
-    } catch (e) {
-      setIndexError(
-        e instanceof Error
-          ? e.message
-          : "Could not build the public article index.",
-      );
-    } finally {
-      setBuildingIndex(false);
-    }
-  }
   const articles = data?.recentArticles ?? [];
-  const indexStatus =
-    updatedIndexStatus ?? data?.publicArticleMetadataIndex ?? null;
   return (
     <>
       <div className={styles.pageHeading}>
@@ -400,39 +365,6 @@ export function Dashboard({
         )}
       </div>
       <Notice error={error} />
-      {indexStatus && (
-        <section className={styles.panel} aria-busy={buildingIndex}>
-          <div className={styles.panelHeading}>
-            <div>
-              <h2>Public article index</h2>
-              <p>
-                {indexStatus.ready
-                  ? `${indexStatus.total ?? 0} published article${indexStatus.total === 1 ? "" : "s"} are indexed.`
-                  : "Build the index once to make existing published articles available through the metadata API."}
-              </p>
-            </div>
-            {canAdmin && (
-              <button
-                type="button"
-                className={styles.secondary}
-                disabled={buildingIndex}
-                onClick={buildIndex}
-              >
-                {buildingIndex
-                  ? "Building index…"
-                  : indexStatus.ready
-                    ? "Rebuild index"
-                    : "Build index"}
-              </button>
-            )}
-          </div>
-          {indexError || indexMessage ? (
-            <Notice error={indexError} message={indexMessage} />
-          ) : !indexStatus.ready && !canAdmin ? (
-            <Notice message="Ask a project admin to build this index once." />
-          ) : null}
-        </section>
-      )}
       <div className={styles.stats}>
         {[
           {
