@@ -506,6 +506,17 @@ function checkpointGenerationTime(generation: string) {
   return match ? Number(match[1]) : null;
 }
 
+async function nextCheckpointGeneration(kind: Kind, store: Store) {
+  const latestTimestamp = (await store.list(`${checkpointPrefix(kind)}/`))
+    .map((key) => generationFromCheckpointKey(kind, key))
+    .filter((generation): generation is string => !!generation)
+    .map(checkpointGenerationTime)
+    .filter((timestamp): timestamp is number => timestamp !== null)
+    .reduce((latest, timestamp) => Math.max(latest, timestamp), 0);
+  const timestamp = Math.max(Date.now(), latestTimestamp + 1);
+  return `${timestamp.toString().padStart(13, "0")}-${randomUUID()}`;
+}
+
 async function pruneCheckpointGenerations(
   kind: Kind,
   store: Store,
@@ -1032,7 +1043,7 @@ export async function rebuildContentCheckpoints(
       },
     );
 
-    const generation = `${Date.now().toString().padStart(13, "0")}-${randomUUID()}`;
+    const generation = await nextCheckpointGeneration(kind, store);
     const shards = makeShards(kind, generation, rows);
     const dashboardShards =
       kind === "articles" ? makeDashboardShards(generation, dashboardRows) : [];

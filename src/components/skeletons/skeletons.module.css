@@ -1,0 +1,1075 @@
+.loadingPage {
+  min-height: 100vh;
+  color: var(--text);
+}
+
+.visual {
+  min-height: 100vh;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skeleton {
+  display: block;
+  flex: 0 0 auto;
+  max-width: 100%;
+  background: linear-gradient(
+    100deg,
+    var(--surface-alt) 20%,
+    color-mix(in srgb, var(--border) 72%, var(--surface-alt)) 48%,
+    var(--surface-alt) 76%
+  );
+  background-size: 220% 100%;
+  animation: skeleton-shimmer 1.55s ease-in-out infinite;
+}
+
+.skeletonLines {
+  display: grid;
+  gap: 11px;
+}
+
+.accountShell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 254px minmax(0, 1fr);
+  background: var(--bg);
+}
+
+.accountSidebar {
+  display: flex;
+  flex-direction: column;
+  padding: 25px 17px 19px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 38px;
+  padding: 0 7px;
+}
+
+.navGroup {
+  display: grid;
+  gap: 9px;
+  margin-top: 45px;
+}
+
+.navCaption {
+  margin-top: 22px;
+}
+
+.accountNavItem {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 10px;
+  border-radius: 5px;
+}
+
+.navCurrent {
+  background: var(--accent-soft);
+}
+
+.accountProfile {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: auto;
+  padding: 18px 7px 0;
+  border-top: 1px solid var(--border);
+}
+
+.profileCopy {
+  display: grid;
+  gap: 7px;
+}
+
+.accountBody {
+  display: flex;
+  min-width: 0;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.appTopbar {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 30px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.topbarActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.accountMain {
+  width: min(100%, 1450px);
+  flex: 1;
+  padding: 35px 34px 48px;
+  margin: 0 auto;
+}
+
+.appFooter {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 30px;
+  border-top: 1px solid var(--border);
+}
+
+.pageHeading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 26px;
+}
+
+.headingCopy {
+  min-width: 0;
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+}
+
+.skeletonPanel {
+  overflow: hidden;
+  margin-bottom: 22px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.panelHeading {
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 17px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panelBody {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.formColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.field {
+  display: grid;
+  gap: 10px;
+}
+
+.inputSkeleton {
+  height: 43px !important;
+  border: 1px solid var(--border);
+  background-color: var(--bg);
+}
+
+.textareaSkeleton {
+  height: 96px !important;
+  border: 1px solid var(--border);
+  background-color: var(--bg);
+}
+
+.buttonSkeleton {
+  width: 146px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 38px;
+}
+
+.projectCard {
+  min-height: 197px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.projectCardTop,
+.projectCardBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.projectCardBottom {
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px solid var(--border);
+}
+
+.projectNote {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.pickerAction {
+  margin-top: 16px;
+}
+
+.accountRows {
+  display: grid;
+}
+
+.accountRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.accountRow:last-child {
+  border-bottom: 0;
+}
+
+.identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 13px;
+}
+
+.identityLines {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.rowActions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.workspaceShell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  background: var(--bg);
+}
+
+.workspaceSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 16px 18px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.workspaceProject {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.workspaceNav {
+  display: grid;
+  gap: 7px;
+}
+
+.workspaceNavItem {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 10px;
+  border-radius: 5px;
+}
+
+.workspaceSidebarBottom {
+  display: grid;
+  gap: 17px;
+  margin-top: auto;
+  padding-top: 17px;
+  border-top: 1px solid var(--border);
+}
+
+.workspaceContent {
+  display: flex;
+  min-width: 0;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.workspaceTopbar {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.workspaceBreadcrumbs {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.workspaceMain {
+  width: min(100%, 1500px);
+  flex: 1;
+  padding: 30px 30px 48px;
+  margin: 0 auto;
+}
+
+.workspaceStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+  margin-bottom: 24px;
+}
+
+.statCard {
+  min-height: 132px;
+  display: grid;
+  align-content: space-between;
+  gap: 18px;
+  padding: 19px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.workflowBanner {
+  display: grid;
+  gap: 12px;
+  padding: 13px 22px;
+  margin-bottom: 22px;
+  border-left: 2px solid var(--accent);
+}
+
+.quickLinks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.quickLink {
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+
+.tableFilters {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) repeat(3, minmax(125px, 1fr));
+  gap: 11px;
+  padding: 17px;
+  border-bottom: 1px solid var(--border);
+}
+
+.filterSkeleton {
+  height: 40px !important;
+  border: 1px solid var(--border);
+  background-color: var(--bg);
+}
+
+.tableLabels,
+.tableSkeletonRow {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.6fr) minmax(120px, 1fr) minmax(100px, 0.8fr)
+    44px;
+  align-items: center;
+  gap: 15px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tableLabels {
+  min-height: 48px;
+  background: var(--surface-alt);
+}
+
+.tableSkeletonRow:last-child {
+  border-bottom: 0;
+}
+
+.editorGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 270px;
+  gap: 20px;
+}
+
+.editorMain,
+.editorAside {
+  display: grid;
+  align-content: start;
+  gap: 17px;
+}
+
+.editorBody {
+  min-height: 260px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.mediaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.mediaDetailsPanel {
+  margin-top: 28px;
+}
+
+.mediaDetailsHeading {
+  display: grid;
+  gap: 18px;
+  padding: 24px 26px 0;
+}
+
+.mediaDetailsHeading > :first-child {
+  justify-self: start;
+}
+
+.mediaDetailsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.mediaDetailsPreview {
+  min-width: 0;
+  padding: 23px;
+}
+
+.mediaDetailsImage {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 370px;
+  aspect-ratio: 4 / 3;
+  margin-bottom: 15px;
+  border-radius: 8px !important;
+}
+
+.mediaDetailsForm {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  padding: 23px;
+}
+
+.mediaMetadataSkeleton {
+  height: 200px !important;
+  border: 1px solid var(--border);
+  background-color: var(--bg);
+}
+
+.buttonGroupSkeleton {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.mediaCard {
+  display: grid;
+  gap: 11px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.mediaThumb {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 4 / 3;
+  border-radius: 4px !important;
+}
+
+.memberRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 17px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.guideBreadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 31px;
+}
+
+.guideHeading {
+  display: grid;
+  justify-items: start;
+  gap: 13px;
+}
+
+.guideContents {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  padding: 18px 20px;
+  margin: 30px 0 45px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.guideContents > :first-child {
+  flex-basis: 100%;
+}
+
+.guideSection {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  margin-bottom: 42px;
+}
+
+.guideCards {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.guideCard {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-height: 126px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.codeSkeleton {
+  width: min(100%, 850px);
+  display: grid;
+  gap: 12px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.guideList {
+  width: min(100%, 760px);
+  display: grid;
+  gap: 14px;
+  padding-left: 24px;
+}
+
+.welcomePage {
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.welcomeHeader {
+  max-width: 1360px;
+  min-height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 40px;
+  margin: 0 auto;
+  border-bottom: 1px solid var(--border);
+}
+
+.welcomeNav {
+  display: flex;
+  align-items: center;
+  gap: 23px;
+}
+
+.welcomeHero {
+  max-width: 1240px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  align-items: center;
+  gap: 54px;
+  padding: 70px 40px 66px;
+  margin: 0 auto;
+}
+
+.heroCopy {
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+}
+
+.heroTitleLines {
+  display: grid;
+  gap: 10px;
+  margin: 9px 0;
+}
+
+.heroActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+}
+
+.heroFacts {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding-top: 21px;
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.heroProduct {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.productBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.productWindow {
+  min-height: 290px;
+  display: grid;
+  grid-template-columns: 104px 155px minmax(0, 1fr);
+  margin-top: 15px;
+}
+
+.productRail,
+.productQueue,
+.productPreview {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 13px 10px;
+}
+
+.productRail,
+.productQueue {
+  border-right: 1px solid var(--border);
+}
+
+.productPreview {
+  gap: 16px;
+  padding: 18px;
+}
+
+.welcomeSection {
+  max-width: 1240px;
+  padding: 60px 36px 72px;
+  margin: 0 auto;
+  border-top: 1px solid var(--border);
+}
+
+.sectionIntro {
+  display: grid;
+  justify-items: start;
+  gap: 13px;
+  margin-bottom: 31px;
+}
+
+.stepsList {
+  display: grid;
+  gap: 0;
+}
+
+.stepRow {
+  display: grid;
+  grid-template-columns: 70px 1fr 1.2fr;
+  gap: 18px;
+  padding: 25px 0;
+  border-top: 1px solid var(--border);
+}
+
+.featureRow {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  align-items: center;
+  gap: 48px;
+  padding: 34px 0;
+  border-top: 1px solid var(--border);
+}
+
+.featureVisual {
+  min-height: 190px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-alt);
+}
+
+.welcomeClosing {
+  max-width: 1240px;
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+  padding: 56px 36px;
+  margin: 0 auto;
+  border-top: 1px solid var(--border);
+}
+
+.authPage {
+  min-height: 100vh;
+  background: var(--surface);
+}
+
+.authHeader {
+  min-height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 40px;
+}
+
+.authLayout {
+  max-width: 1180px;
+  min-height: 650px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 35px auto 65px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.authStory {
+  display: flex;
+  flex-direction: column;
+  padding: 48px 40px 32px;
+  background: var(--surface-alt);
+}
+
+.authImage {
+  min-height: 220px;
+  flex: 1;
+  margin-top: 24px;
+  border-radius: 4px;
+}
+
+.authForm {
+  display: grid;
+  align-content: center;
+  gap: 17px;
+  padding: 42px clamp(28px, 6vw, 72px);
+}
+
+.authDivider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 3px 0;
+}
+
+.authDivider::before,
+.authDivider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: var(--border);
+}
+
+.authField {
+  display: grid;
+  gap: 9px;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+@media (max-width: 980px) {
+  .cardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .welcomeHero {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+
+  .productWindow {
+    grid-template-columns: 130px 1fr;
+  }
+
+  .productPreview {
+    display: none;
+  }
+
+  .workspaceStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mediaGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mediaDetailsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .accountShell,
+  .workspaceShell {
+    grid-template-columns: 1fr;
+  }
+
+  .accountSidebar,
+  .workspaceSidebar {
+    gap: 12px;
+    padding: 14px 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .navGroup {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    margin-top: 8px;
+  }
+
+  .navGroup > .skeleton:not(.navCaption) {
+    display: none;
+  }
+
+  .navCaption {
+    display: none;
+  }
+
+  .accountNavItem {
+    min-height: 34px;
+    padding: 0 8px;
+  }
+
+  .accountProfile,
+  .workspaceSidebar > .accountProfile {
+    display: none;
+  }
+
+  .appTopbar,
+  .workspaceTopbar {
+    min-height: 60px;
+    padding: 10px 17px;
+  }
+
+  .accountMain,
+  .workspaceMain {
+    padding: 25px 18px 36px;
+  }
+
+  .appFooter {
+    padding: 16px 18px;
+  }
+
+  .tableFilters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .editorGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .editorAside {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rowActions {
+    display: none;
+  }
+
+  .accountRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .appTopbar .topbarActions > :first-child,
+  .appTopbar .topbarActions > :last-child,
+  .workspaceTopbar .topbarActions > :first-child {
+    display: none;
+  }
+
+  .pageHeading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 17px;
+  }
+
+  .pageHeading > .skeleton {
+    width: 132px !important;
+  }
+
+  .formColumns,
+  .cardGrid,
+  .workspaceStats,
+  .quickLinks,
+  .guideCards,
+  .featureRow,
+  .stepRow {
+    grid-template-columns: 1fr;
+  }
+
+  .projectCard {
+    min-height: 170px;
+  }
+
+  .tableFilters {
+    grid-template-columns: 1fr;
+  }
+
+  .tableLabels,
+  .tableSkeletonRow {
+    grid-template-columns: minmax(0, 1.5fr) minmax(70px, 0.8fr) 30px;
+    gap: 10px;
+    padding: 13px;
+  }
+
+  .tableLabels > :nth-child(3),
+  .tableSkeletonRow > :nth-child(3) {
+    display: none;
+  }
+
+  .mediaGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .memberRow {
+    align-items: flex-start;
+  }
+
+  .welcomeHeader,
+  .authHeader {
+    min-height: 68px;
+    padding: 16px 20px;
+  }
+
+  .welcomeNav > :not(:last-child) {
+    display: none;
+  }
+
+  .welcomeHero {
+    padding: 45px 20px 42px;
+  }
+
+  .welcomeSection,
+  .welcomeClosing {
+    padding: 43px 20px;
+  }
+
+  .stepRow {
+    gap: 10px;
+    padding: 19px 0;
+  }
+
+  .authLayout {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    margin: 10px 16px 40px;
+  }
+
+  .authStory {
+    min-height: 320px;
+    padding: 30px 24px 24px;
+  }
+
+  .authImage {
+    min-height: 100px;
+  }
+
+  .authForm {
+    padding: 32px 24px;
+  }
+
+  .heroFacts {
+    gap: 10px;
+  }
+
+  .productWindow {
+    min-height: 240px;
+    grid-template-columns: 90px 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

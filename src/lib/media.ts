@@ -1,11 +1,13 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
+import { pipeline } from "node:stream/promises";
+import sharp from "sharp";
 import { z } from "zod";
 import { HttpError, localDriver } from "./config";
-import { append, events } from "./events";
+import { append } from "./events";
 import { mapBounded, type Store } from "./storage";
 import { mediaReferences, records } from "./content";
-import type { Kind, Media } from "./types";
+import type { Event, Kind, Media } from "./types";
 import { replaceMediaReferences } from "./media-references";
 const maxMediaSize = 1024 * 1024 * 1024;
 const maxLocalMediaSize = 32 * 1024 * 1024;
@@ -33,20 +35,148 @@ interface Upload {
 const parsedId = (id: string) => z.string().uuid().parse(id).toLowerCase();
 const original = (id: string) => `originals/${parsedId(id)}/asset`;
 export const delivery = (id: string) => `public/media/${parsedId(id)}/asset`;
+const thumbnail = (id: string) => `previews/${parsedId(id)}/thumbnail.webp`;
 const incoming = (id: string) => `incoming/${parsedId(id)}/asset`;
 const ticket = (id: string) => `uploads/${parsedId(id)}.json`;
+const thumbnailJobs = new WeakMap<Store, Map<string, Promise<string>>>();
+
+interface MediaLibraryItem extends Media {
+  previewUrl: string | null;
+}
+
+export interface MediaLibraryPage {
+  items: MediaLibraryItem[];
+  total: number;
+  offset: number;
+  limit: number;
+  nextOffset: number | null;
+}
+
 export async function getMedia(id: string, store: Store) {
-  return (
-    (await events<Media>(store, `media/${parsedId(id)}`)).at(-1)?.data ?? null
-  );
+  const prefix = `media/${parsedId(id)}/`;
+  const key = (await store.list(prefix))
+    .filter((item) => item.endsWith(".json"))
+    .sort()
+    .at(-1);
+  if (!key) return null;
+  return (await store.get<Event<Media>>(key))?.data ?? null;
 }
 export async function listMedia(store: Store) {
-  const history = await events<Media>(store, "media");
-  const latest = new Map<string, Media>();
-  for (const event of history) latest.set(event.data.id, event.data);
-  return [...latest.values()]
+  const keys = (await store.list("media/")).sort();
+  const latestKeys = new Map<string, string>();
+  for (const key of keys) {
+    const match = /^media\/([0-9a-f-]{36})\/[^/]+\.json$/i.exec(key);
+    if (match) latestKeys.set(match[1].toLowerCase(), key);
+  }
+  const latestEvents = await mapBounded([...latestKeys.values()], (key) =>
+    store.get<Event<Media>>(key),
+  );
+  return latestEvents
+    .filter((event): event is Event<Media> => !!event)
+    .map((event) => event.data)
     .filter((m) => !m.deleted)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function listMediaPage(
+  store: Store,
+  options: { offset: number; limit: number; query: string },
+): Promise<MediaLibraryPage> {
+  const matching = (await listMedia(store)).filter((item) =>
+    item.filename.toLowerCase().includes(options.query.toLowerCase()),
+  );
+  const page = matching.slice(options.offset, options.offset + options.limit);
+  // Keep the listing independent of image storage and conversion latency. The
+  // browser loads each thumbnail lazily through the authenticated thumbnail route.
+  const items: MediaLibraryItem[] = page.map((item) => ({
+    ...item,
+    previewUrl: null,
+  }));
+  const nextOffset = options.offset + items.length;
+  return {
+    items,
+    total: matching.length,
+    offset: options.offset,
+    limit: options.limit,
+    nextOffset: nextOffset < matching.length ? nextOffset : null,
+  };
+}
+
+export async function ensureMediaThumbnail(
+  id: string,
+  media: Media,
+  store: Store,
+) {
+  const normalizedId = parsedId(id);
+  if (!media.contentType.startsWith("image/"))
+    throw new HttpError(415, "Only images have previews");
+
+  let jobs = thumbnailJobs.get(store);
+  if (!jobs) {
+    jobs = new Map();
+    thumbnailJobs.set(store, jobs);
+  }
+  const existingJob = jobs.get(normalizedId);
+  if (existingJob) return existingJob;
+
+  const key = thumbnail(normalizedId);
+  const job = (async () => {
+    try {
+      if ((await store.head(key)).size > 0) return key;
+    } catch (error) {
+      if (!isMissingObject(error)) throw error;
+    }
+
+    const source = await store.readStream(original(normalizedId));
+    const processor = sharp({ limitInputPixels: 250_000_000 })
+      .rotate()
+      .resize(480, 360, {
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({ quality: 76, effort: 4 });
+    const chunks: Buffer[] = [];
+    const collect = (async () => {
+      for await (const chunk of processor) chunks.push(Buffer.from(chunk));
+      return Buffer.concat(chunks);
+    })();
+    const [, preview] = await Promise.all([
+      pipeline(source, processor),
+      collect,
+    ]);
+    await store.writeBytes(key, preview, "image/webp", "private, max-age=900");
+    return key;
+  })();
+  jobs.set(normalizedId, job);
+  try {
+    return await job;
+  } finally {
+    if (jobs.get(normalizedId) === job) jobs.delete(normalizedId);
+  }
+}
+
+function isMissingObject(error: unknown) {
+  if (error instanceof HttpError && error.status === 404) return true;
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as {
+    name?: unknown;
+    $metadata?: { httpStatusCode?: unknown };
+  };
+  return (
+    ["NoSuchKey", "NotFound"].includes(String(candidate.name)) ||
+    candidate.$metadata?.httpStatusCode === 404
+  );
+}
+
+export async function mediaThumbnailUrl(id: string, store: Store) {
+  const media = await getMedia(id, store);
+  if (!media || media.deleted || !media.ready)
+    throw new HttpError(404, "Media not found");
+  return store.signGet(await ensureMediaThumbnail(id, media, store), 900);
+}
+
+export async function mediaOriginalUrl(id: string, store: Store) {
+  return store.signGet(original(id), 900);
 }
 export async function startUpload(
   actor: string,
@@ -667,11 +797,12 @@ export async function deleteMedia(actor: string, id: string, store: Store) {
     });
   }
 
-  // Keep cleanup retryable after the tombstone is written. Attempt both objects
+  // Keep cleanup retryable after the tombstone is written. Attempt every object
   // even if one removal fails, then let the caller retry the DELETE request.
   const removals = await Promise.allSettled([
     store.remove(original(normalizedId)),
     store.remove(delivery(normalizedId)),
+    store.remove(thumbnail(normalizedId)),
   ]);
   const failure = removals.find((result) => result.status === "rejected");
   if (failure?.status === "rejected") throw failure.reason;
@@ -679,7 +810,7 @@ export async function deleteMedia(actor: string, id: string, store: Store) {
 export async function previewMedia(id: string, store: Store) {
   const media = await getMedia(id, store);
   if (!media || media.deleted) throw new HttpError(404, "Media not found");
-  return store.signGet(original(id));
+  return store.signGet(original(id), 900);
 }
 export async function publishMedia(
   content: unknown,

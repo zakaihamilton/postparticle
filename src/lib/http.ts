@@ -2,9 +2,11 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { HttpError, requiredEnv } from "./config";
+import { isDevelopmentLoopbackOrigin } from "./origin";
 export function sameOrigin(request: Request) {
   const expected = new URL(requiredEnv("APP_ORIGIN")).origin;
-  if (request.headers.get("origin") !== expected)
+  const origin = request.headers.get("origin");
+  if (!origin || (origin !== expected && !isDevelopmentLoopbackOrigin(origin)))
     throw new HttpError(403, "Request origin is not allowed");
 }
 export async function readBytes(

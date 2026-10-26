@@ -18,6 +18,7 @@ export async function GET(request: Request) {
     const destination = perministerAuthorizationUrl(
       transaction.state,
       transaction.challenge,
+      new URL(request.url).origin,
     );
     const cookieName = perministerSsoCookieName(transaction.state);
     if (!cookieName) throw new Error("Invalid SSO transaction state.");

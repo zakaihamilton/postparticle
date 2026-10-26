@@ -315,11 +315,11 @@ test("media upload and metadata plus JSON publication work", async ({
   page,
 }) => {
   await signIn(page);
-  await page.goto("/workspace/demo/media");
+  await openMediaLibrary(page);
   await chooseFixtureImage(page, "tiny.png");
   await expect(page.getByRole("status")).toContainText("Upload complete");
   await page
-    .getByRole("button", { name: /tiny.png/ })
+    .getByRole("link", { name: /tiny.png/ })
     .first()
     .click();
   await page
@@ -867,6 +867,18 @@ async function chooseFixtureImage(page: Page, name: string) {
   ]);
 }
 
+async function openMediaLibrary(page: Page) {
+  const initialPage = page.waitForResponse(
+    (response) =>
+      response.request().method() === "GET" &&
+      new URL(response.url()).pathname === "/api/manage/projects/demo/media" &&
+      new URL(response.url()).searchParams.get("offset") === "0",
+  );
+  await page.goto("/workspace/demo/media");
+  await initialPage;
+  await expect(page.getByText("Loading your library…")).toHaveCount(0);
+}
+
 test("media drops accept one supported file and reject unsupported or multiple files", async ({
   page,
 }) => {
@@ -879,7 +891,7 @@ test("media drops accept one supported file and reject unsupported or multiple f
       uploadRequests++;
   });
   await signIn(page);
-  await page.goto("/workspace/demo/media");
+  await openMediaLibrary(page);
   const fileInput = page.locator('input[type="file"]');
   await expect(fileInput).toHaveCount(1);
   await expect(fileInput).toHaveAttribute("aria-hidden", "true");
@@ -916,7 +928,7 @@ test("upload finalization can retry a lost success response without duplicating 
   page,
 }, info) => {
   await signIn(page);
-  await page.goto("/workspace/demo/media");
+  await openMediaLibrary(page);
   let first = true;
   let aborts = 0;
   page.on("request", (request) => {
@@ -947,18 +959,20 @@ test("upload finalization can retry a lost success response without duplicating 
   await expect(
     page.getByRole("button", { name: "Retry finalization" }),
   ).toHaveCount(0);
-  const items = await (
+  const mediaPage = await (
     await page.request.get("/api/manage/projects/demo/media")
   ).json();
   expect(
-    items.filter((item: { filename: string }) => item.filename === filename),
+    mediaPage.items.filter(
+      (item: { filename: string }) => item.filename === filename,
+    ),
   ).toHaveLength(1);
 });
 test("a rejected file signature is terminal and does not offer finalization retry", async ({
   page,
 }, info) => {
   await signIn(page);
-  await page.goto("/workspace/demo/media");
+  await openMediaLibrary(page);
   let aborts = 0;
   page.on("request", (request) => {
     if (request.url().endsWith("/abort")) aborts++;
@@ -993,7 +1007,7 @@ test("a failed finalization can be explicitly discarded", async ({
   page,
 }, info) => {
   await signIn(page);
-  await page.goto("/workspace/demo/media");
+  await openMediaLibrary(page);
   let uploadId = "";
   await page.route("**/media/*/complete", async (route) => {
     uploadId = route.request().url().split("/").at(-2)!;

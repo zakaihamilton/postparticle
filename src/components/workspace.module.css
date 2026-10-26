@@ -309,6 +309,10 @@ a.secondary:hover {
   color: var(--muted);
   padding: 7px;
 }
+.ghost:hover {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
 .dangerButton {
   border: 1px solid var(--border);
   background: var(--surface);
@@ -1224,11 +1228,14 @@ a.secondary:hover {
   gap: 18px;
 }
 .mediaCard {
+  display: block;
+  width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
   padding: 0;
   text-align: left;
   color: var(--text);
+  text-decoration: none;
   overflow: hidden;
   border-radius: 5px;
   transition:
@@ -1238,6 +1245,10 @@ a.secondary:hover {
 .mediaCard:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow);
+}
+.mediaCard:focus-visible {
+  outline: 3px solid var(--accent-ink);
+  outline-offset: 3px;
 }
 .mediaThumbnail {
   height: 150px;

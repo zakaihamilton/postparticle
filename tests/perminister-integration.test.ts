@@ -11,8 +11,8 @@ const clientId = "550e8400-e29b-41d4-a716-446655440001";
 
 function configure() {
   vi.stubEnv("PERMINISTER_BASE_URL", "https://perminister.example");
-  vi.stubEnv("PERMINISTER_CLIENT_ID", clientId);
-  vi.stubEnv("PERMINISTER_CLIENT_SECRET", "server-only-client-secret");
+  vi.stubEnv("PERMINISTER_APP_CLIENT_ID", clientId);
+  vi.stubEnv("PERMINSITER_APP_CLIENT_SECRET", "server-only-client-secret");
 }
 
 afterEach(() => {

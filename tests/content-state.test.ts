@@ -327,6 +327,8 @@ describe("content checkpoints", () => {
       article("alpha", 3),
     );
     const newest = await rebuildContentCheckpoints("articles", store.asStore());
+    expect(newest.complete).toBe(true);
+    expect(newest.generation).toBeTruthy();
     expect(newest.generation).not.toBe(first.generation);
 
     const manifest = store.objects.get(
@@ -423,8 +425,11 @@ describe("content checkpoints", () => {
     const store = new MemoryStore();
     addEvent(store, makeEvent("alpha", 1, 0));
     addEvent(store, makeEvent("alpha", 1, 1));
-    store.beforeList = (call, prefix) => {
-      if (call === 3 && prefix === "content/articles/") {
+    let sourceListings = 0;
+    store.beforeList = (_call, prefix) => {
+      if (prefix !== "content/articles/") return;
+      sourceListings++;
+      if (sourceListings === 3) {
         store.beforeList = null;
         addEvent(store, makeEvent("alpha", 2, 2));
       }

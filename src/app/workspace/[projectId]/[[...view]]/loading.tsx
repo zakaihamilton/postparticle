@@ -1,9 +1,5 @@
-import styles from "@/components/workspace.module.css";
+import WorkspacePageSkeleton from "@/components/skeletons/workspace-page-skeleton";
 
 export default function WorkspaceLoading() {
-  return (
-    <main aria-live="polite" className={styles.loading}>
-      Opening workspace content…
-    </main>
-  );
+  return <WorkspacePageSkeleton />;
 }

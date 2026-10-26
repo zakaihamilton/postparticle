@@ -17,7 +17,6 @@ import {
   getProject,
   projectStoreFor,
   updateProjectRegistry,
-  writeProjectRegistry,
   type ProjectRecord,
 } from "@/lib/projects";
 import { LocalStore } from "@/lib/storage";
@@ -38,6 +37,10 @@ function project(id: string, name = id, description = ""): ProjectRecord {
   };
 }
 
+async function seedProjects(organizationId: string, projects: ProjectRecord[]) {
+  await updateProjectRegistry(organizationId, () => projects);
+}
+
 beforeAll(async () => {
   root = await mkdtemp(path.join(tmpdir(), "postparticle-projects-"));
   vi.stubEnv("STORAGE_DRIVER", "local");
@@ -56,11 +59,10 @@ afterAll(async () => {
 
 describe("project registry projections", () => {
   it("preserves concurrent updates to different projects", async () => {
-    await writeProjectRegistry(
-      organizationA,
-      [project("alpha", "Alpha"), project("beta", "Beta")],
-      { onlyIfMissing: true },
-    );
+    await seedProjects(organizationA, [
+      project("alpha", "Alpha"),
+      project("beta", "Beta"),
+    ]);
 
     await Promise.all([
       updateProjectRegistry(organizationA, (projects) =>
@@ -85,14 +87,14 @@ describe("project registry projections", () => {
     ]);
   });
 
-  it("resumes a partial immutable registry initialization", async () => {
+  it("builds the registry from successive immutable updates", async () => {
     const alpha = project("alpha", "Alpha");
     const beta = project("beta", "Beta");
-    await writeProjectRegistry(organizationA, [alpha], { onlyIfMissing: true });
-
-    await writeProjectRegistry(organizationA, [alpha, beta], {
-      onlyIfMissing: true,
-    });
+    await seedProjects(organizationA, [alpha]);
+    await updateProjectRegistry(organizationA, (projects) => [
+      ...projects,
+      beta,
+    ]);
 
     expect(
       await getProjectRegistry(organizationA, { includeArchived: true }),
@@ -102,9 +104,7 @@ describe("project registry projections", () => {
   it("keeps the registry usable and marks same-project branches for resolution", async () => {
     const base = project("alpha", "Alpha");
     const beta = project("beta", "Beta");
-    await writeProjectRegistry(organizationA, [base, beta], {
-      onlyIfMissing: true,
-    });
+    await seedProjects(organizationA, [base, beta]);
     const previousHash = createHash("sha256")
       .update(JSON.stringify(base))
       .digest("hex");
@@ -190,11 +190,7 @@ describe("project registry projections", () => {
   });
 
   it("can remove a project after its deletion marker is written", async () => {
-    await writeProjectRegistry(
-      organizationA,
-      [project("retire-me", "Retire me")],
-      { onlyIfMissing: true },
-    );
+    await seedProjects(organizationA, [project("retire-me", "Retire me")]);
     await beginProjectDeletion(organizationA, "retire-me");
 
     await updateProjectRegistry(organizationA, (projects) =>

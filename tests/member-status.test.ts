@@ -18,8 +18,11 @@ afterEach(() => {
 describe("project member status", () => {
   it("combines disabled account status with the separate project grant state", async () => {
     vi.stubEnv("PERMINISTER_BASE_URL", "https://perminister.example");
-    vi.stubEnv("PERMINISTER_CLIENT_ID", "550e8400-e29b-41d4-a716-446655440001");
-    vi.stubEnv("PERMINISTER_CLIENT_SECRET", "server-only-secret");
+    vi.stubEnv(
+      "PERMINISTER_APP_CLIENT_ID",
+      "550e8400-e29b-41d4-a716-446655440001",
+    );
+    vi.stubEnv("PERMINSITER_APP_CLIENT_SECRET", "server-only-secret");
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: RequestInfo | URL) => {
@@ -84,8 +87,11 @@ describe("project member status", () => {
 
   it("does not report a member as active when Perminister omits account status", async () => {
     vi.stubEnv("PERMINISTER_BASE_URL", "https://perminister.example");
-    vi.stubEnv("PERMINISTER_CLIENT_ID", "550e8400-e29b-41d4-a716-446655440001");
-    vi.stubEnv("PERMINISTER_CLIENT_SECRET", "server-only-secret");
+    vi.stubEnv(
+      "PERMINISTER_APP_CLIENT_ID",
+      "550e8400-e29b-41d4-a716-446655440001",
+    );
+    vi.stubEnv("PERMINSITER_APP_CLIENT_SECRET", "server-only-secret");
     vi.stubGlobal(
       "fetch",
       vi.fn(

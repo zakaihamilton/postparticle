@@ -92,7 +92,13 @@ a {
   color: inherit;
   transition:
     color var(--motion-fast) ease,
-    text-decoration-color var(--motion-fast) ease;
+    text-decoration-color var(--motion-fast) ease,
+    filter var(--motion-fast);
+}
+@media (hover: hover) {
+  a[href]:hover {
+    filter: brightness(0.95);
+  }
 }
 a:not([class]):hover {
   color: var(--accent-ink);
@@ -115,7 +121,13 @@ button {
   transition:
     background-color var(--motion-fast),
     border-color var(--motion-fast),
-    color var(--motion-fast);
+    color var(--motion-fast),
+    filter var(--motion-fast);
+}
+@media (hover: hover) {
+  button:not(:disabled):hover {
+    filter: brightness(0.95);
+  }
 }
 button:disabled {
   cursor: not-allowed;

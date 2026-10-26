@@ -1,7 +1,10 @@
 import { notFound, redirect } from "next/navigation";
+import { z } from "zod";
 import { authorizeProject, currentAuthContext } from "@/lib/auth";
 import { HttpError } from "@/lib/config";
+import { getMedia, mediaOriginalUrl } from "@/lib/media";
 import { projectStoreFor } from "@/lib/projects";
+import type { Media } from "@/lib/types";
 import { readWorkspaceDashboardResult } from "@/lib/workspace-dashboard";
 import Workspace from "@/components/workspace";
 export default async function WorkspacePage({
@@ -16,13 +19,16 @@ export default async function WorkspacePage({
   if (!context) redirect("/login");
   const { actor } = context;
   const { projectId, view = [] } = routeParams;
+  const mediaDetail = view[0] === "media" && view.length === 2;
   if (
     view.length > 2 ||
     (view[0] &&
       !["articles", "documents", "media", "members", "settings"].includes(
         view[0],
       )) ||
-    (view.length > 1 && !["articles", "documents"].includes(view[0]))
+    (view.length > 1 &&
+      !["articles", "documents"].includes(view[0]) &&
+      !(mediaDetail && z.string().uuid().safeParse(view[1]).success))
   )
     notFound();
   let workspaceAccess: Awaited<ReturnType<typeof authorizeProject>>;
@@ -39,6 +45,15 @@ export default async function WorkspacePage({
     throw error;
   }
   const { role, project } = workspaceAccess;
+  let initialMedia: Media | null = null;
+  let initialMediaUrl: string | null = null;
+  if (mediaDetail) {
+    const store = projectStoreFor(actor.organizationId, project);
+    initialMedia = await getMedia(view[1], store);
+    if (!initialMedia || initialMedia.deleted || !initialMedia.ready)
+      notFound();
+    initialMediaUrl = await mediaOriginalUrl(initialMedia.id, store);
+  }
   const initialDashboard =
     view.length === 0
       ? readWorkspaceDashboardResult(
@@ -55,6 +70,8 @@ export default async function WorkspacePage({
         description: project.description,
       }}
       view={view}
+      initialMedia={initialMedia}
+      initialMediaUrl={initialMediaUrl}
       initialDashboard={initialDashboard}
     />
   );

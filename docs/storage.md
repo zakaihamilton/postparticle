@@ -36,8 +36,7 @@ and media remain available. New organizations use the organization-prefixed path
 storage credential can access every prefix; the application scopes reads and writes by the active
 Perminister organization and its project grants.
 
-Project registries are derived from the optional legacy baseline at
-`organizations/{organizationId}/projects.json` and immutable per-project changes under
+Project registries are derived from immutable per-project changes under
 `organizations/{organizationId}/project-registry/changes/{projectId}/{edgeHash}.json`. Each change
 stores the previous and next project hashes. Changes to different IDs compose; competing changes to
 the same project are projected onto a stable branch and surfaced as a project-specific conflict
