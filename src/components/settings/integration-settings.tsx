@@ -29,6 +29,18 @@ function integrationParameters(
   ].join("\n");
 }
 
+function subscribeToLocationOrigin() {
+  return () => {};
+}
+
+function getLocationOrigin() {
+  return window.location.origin;
+}
+
+function getServerLocationOrigin() {
+  return "";
+}
+
 export function IntegrationSettings({
   projectId,
   organizationId,
@@ -37,9 +49,9 @@ export function IntegrationSettings({
   organizationId: string;
 }) {
   const postparticleUrl = useSyncExternalStore(
-    () => () => {},
-    () => window.location.origin,
-    () => "",
+    subscribeToLocationOrigin,
+    getLocationOrigin,
+    getServerLocationOrigin,
   );
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [copyState, setCopyState] = useState<
@@ -188,7 +200,10 @@ export function IntegrationSettings({
                   : "Use the base URL readers will visit, without a trailing slash."}
             </small>
           </label>
-          <pre className={styles.codeBlock}>{promptDetails}</pre>
+          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Focus enables keyboard scrolling of integration parameters. */}
+          <pre className={styles.codeBlock} tabIndex={0}>
+            {promptDetails}
+          </pre>
           <span className={styles.srOnly} role="status" aria-live="polite">
             {copyState === "copied"
               ? "AI integration parameters copied to clipboard."

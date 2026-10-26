@@ -30,7 +30,7 @@
     "health:styles": "stylelint --formatter json \"**/*.{css,pcss,postcss}\""
   },
   "engines": {
-    "node": ">=22.20.0"
+    "node": ">=22.23.4 <23 || >=24.22.1 <25 || >=26.12.1"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1146.0",
