@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type DragEvent } from "react";
+import { GuardedLink as Link } from "./navigation-guard";
 import type { Media } from "@/lib/types";
 import { ApiError, api, Empty, Icon, Notice } from "./ui";
 import styles from "./workspace.module.css";
@@ -14,6 +15,15 @@ interface UploadStart {
   partSize: number;
   url: string | null;
 }
+interface MediaLibraryItem extends Media {
+  previewUrl: string | null;
+}
+interface MediaLibraryPage {
+  items: MediaLibraryItem[];
+  total: number;
+  nextOffset: number | null;
+}
+const pageSize = 24;
 const supportedMediaTypes = new Set([
   "image/jpeg",
   "image/png",
@@ -30,43 +40,146 @@ export default function MediaLibrary({
   canEdit: boolean;
 }) {
   const endpoint = `/api/manage/projects/${projectId}/media`;
-  const [items, setItems] = useState<Media[]>([]);
+  const [items, setItems] = useState<MediaLibraryItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [nextOffset, setNextOffset] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loadedQuery, setLoadedQuery] = useState<string | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const [pendingUpload, setPendingUpload] = useState<PendingUpload | null>(
     null,
   );
-  const [selected, setSelected] = useState<Media | null>(null);
-  const [metadata, setMetadata] = useState("{}");
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
+  const [failedPreviews, setFailedPreviews] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [refreshingPreviews, setRefreshingPreviews] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const queryRef = useRef(q);
+  const previewRetries = useRef(new Set<string>());
   const abort = useRef<AbortController | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const loading = loadedQuery !== q;
   useEffect(() => {
     let active = true;
-    api<Media[]>(endpoint)
-      .then((m) => {
-        if (active) {
-          setItems(m);
-          setLoading(false);
-        }
-      })
-      .catch((e) => {
-        if (active) {
-          setError(e.message);
-          setLoading(false);
-        }
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({
+        offset: "0",
+        limit: String(pageSize),
       });
+      if (q.trim()) params.set("q", q.trim());
+      api<MediaLibraryPage>(`${endpoint}?${params}`, {
+        signal: controller.signal,
+      })
+        .then((page) => {
+          if (!active) return;
+          setItems(page.items);
+          setTotal(page.total);
+          setNextOffset(page.nextOffset);
+          setError("");
+          setPreviewUrls({});
+          setFailedPreviews(new Set());
+          previewRetries.current.clear();
+          setLoadedQuery(q);
+        })
+        .catch((e) => {
+          if (!active) return;
+          setError(e.message);
+          setItems([]);
+          setTotal(0);
+          setNextOffset(null);
+          setLoadedQuery(q);
+        });
+    }, 180);
     return () => {
       active = false;
-      abort.current?.abort();
+      clearTimeout(timer);
+      controller.abort();
     };
-  }, [endpoint]);
+  }, [endpoint, q]);
+
+  useEffect(() => () => abort.current?.abort(), [endpoint]);
+
   async function reload() {
-    setItems(await api<Media[]>(endpoint));
+    const query = queryRef.current;
+    const params = new URLSearchParams({
+      offset: "0",
+      limit: String(pageSize),
+    });
+    if (query.trim()) params.set("q", query.trim());
+    const page = await api<MediaLibraryPage>(`${endpoint}?${params}`);
+    if (queryRef.current !== query) return;
+    setItems(page.items);
+    setTotal(page.total);
+    setNextOffset(page.nextOffset);
+    setError("");
+    setLoadedQuery(query);
+    setPreviewUrls({});
+    setFailedPreviews(new Set());
+    previewRetries.current.clear();
+  }
+
+  async function loadMore() {
+    if (nextOffset === null || loadingMore) return;
+    const query = queryRef.current;
+    setLoadingMore(true);
+    setError("");
+    try {
+      const params = new URLSearchParams({
+        offset: String(nextOffset),
+        limit: String(pageSize),
+      });
+      if (query.trim()) params.set("q", query.trim());
+      const page = await api<MediaLibraryPage>(`${endpoint}?${params}`);
+      if (queryRef.current !== query) return;
+      setItems((current) => [...current, ...page.items]);
+      setTotal(page.total);
+      setNextOffset(page.nextOffset);
+    } catch (e) {
+      if (queryRef.current === query) setError((e as Error).message);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  async function refreshPreview(id: string) {
+    if (refreshingPreviews.has(id)) return;
+    setRefreshingPreviews((current) => new Set(current).add(id));
+    try {
+      const result = await api<{ url: string }>(
+        `${endpoint}/${id}/preview-thumbnail`,
+      );
+      setPreviewUrls((current) => ({ ...current, [id]: result.url }));
+      setFailedPreviews((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+    } catch {
+      setFailedPreviews((current) => new Set(current).add(id));
+    } finally {
+      setRefreshingPreviews((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+    }
+  }
+
+  function handlePreviewError(id: string) {
+    if (previewRetries.current.has(id)) {
+      setFailedPreviews((current) => new Set(current).add(id));
+      return;
+    }
+    previewRetries.current.add(id);
+    void refreshPreview(id);
   }
   async function upload(file: File) {
     let uploadId: string | undefined;
@@ -200,7 +313,7 @@ export default function MediaLibrary({
           <div className={styles.eyebrow}>YOUR CREATIVE COLLECTION</div>
           <h1>
             Media library
-            <span className={styles.headingCount}>{items.length}</span>
+            <span className={styles.headingCount}>{loading ? "…" : total}</span>
           </h1>
           <p className={styles.subtitle}>
             A home for the images and videos that bring your content to life.
@@ -263,7 +376,7 @@ export default function MediaLibrary({
           </div>
         )}
       </div>
-      <Notice error={error} message={message} />
+      <Notice error={loading ? "" : error} message={message} />
       {pendingUpload && (
         <div className={styles.uploadProgress}>
           <strong>Your uploaded file is waiting for finalization.</strong>
@@ -333,153 +446,107 @@ export default function MediaLibrary({
             aria-label="Search media"
             placeholder="Search your media…"
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(e) => {
+              queryRef.current = e.target.value;
+              setQ(e.target.value);
+            }}
           />
         </label>
         <span>Up to 32 MiB locally · 1 GiB on Spaces</span>
       </div>
       {loading ? (
         <div className={styles.loading}>Loading your library…</div>
-      ) : !items.length ? (
+      ) : total === 0 ? (
         <section className={styles.panel}>
-          <Empty title="Give your stories something to show">
-            Upload images or videos, add their details, and use them across your
-            content.
-          </Empty>
+          {q.trim() ? (
+            <Empty title="No matching media">Try another filename.</Empty>
+          ) : (
+            <Empty title="Give your stories something to show">
+              Upload images or videos, add their details, and use them across
+              your content.
+            </Empty>
+          )}
         </section>
       ) : (
-        <div className={styles.mediaGrid}>
-          {items
-            .filter((m) => m.filename.toLowerCase().includes(q.toLowerCase()))
-            .map((m) => (
-              <button
-                key={m.id}
-                className={styles.mediaCard}
-                onClick={() => {
-                  setSelected(m);
-                  setMetadata(JSON.stringify(m.metadata, null, 2));
-                }}
-              >
-                <div className={styles.mediaThumbnail}>
-                  {m.contentType.startsWith("image/") ? (
-                    <img
-                      src={`${endpoint}/${m.id}/preview-file`}
-                      alt={m.alt || m.filename}
-                    />
-                  ) : (
-                    <>
-                      <Icon name="image" size={35} />
-                      <span>VIDEO</span>
-                    </>
+        <>
+          <div className={styles.mediaGrid}>
+            {items.map((m) => {
+              const isImage = m.contentType.startsWith("image/");
+              const previewSrc =
+                previewUrls[m.id] ??
+                m.previewUrl ??
+                `${endpoint}/${m.id}/thumbnail-file`;
+              const previewFailed = failedPreviews.has(m.id);
+              return (
+                <div className={libraryStyles.mediaCardShell} key={m.id}>
+                  <Link
+                    className={styles.mediaCard}
+                    href={`/workspace/${projectId}/media/${m.id}`}
+                    prefetch={false}
+                  >
+                    <div className={styles.mediaThumbnail}>
+                      {isImage && !previewFailed ? (
+                        <img
+                          src={previewSrc}
+                          alt={m.alt || m.filename}
+                          loading="lazy"
+                          decoding="async"
+                          onLoad={() => previewRetries.current.delete(m.id)}
+                          onError={() => handlePreviewError(m.id)}
+                        />
+                      ) : isImage ? (
+                        <span className={libraryStyles.previewUnavailable}>
+                          Preview unavailable
+                        </span>
+                      ) : (
+                        <>
+                          <Icon name="image" size={35} />
+                          <span>VIDEO</span>
+                        </>
+                      )}
+                    </div>
+                    <div className={styles.mediaInfo}>
+                      <strong>{m.filename}</strong>
+                      <span>
+                        {m.contentType.split("/")[1].toUpperCase()}
+                        <span>{formatSize(m.size)}</span>
+                      </span>
+                    </div>
+                  </Link>
+                  {isImage && previewFailed && (
+                    <button
+                      className={libraryStyles.retryPreview}
+                      type="button"
+                      disabled={refreshingPreviews.has(m.id)}
+                      onClick={() => {
+                        previewRetries.current.delete(m.id);
+                        void refreshPreview(m.id);
+                      }}
+                    >
+                      {refreshingPreviews.has(m.id)
+                        ? "Retrying…"
+                        : "Retry preview"}
+                    </button>
                   )}
                 </div>
-                <div className={styles.mediaInfo}>
-                  <strong>{m.filename}</strong>
-                  <span>
-                    {m.contentType.split("/")[1].toUpperCase()}
-                    <span>{formatSize(m.size)}</span>
-                  </span>
-                </div>
+              );
+            })}
+          </div>
+          {nextOffset !== null && (
+            <div className={libraryStyles.loadMore}>
+              <button
+                className={styles.secondary}
+                type="button"
+                disabled={loadingMore}
+                onClick={() => void loadMore()}
+              >
+                {loadingMore
+                  ? "Loading more…"
+                  : `Load more (${items.length} of ${total})`}
               </button>
-            ))}
-        </div>
-      )}
-      {selected && (
-        <section className={`${styles.panel} ${styles.assetDetails}`}>
-          <div className={styles.panelHeading}>
-            <h2>{selected.filename}</h2>
-            <button className={styles.ghost} onClick={() => setSelected(null)}>
-              Close details
-            </button>
-          </div>
-          <div className={styles.assetDetailGrid}>
-            <div>
-              {selected.contentType.startsWith("video/") ? (
-                <video controls src={`${endpoint}/${selected.id}/preview-file`}>
-                  <track kind="captions" />
-                </video>
-              ) : (
-                <img
-                  src={`${endpoint}/${selected.id}/preview-file`}
-                  alt={selected.alt || selected.filename}
-                />
-              )}
-              <p className={styles.subtitle}>
-                Media reference: <code>media:{selected.id}</code>
-              </p>
             </div>
-            <div className={styles.formSection}>
-              <label>
-                Alt text
-                <input
-                  readOnly={!canEdit}
-                  value={selected.alt}
-                  onChange={(e) =>
-                    setSelected({ ...selected, alt: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Caption
-                <input
-                  readOnly={!canEdit}
-                  value={selected.caption}
-                  onChange={(e) =>
-                    setSelected({ ...selected, caption: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Metadata JSON
-                <textarea
-                  className={styles.codeInput}
-                  readOnly={!canEdit}
-                  rows={5}
-                  value={metadata}
-                  onChange={(e) => setMetadata(e.target.value)}
-                />
-              </label>
-              {canEdit && (
-                <div className={styles.buttonGroup}>
-                  <button
-                    className={styles.primary}
-                    disabled={busy}
-                    onClick={() =>
-                      mutate(async () => {
-                        await api(`${endpoint}/${selected.id}`, {
-                          method: "PATCH",
-                          body: JSON.stringify({
-                            alt: selected.alt,
-                            caption: selected.caption,
-                            metadata: JSON.parse(metadata),
-                          }),
-                        });
-                        setMessage("Asset details saved.");
-                      })
-                    }
-                  >
-                    Save details
-                  </button>
-                  <button
-                    className={styles.dangerButton}
-                    disabled={busy}
-                    onClick={() =>
-                      mutate(async () => {
-                        await api(`${endpoint}/${selected.id}`, {
-                          method: "DELETE",
-                        });
-                        setSelected(null);
-                        setMessage("Asset deleted.");
-                      })
-                    }
-                  >
-                    Delete asset
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
+          )}
+        </>
       )}
     </>
   );

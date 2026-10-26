@@ -45,6 +45,7 @@ export default function LoginForm({
             width={1536}
             height={1024}
             sizes="(max-width: 600px) 100vw, 50vw"
+            loading="eager"
             alt="Paper proofs and books on a sunlit publishing desk"
           />
           <div className={styles.storyFooter}>

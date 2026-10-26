@@ -6,9 +6,15 @@ server-only values in each environment:
 
 ```dotenv
 PERMINISTER_BASE_URL=https://www.perminister.com
-PERMINISTER_CLIENT_ID=<postparticle-client-uuid>
+PERMINISTER_APP_CLIENT_ID=<postparticle-client-uuid>
+PERMINSITER_APP_CLIENT_SECRET=<postparticle-client-secret>
+# Optional fallback for existing Vercel secrets that cannot be renamed:
 PERMINISTER_CLIENT_SECRET=<postparticle-client-secret>
 ```
+
+`PERMINSITER_APP_CLIENT_SECRET` takes precedence when both names are set. The app accepts
+`PERMINISTER_CLIENT_SECRET` as a fallback so existing Vercel environments can keep their current
+secret name.
 
 Use a separate Perminister client for development and preview deployments, and select the organization
 that owns each project's data. The PostParticle product client must be restricted to the matching
@@ -19,6 +25,10 @@ The login page offers **Sign in with Perminister**. The callback is
 `/auth/perminister/callback` on the exact origin registered for that app client. The backend completes
 the authorization-code exchange with PKCE and stores the resulting app-bound session in the existing
 PostParticle cookie.
+
+In development, localhost, `127.0.0.1`, and `[::1]` origins are accepted on any port. Perminister
+SSO returns to the same local origin that started sign-in, so register that callback URL on the
+development client (for example, `http://localhost:3000/auth/perminister/callback`).
 
 New and changed passwords must be 15–256 characters. Imported legacy passwords remain usable until
 changed; Perminister rehashes them after a successful login. PostParticle fails closed when

@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState, type ComponentProps } from "react";
 import type {
   Actor,
+  Media,
   Project,
   Role,
   WorkspaceDashboardResult,
@@ -20,6 +21,7 @@ import styles from "./workspace.module.css";
 
 const Editor = dynamic(() => import("./editor"));
 const MediaLibrary = dynamic(() => import("./media-library"));
+const MediaDetails = dynamic(() => import("./media-details"));
 const Members = dynamic(() =>
   import("./settings/members").then((module) => module.Members),
 );
@@ -48,12 +50,16 @@ function WorkspaceContent({
   role,
   project,
   view,
+  initialMedia,
+  initialMediaUrl,
   initialDashboard,
 }: {
   actor: Actor;
   role: Role;
   project: Project;
   view: string[];
+  initialMedia: Media | null;
+  initialMediaUrl: string | null;
   initialDashboard: Promise<WorkspaceDashboardResult>;
 }) {
   const router = useRouter();
@@ -264,6 +270,14 @@ function WorkspaceContent({
               {navigation.find((n) => n.id === tab)?.label ||
                 (tab === "members" ? "Members" : "Settings")}
             </strong>
+            {tab === "media" && initialMedia && (
+              <>
+                <span className={styles.breadcrumb}>/</span>
+                <strong title={initialMedia.filename}>
+                  {initialMedia.filename}
+                </strong>
+              </>
+            )}
           </div>
           <div className={styles.topRight}>
             <OrganizationSwitcher
@@ -304,9 +318,18 @@ function WorkspaceContent({
                 canEdit={canEdit}
               />
             ))}
-          {tab === "media" && (
-            <MediaLibrary projectId={project.id} canEdit={canEdit} />
-          )}
+          {tab === "media" &&
+            (initialMedia && initialMediaUrl ? (
+              <MediaDetails
+                key={initialMedia.id}
+                projectId={project.id}
+                media={initialMedia}
+                previewUrl={initialMediaUrl}
+                canEdit={canEdit}
+              />
+            ) : (
+              <MediaLibrary projectId={project.id} canEdit={canEdit} />
+            ))}
           {tab === "members" && <Members projectId={project.id} />}
           {tab === "settings" && (
             <IntegrationSettings

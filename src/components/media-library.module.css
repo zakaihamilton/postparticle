@@ -53,6 +53,64 @@
   border-color: var(--accent-ink);
   background: var(--accent-soft);
 }
+.mediaCardShell {
+  min-width: 0;
+}
+.previewUnavailable {
+  padding: 12px;
+  font-size: 12px;
+  text-align: center;
+}
+.retryPreview {
+  width: 100%;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: var(--surface);
+  color: var(--accent-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.retryPreview:hover:not(:disabled) {
+  border-color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+.loadMore {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+.detailHeader {
+  display: grid;
+  gap: 18px;
+  padding: 24px 26px 0;
+}
+.detailHeader > a {
+  justify-self: start;
+  text-decoration: none;
+}
+.detailHeader h1 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.detailHeader p {
+  margin: 9px 0 0;
+}
+.detailPreviewError {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-radius: 8px;
+  background: var(--surface-alt);
+  color: var(--muted);
+}
+.detailPreviewError p {
+  margin: 0;
+}
 .dragging {
   border-color: var(--accent-ink);
   background: var(--accent-soft);

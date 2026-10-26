@@ -1,6 +1,7 @@
 import "server-only";
 
 import { HttpError } from "./config";
+import { isDevelopmentLoopbackOrigin } from "./origin";
 import type { Role } from "./types";
 
 const productId = "postparticle";
@@ -78,6 +79,13 @@ function requiredEnv(name: string) {
   return value;
 }
 
+function requiredEnvWithFallback(primaryName: string, fallbackName: string) {
+  const value =
+    process.env[primaryName]?.trim() || process.env[fallbackName]?.trim();
+  if (!value) throw new HttpError(503, "Perminister is not configured.");
+  return value;
+}
+
 function baseUrl() {
   const raw = requiredEnv("PERMINISTER_BASE_URL");
   let url: URL;
@@ -102,8 +110,11 @@ function baseUrl() {
 }
 
 function authConfig(): AuthConfig {
-  const clientId = requiredEnv("PERMINISTER_CLIENT_ID");
-  const clientSecret = requiredEnv("PERMINISTER_CLIENT_SECRET");
+  const clientId = requiredEnv("PERMINISTER_APP_CLIENT_ID");
+  const clientSecret = requiredEnvWithFallback(
+    "PERMINSITER_APP_CLIENT_SECRET",
+    "PERMINISTER_CLIENT_SECRET",
+  );
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       clientId,
@@ -125,10 +136,15 @@ export function perministerClientSecretForSso() {
 export function perministerAuthorizationUrl(
   state: string,
   challenge: string,
+  requestOrigin?: string,
 ): string {
   const config = authConfig();
   const appOrigin = new URL(requiredEnv("APP_ORIGIN")).origin;
-  const redirectUri = new URL("/auth/perminister/callback", appOrigin);
+  const callbackOrigin =
+    requestOrigin && isDevelopmentLoopbackOrigin(requestOrigin)
+      ? requestOrigin
+      : appOrigin;
+  const redirectUri = new URL("/auth/perminister/callback", callbackOrigin);
   const url = new URL("/oauth/authorize", config.baseUrl);
   url.search = new URLSearchParams({
     client_id: config.clientId,

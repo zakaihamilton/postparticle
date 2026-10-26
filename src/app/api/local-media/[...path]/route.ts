@@ -41,7 +41,10 @@ export async function GET(
       throw new HttpError(404, "Not found");
     if (!organizationId || !projectId) throw new HttpError(404, "Not found");
     const key = keySegments.join("/");
-    if (!/^((public\/media)|(originals))\/[0-9a-f-]{36}\/asset$/.test(key))
+    if (
+      !/^((public\/media)|(originals))\/[0-9a-f-]{36}\/asset$/.test(key) &&
+      !/^previews\/[0-9a-f-]{36}\/thumbnail\.webp$/.test(key)
+    )
       throw new HttpError(404, "Not found");
     if (!key.startsWith("public/")) {
       const authContext = await requireAuthContext();
@@ -54,7 +57,9 @@ export async function GET(
         "Content-Type": head.contentType,
         "Cache-Control": key.startsWith("public/")
           ? "public, max-age=60"
-          : "no-store",
+          : key.startsWith("previews/")
+            ? "private, max-age=900"
+            : "no-store",
       },
     });
   } catch (error) {

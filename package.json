@@ -20,7 +20,6 @@
     "storage:checkpoint": "tsx --conditions=react-server --env-file=.env.local scripts/rebuild-content-checkpoints.ts",
     "benchmark:content": "tsx --conditions=react-server scripts/benchmark-content-checkpoints.ts",
     "storage:measure": "tsx --conditions=react-server --env-file=.env.local scripts/measure-content-storage.ts",
-    "projects:migrate": "tsx --conditions=react-server --env-file=.env.local scripts/migrate-projects.ts",
     "example:dev": "next dev examples/next-blog",
     "example:build": "next build examples/next-blog",
     "example:start": "next start examples/next-blog",
@@ -41,6 +40,7 @@
     "react-dom": "^19.3.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
+    "sharp": "^0.35.5",
     "server-only": "^0.0.1",
     "zod": "^4.6.5"
   },

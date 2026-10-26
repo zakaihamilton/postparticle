@@ -26,6 +26,8 @@ import {
   readdir,
   stat,
 } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { Readable } from "node:stream";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import {
@@ -42,13 +44,19 @@ export interface Store {
   list(prefix: string, marker?: string): Promise<string[]>;
   remove(key: string): Promise<void>;
   bytes(key: string): Promise<Uint8Array>;
+  readStream(key: string): Promise<Readable>;
   readPrefix(key: string, length: number): Promise<Uint8Array>;
   readSuffix(key: string, length: number, size?: number): Promise<Uint8Array>;
-  writeBytes(key: string, data: Uint8Array, contentType: string): Promise<void>;
+  writeBytes(
+    key: string,
+    data: Uint8Array,
+    contentType: string,
+    cacheControl?: string,
+  ): Promise<void>;
   head(key: string): Promise<{ size: number; contentType: string }>;
   copyPublic(from: string, to: string, contentType: string): Promise<void>;
   copyPrivate(from: string, to: string, contentType: string): Promise<void>;
-  signGet(key: string): Promise<string>;
+  signGet(key: string, expiresIn?: number): Promise<string>;
   signPut(key: string, contentType: string): Promise<string>;
   multipartStart(key: string, contentType: string): Promise<string>;
   multipartPart(key: string, uploadId: string, part: number): Promise<string>;
@@ -161,6 +169,16 @@ export class SpacesStore implements Store {
     );
     return result.Body!.transformToByteArray();
   }
+  async readStream(key: string) {
+    const result = await this.client.send(
+      new GetObjectCommand(this.input(key)),
+    );
+    if (!result.Body) throw new Error("Stored object has no response body");
+    return Readable.from(
+      result.Body.transformToWebStream() as unknown as AsyncIterable<Uint8Array>,
+      { objectMode: false },
+    );
+  }
   async readPrefix(key: string, length: number) {
     if (!Number.isInteger(length) || length < 1 || length > 64 * 1024)
       throw new Error("Invalid storage prefix length");
@@ -184,13 +202,19 @@ export class SpacesStore implements Store {
     );
     return result.Body!.transformToByteArray();
   }
-  async writeBytes(key: string, data: Uint8Array, contentType: string) {
+  async writeBytes(
+    key: string,
+    data: Uint8Array,
+    contentType: string,
+    cacheControl?: string,
+  ) {
     await this.client.send(
       new PutObjectCommand({
         ...this.input(key),
         Body: data,
         ContentType: contentType,
         ACL: "private",
+        ...(cacheControl ? { CacheControl: cacheControl } : {}),
       }),
     );
   }
@@ -227,9 +251,9 @@ export class SpacesStore implements Store {
       }),
     );
   }
-  signGet(key: string) {
+  signGet(key: string, expiresIn = 300) {
     return getSignedUrl(this.client, new GetObjectCommand(this.input(key)), {
-      expiresIn: 300,
+      expiresIn,
     });
   }
   signPut(key: string, contentType: string) {
@@ -429,6 +453,9 @@ export class LocalStore implements Store {
   async bytes(key: string) {
     return readFile(this.file(key));
   }
+  async readStream(key: string) {
+    return createReadStream(this.file(key));
+  }
   async readPrefix(key: string, length: number) {
     if (!Number.isInteger(length) || length < 1 || length > 64 * 1024)
       throw new Error("Invalid storage prefix length");
@@ -460,7 +487,13 @@ export class LocalStore implements Store {
       await file.close();
     }
   }
-  async writeBytes(key: string, data: Uint8Array, contentType: string) {
+  async writeBytes(
+    key: string,
+    data: Uint8Array,
+    contentType: string,
+    cacheControl?: string,
+  ) {
+    void cacheControl;
     const file = this.file(key);
     await mkdir(path.dirname(file), { recursive: true });
     const temp = `${file}.tmp-${randomUUID()}`;
@@ -630,8 +663,17 @@ class NamespacedStore implements Store {
     return this.store.readSuffix(this.key(key), length, size);
   }
 
-  async writeBytes(key: string, data: Uint8Array, contentType: string) {
-    await this.store.writeBytes(this.key(key), data, contentType);
+  async readStream(key: string) {
+    return this.store.readStream(this.key(key));
+  }
+
+  async writeBytes(
+    key: string,
+    data: Uint8Array,
+    contentType: string,
+    cacheControl?: string,
+  ) {
+    await this.store.writeBytes(this.key(key), data, contentType, cacheControl);
   }
 
   async head(key: string) {
@@ -646,8 +688,8 @@ class NamespacedStore implements Store {
     await this.store.copyPrivate(this.key(from), this.key(to), contentType);
   }
 
-  async signGet(key: string) {
-    return this.store.signGet(this.key(key));
+  async signGet(key: string, expiresIn?: number) {
+    return this.store.signGet(this.key(key), expiresIn);
   }
 
   async signPut(key: string, contentType: string) {

@@ -5,8 +5,6 @@ import { HttpError, identifier, organizationIdentifier } from "./config";
 import { contentStore, projectStore, type Store } from "./storage";
 import type { Project } from "./types";
 
-const registryKey = (organizationId: string) =>
-  `organizations/${organizationId}/projects.json`;
 const registryChangePrefix = (organizationId: string) =>
   `organizations/${organizationId}/project-registry/changes/`;
 const deletionKey = (organizationId: string, projectId: string) =>
@@ -201,13 +199,7 @@ function parseRegistryChange(
 
 async function projectRegistryProjection(organizationId: string) {
   const store = contentStore();
-  const baseline = validateProjects(
-    (await store.get<unknown>(registryKey(organizationId))) ?? [],
-    organizationId,
-  );
-  const projects = new Map<string, ProjectRecord>(
-    baseline.map((project) => [project.id, project]),
-  );
+  const projects = new Map<string, ProjectRecord>();
   const prefix = registryChangePrefix(organizationId);
   const keys = await store.list(prefix);
   const changes = await mapRegistryChanges(keys, organizationId, store);
@@ -501,67 +493,6 @@ export async function findLegacyProject(projectId: string) {
     if (project) return { organizationId, project };
   }
   return null;
-}
-
-export async function writeProjectRegistry(
-  rawOrganizationId: string,
-  projects: unknown,
-  options: { onlyIfMissing?: boolean } = {},
-) {
-  const organizationId = parsedOrganizationId(rawOrganizationId);
-  const validated = validateProjects(projects, organizationId);
-  return withRegistryMutationLock(organizationId, async () => {
-    const store = contentStore();
-    const key = registryKey(organizationId);
-    if (options.onlyIfMissing) {
-      if ((await store.get<unknown>(key)) !== null)
-        throw new HttpError(
-          409,
-          `A project registry already exists for ${organizationId}.`,
-        );
-      const deletingIds = await deletingProjectIds(organizationId);
-      if (validated.some((project) => deletingIds.has(project.id)))
-        throw new HttpError(
-          409,
-          "A permanently deleted project ID cannot be reused.",
-        );
-      const protectedProjects = await preserveDeletionMarkers(
-        organizationId,
-        validated,
-        deletingIds,
-      );
-      const projection = await projectRegistryProjection(organizationId);
-      const current = projection.projects;
-      const requestedById = new Map(
-        protectedProjects.map((project) => [project.id, project]),
-      );
-      if (
-        current.some(
-          (project) =>
-            projectHash(project) !==
-            projectHash(requestedById.get(project.id) ?? null),
-        ) ||
-        current.length > protectedProjects.length
-      )
-        throw new HttpError(
-          409,
-          `A project registry already exists for ${organizationId}.`,
-        );
-      // This also resumes an interrupted immutable migration when every existing
-      // entry agrees with the requested registry.
-      return appendProjectRegistryChanges(
-        organizationId,
-        current,
-        protectedProjects,
-      );
-    }
-    const projection = await projectRegistryProjection(organizationId);
-    return appendProjectRegistryChanges(
-      organizationId,
-      projection.projects,
-      validated,
-    );
-  });
 }
 
 export async function updateProjectRegistry(

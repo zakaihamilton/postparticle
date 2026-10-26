@@ -4,7 +4,10 @@ import { json, readBytes, readJson } from "@/lib/http";
 import { manageHandler, manageProject } from "@/lib/manage-api";
 import {
   abortUpload,
+  ensureMediaThumbnail,
   finishUpload,
+  getMedia,
+  mediaThumbnailUrl,
   previewMedia,
   signPart,
   writeLocalUpload,
@@ -26,6 +29,21 @@ export const GET = manageHandler(async (request: Request, context: Context) => {
       },
     });
   if (action === "preview") return json({ url: await previewMedia(id, store) });
+  if (action === "preview-thumbnail")
+    return json({ url: await mediaThumbnailUrl(id, store) });
+  if (action === "thumbnail-file") {
+    const media = await getMedia(id, store);
+    if (!media || media.deleted || !media.ready)
+      throw new HttpError(404, "Media not found");
+    const key = await ensureMediaThumbnail(id, media, store);
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: await store.signGet(key, 900),
+        "Cache-Control": "no-store",
+      },
+    });
+  }
   throw new HttpError(404, "Route not found");
 });
 
