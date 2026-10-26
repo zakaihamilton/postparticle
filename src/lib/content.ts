@@ -4,6 +4,7 @@ import { append, events } from "./events";
 import { readContentRecord, readContentRecords } from "./content-state";
 import { HttpError, identifier } from "./config";
 import { collectMediaReferenceIds } from "./media-references";
+import { syncPublicArticleMetadata } from "./article-metadata-index";
 import type { Store } from "./storage";
 import type { Article, Content, JsonDocument, Kind } from "./types";
 const tags = z
@@ -83,7 +84,32 @@ export async function contentAction(
     if (!old) throw new HttpError(404, "Revision not found");
     data = old.data;
   }
-  await append(store, `content/${kind}/${id}`, actor, action, data);
+  const event = await append(
+    store,
+    `content/${kind}/${id}`,
+    actor,
+    action,
+    data,
+  );
+  if (kind === "articles" && action !== "restore") {
+    const previous = state.published as Article | null;
+    const next =
+      action === "publish"
+        ? {
+            article: data as Article,
+            createdAt: state.createdAt,
+            publishedAt: event.at,
+          }
+        : null;
+    try {
+      await syncPublicArticleMetadata(store, previous, next);
+    } catch (error) {
+      console.error(
+        "Public article metadata index update failed",
+        error instanceof Error ? error.name : "UnknownError",
+      );
+    }
+  }
 }
 export async function restoreRevision(
   kind: Kind,
