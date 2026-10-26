@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { Check, Copy } from "lucide-react";
 import { GuardedLink as Link } from "../navigation-guard";
 import styles from "../workspace.module.css";
@@ -36,16 +36,16 @@ export function IntegrationSettings({
   projectId: string;
   organizationId: string;
 }) {
-  const [postparticleUrl, setPostparticleUrl] = useState("");
+  const postparticleUrl = useSyncExternalStore(
+    () => () => {},
+    () => window.location.origin,
+    () => "",
+  );
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [copyState, setCopyState] = useState<
     "idle" | "copied" | "error" | "website-required" | "website-invalid"
   >("idle");
   const websiteUrlInput = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setPostparticleUrl(window.location.origin);
-  }, []);
 
   const normalizedWebsiteUrl = normalizeWebsiteUrl(websiteUrl);
   const promptDetails = integrationParameters(
@@ -188,9 +188,7 @@ export function IntegrationSettings({
                   : "Use the base URL readers will visit, without a trailing slash."}
             </small>
           </label>
-          <pre className={styles.codeBlock} tabIndex={0}>
-            {promptDetails}
-          </pre>
+          <pre className={styles.codeBlock}>{promptDetails}</pre>
           <span className={styles.srOnly} role="status" aria-live="polite">
             {copyState === "copied"
               ? "AI integration parameters copied to clipboard."
