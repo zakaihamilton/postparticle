@@ -189,14 +189,16 @@ export function Notice({
 export function Empty({
   title,
   children,
+  icon = "article",
 }: {
   title: string;
   children?: React.ReactNode;
+  icon?: string;
 }) {
   return (
     <div className={styles.empty}>
       <span className={styles.emptyIcon}>
-        <Icon name="article" size={28} />
+        <Icon name={icon} size={28} />
       </span>
       <h3>{title}</h3>
       <p>{children}</p>

@@ -62,6 +62,7 @@ export function OrganizationSwitcher({
       {actor.organizations.length > 1 ? (
         <>
           <span className={styles.label}>Organization</span>
+          <span className={styles.mobileLabel}>Org.</span>
           <Select
             label="Organization"
             value={selected}
@@ -75,7 +76,13 @@ export function OrganizationSwitcher({
           />
         </>
       ) : (
-        <span className={styles.single}>{actor.organizationName}</span>
+        <>
+          <span className={styles.label}>Organization</span>
+          <span className={styles.mobileLabel}>Org.</span>
+          <span className={styles.single} title={actor.organizationName}>
+            {actor.organizationName}
+          </span>
+        </>
       )}
       {error ? (
         <span className={styles.error} role="alert">
