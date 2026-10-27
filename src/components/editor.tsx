@@ -44,11 +44,13 @@ export default function Editor({
   id,
   projectId,
   canEdit,
+  request = api,
 }: {
   kind: Kind;
   id: string;
   projectId: string;
   canEdit: boolean;
+  request?: typeof api;
 }) {
   const isNew = id === "new";
   const isArticle = kind === "articles";
@@ -110,7 +112,7 @@ export default function Editor({
     setShowHistory(false);
     setLoading(!isNew);
     setError("");
-    api<EditorData>(editorInitialEndpoint)
+    request<EditorData>(editorInitialEndpoint)
       .then((data) => {
         if (!active) return;
         applyEditorData(data, !isNew);
@@ -125,7 +127,7 @@ export default function Editor({
     return () => {
       active = false;
     };
-  }, [applyEditorData, editorInitialEndpoint, isNew]);
+  }, [applyEditorData, editorInitialEndpoint, isNew, request]);
   function update(field: string, value: unknown) {
     if (inFlight.current) return;
     setContent((old) => ({ ...old, [field]: value }));
@@ -147,13 +149,15 @@ export default function Editor({
     }
   }
   async function refresh(syncContent = false) {
-    const data = await api<EditorData>(editorDataEndpoint);
+    const data = await request<EditorData>(editorDataEndpoint);
     applyEditorData(data, syncContent);
     if (historyLoaded) await loadHistory();
   }
   async function loadHistory() {
     const requestVersion = ++historyRequestVersion.current;
-    const items = await api<EditorHistoryItem[]>(`${endpoint}/${id}/history`);
+    const items = await request<EditorHistoryItem[]>(
+      `${endpoint}/${id}/history`,
+    );
     if (requestVersion !== historyRequestVersion.current) return;
     setHistory(items);
     setHistoryLoaded(true);
@@ -206,14 +210,14 @@ export default function Editor({
       )
     )
       return;
-    const result = await api<{ id: string }>(
+    const result = await request<{ id: string }>(
       savedId ? `${endpoint}/${savedId}` : endpoint,
       { method: savedId ? "PUT" : "POST", body: JSON.stringify(payload) },
     );
     setSavedId(result.id);
     setDirty(false);
     if (publish)
-      await api(`${endpoint}/${result.id}`, {
+      await request(`${endpoint}/${result.id}`, {
         method: "POST",
         body: JSON.stringify({ action: "publish" }),
       });
@@ -230,7 +234,7 @@ export default function Editor({
     }
   }
   async function action(action: string, revision?: string) {
-    await api(`${endpoint}/${id}`, {
+    await request(`${endpoint}/${id}`, {
       method: "POST",
       body: JSON.stringify({ action, revision }),
     });

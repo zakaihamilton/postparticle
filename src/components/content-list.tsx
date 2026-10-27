@@ -157,10 +157,12 @@ export function ContentList({
   kind,
   projectId,
   canEdit,
+  previewData,
 }: {
   kind: Kind;
   projectId: string;
   canEdit: boolean;
+  previewData?: ContentListData;
 }) {
   const [rows, setRows] = useState<ContentListRow[]>([]);
   const [recordCount, setRecordCount] = useState(0);
@@ -173,6 +175,7 @@ export function ContentList({
   const [status, setStatus] = useState("active");
   const [order, setOrder] = useState("desc");
   useEffect(() => {
+    if (previewData) return;
     let active = true;
     const timer = window.setTimeout(
       () => {
@@ -205,8 +208,17 @@ export function ContentList({
       active = false;
       window.clearTimeout(timer);
     };
-  }, [projectId, kind, q]);
-  const filtered = rows
+  }, [projectId, kind, q, previewData]);
+  const query = q.trim().toLowerCase();
+  const visibleRows = previewData
+    ? previewData.rows.filter(
+        (row) =>
+          !query || JSON.stringify(row.draft).toLowerCase().includes(query),
+      )
+    : rows;
+  const displayedRecordCount = previewData?.recordCount ?? recordCount;
+  const displayedActiveCount = previewData?.activeCount ?? activeCount;
+  const filtered = visibleRows
     .filter(
       (r) =>
         (status === "trashed"
@@ -231,7 +243,7 @@ export function ContentList({
           <div className={styles.eyebrow}>YOUR CONTENT</div>
           <h1>
             {kind === "articles" ? "Articles" : "JSON documents"}
-            <span className={styles.headingCount}>{activeCount}</span>
+            <span className={styles.headingCount}>{displayedActiveCount}</span>
           </h1>
           <p className={styles.subtitle}>
             {kind === "articles"
@@ -290,7 +302,7 @@ export function ContentList({
             ]}
           />
         </div>
-        {busy ? (
+        {!previewData && busy ? (
           <div className={styles.loading} role="status">
             Loading your content…
           </div>
@@ -299,12 +311,12 @@ export function ContentList({
         ) : (
           <Empty
             title={
-              recordCount
+              displayedRecordCount
                 ? "No matching content"
                 : `Your first ${kind === "articles" ? "story" : "document"} starts here`
             }
           >
-            {recordCount
+            {displayedRecordCount
               ? "Try another search, tag, or status."
               : "Create something new. It will stay private until you publish it."}
           </Empty>

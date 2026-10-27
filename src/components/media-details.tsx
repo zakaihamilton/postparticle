@@ -12,11 +12,13 @@ export default function MediaDetails({
   media: initialMedia,
   previewUrl,
   canEdit,
+  request = api,
 }: {
   projectId: string;
   media: Media;
   previewUrl: string;
   canEdit: boolean;
+  request?: typeof api;
 }) {
   const router = useRouter();
   const endpoint = `/api/manage/projects/${projectId}/media`;
@@ -35,7 +37,7 @@ export default function MediaDetails({
     setPreviewError(false);
     setError("");
     try {
-      const result = await api<{ url: string }>(
+      const result = await request<{ url: string }>(
         `${endpoint}/${media.id}/preview`,
       );
       setFileUrl(result.url);
@@ -65,7 +67,7 @@ export default function MediaDetails({
     setMessage("");
     try {
       const parsedMetadata: unknown = JSON.parse(metadata);
-      await api(`${endpoint}/${media.id}`, {
+      await request(`${endpoint}/${media.id}`, {
         method: "PATCH",
         body: JSON.stringify({
           alt: media.alt,
@@ -85,7 +87,7 @@ export default function MediaDetails({
     setBusy(true);
     setError("");
     try {
-      await api(`${endpoint}/${media.id}`, { method: "DELETE" });
+      await request(`${endpoint}/${media.id}`, { method: "DELETE" });
       router.push(`/workspace/${projectId}/media`);
       router.refresh();
     } catch (e) {

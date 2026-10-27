@@ -14,8 +14,10 @@ type PlatformUser = {
 
 export function PlatformAccountsSettings({
   currentUsername,
+  request = api,
 }: {
   currentUsername: string;
+  request?: typeof api;
 }) {
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [error, setError] = useState("");
@@ -26,7 +28,7 @@ export function PlatformAccountsSettings({
 
   useEffect(() => {
     let active = true;
-    api<PlatformUser[]>("/api/manage/users")
+    request<PlatformUser[]>("/api/manage/users")
       .then((accounts) => {
         if (active) setUsers(accounts);
       })
@@ -39,12 +41,12 @@ export function PlatformAccountsSettings({
     return () => {
       active = false;
     };
-  }, []);
+  }, [request]);
 
   function refreshUsers() {
     setError("");
     setLoading(true);
-    api<PlatformUser[]>("/api/manage/users")
+    request<PlatformUser[]>("/api/manage/users")
       .then(setUsers)
       .catch((e) => setError((e as Error).message))
       .finally(() => setLoading(false));
@@ -159,7 +161,7 @@ export function PlatformAccountsSettings({
                         disabled={!!busyUsername}
                         onClick={() =>
                           run(user.username, async () => {
-                            await api(
+                            await request(
                               "/api/manage/users/" +
                                 encodeURIComponent(user.username) +
                                 "/revoke",
@@ -179,7 +181,7 @@ export function PlatformAccountsSettings({
                           disabled={!!busyUsername}
                           onClick={() =>
                             run(user.username, async () => {
-                              await api(
+                              await request(
                                 "/api/manage/users/" +
                                   encodeURIComponent(user.username),
                                 {
@@ -211,7 +213,10 @@ export function PlatformAccountsSettings({
                   </div>
                   {expandedUsername === user.username &&
                     !user.platformAdmin && (
-                      <PlatformAccountProjectAccess username={user.username} />
+                      <PlatformAccountProjectAccess
+                        username={user.username}
+                        request={request}
+                      />
                     )}
                 </article>
               );

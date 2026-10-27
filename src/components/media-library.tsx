@@ -35,9 +35,11 @@ const supportedMediaTypes = new Set([
 export default function MediaLibrary({
   projectId,
   canEdit,
+  request = api,
 }: {
   projectId: string;
   canEdit: boolean;
+  request?: typeof api;
 }) {
   const endpoint = `/api/manage/projects/${projectId}/media`;
   const [items, setItems] = useState<MediaLibraryItem[]>([]);
@@ -75,7 +77,7 @@ export default function MediaLibrary({
         limit: String(pageSize),
       });
       if (q.trim()) params.set("q", q.trim());
-      api<MediaLibraryPage>(`${endpoint}?${params}`, {
+      request<MediaLibraryPage>(`${endpoint}?${params}`, {
         signal: controller.signal,
       })
         .then((page) => {
@@ -102,7 +104,7 @@ export default function MediaLibrary({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [endpoint, q]);
+  }, [endpoint, q, request]);
 
   useEffect(() => () => abort.current?.abort(), [endpoint]);
 
@@ -113,7 +115,7 @@ export default function MediaLibrary({
       limit: String(pageSize),
     });
     if (query.trim()) params.set("q", query.trim());
-    const page = await api<MediaLibraryPage>(`${endpoint}?${params}`);
+    const page = await request<MediaLibraryPage>(`${endpoint}?${params}`);
     if (queryRef.current !== query) return;
     setItems(page.items);
     setTotal(page.total);
@@ -136,7 +138,7 @@ export default function MediaLibrary({
         limit: String(pageSize),
       });
       if (query.trim()) params.set("q", query.trim());
-      const page = await api<MediaLibraryPage>(`${endpoint}?${params}`);
+      const page = await request<MediaLibraryPage>(`${endpoint}?${params}`);
       if (queryRef.current !== query) return;
       setItems((current) => [...current, ...page.items]);
       setTotal(page.total);
@@ -152,7 +154,7 @@ export default function MediaLibrary({
     if (refreshingPreviews.has(id)) return;
     setRefreshingPreviews((current) => new Set(current).add(id));
     try {
-      const result = await api<{ url: string }>(
+      const result = await request<{ url: string }>(
         `${endpoint}/${id}/preview-thumbnail`,
       );
       setPreviewUrls((current) => ({ ...current, [id]: result.url }));
@@ -190,7 +192,7 @@ export default function MediaLibrary({
     setError("");
     setMessage("");
     try {
-      const started = await api<UploadStart>(endpoint, {
+      const started = await request<UploadStart>(endpoint, {
         method: "POST",
         body: JSON.stringify({
           filename: file.name,
@@ -203,7 +205,7 @@ export default function MediaLibrary({
       if (started.multipart) {
         const count = Math.ceil(file.size / started.partSize);
         for (let part = 1; part <= count; part++) {
-          const { url } = await api<{ url: string }>(
+          const { url } = await request<{ url: string }>(
             `${endpoint}/${started.id}/part`,
             {
               method: "POST",
@@ -235,7 +237,7 @@ export default function MediaLibrary({
         );
       }
       uploaded = true;
-      await api(`${endpoint}/${started.id}/complete`, {
+      await request(`${endpoint}/${started.id}/complete`, {
         method: "POST",
         body: JSON.stringify({ parts }),
         signal: controller.signal,
@@ -256,7 +258,7 @@ export default function MediaLibrary({
       }
       if (uploadId) {
         try {
-          await api(`${endpoint}/${uploadId}/abort`, { method: "POST" });
+          await request(`${endpoint}/${uploadId}/abort`, { method: "POST" });
         } catch {
           setError(
             "Upload cleanup failed. Retry cleanup or use the documented lifecycle rule.",
@@ -386,7 +388,7 @@ export default function MediaLibrary({
               onClick={() =>
                 mutate(
                   async () => {
-                    await api(`${endpoint}/${pendingUpload.id}/complete`, {
+                    await request(`${endpoint}/${pendingUpload.id}/complete`, {
                       method: "POST",
                       body: JSON.stringify({ parts: pendingUpload.parts }),
                     });
@@ -408,7 +410,7 @@ export default function MediaLibrary({
               onClick={() =>
                 mutate(
                   async () => {
-                    await api(`${endpoint}/${pendingUpload.id}/abort`, {
+                    await request(`${endpoint}/${pendingUpload.id}/abort`, {
                       method: "POST",
                     });
                   },

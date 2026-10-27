@@ -46,9 +46,11 @@ function getServerLocationOrigin() {
 function PublicArticleMetadataIndexSettings({
   projectId,
   canAdmin,
+  request = api,
 }: {
   projectId: string;
   canAdmin: boolean;
+  request?: typeof api;
 }) {
   const [status, setStatus] = useState<PublicArticleMetadataIndexStatus | null>(
     null,
@@ -60,7 +62,7 @@ function PublicArticleMetadataIndexSettings({
 
   useEffect(() => {
     let active = true;
-    api<{ publicArticleMetadataIndex: PublicArticleMetadataIndexStatus }>(
+    request<{ publicArticleMetadataIndex: PublicArticleMetadataIndexStatus }>(
       `/api/manage/projects/${projectId}/article-metadata-index`,
     )
       .then((result) => {
@@ -77,14 +79,14 @@ function PublicArticleMetadataIndexSettings({
     return () => {
       active = false;
     };
-  }, [projectId]);
+  }, [projectId, request]);
 
   async function buildIndex() {
     setBuildingIndex(true);
     setIndexError("");
     setIndexMessage("");
     try {
-      const result = await api<{
+      const result = await request<{
         publicArticleMetadataIndex: PublicArticleMetadataIndexStatus;
       }>(`/api/manage/projects/${projectId}/article-metadata-index`, {
         method: "POST",
@@ -152,10 +154,12 @@ export function IntegrationSettings({
   projectId,
   organizationId,
   canAdmin,
+  request = api,
 }: {
   projectId: string;
   organizationId: string;
   canAdmin: boolean;
+  request?: typeof api;
 }) {
   const postparticleUrl = useSyncExternalStore(
     subscribeToLocationOrigin,
@@ -363,6 +367,7 @@ export function IntegrationSettings({
       <PublicArticleMetadataIndexSettings
         projectId={projectId}
         canAdmin={canAdmin}
+        request={request}
       />
       <section className={styles.panel}>
         <div className={styles.panelHeading}>
