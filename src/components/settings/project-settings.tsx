@@ -23,8 +23,10 @@ interface ProjectRecord {
 
 export function ProjectSettings({
   organizationId,
+  request = api,
 }: {
   organizationId: string;
+  request?: typeof api;
 }) {
   const [projects, setProjects] = useState<ProjectRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +39,7 @@ export function ProjectSettings({
 
   const refresh = useCallback(async () => {
     try {
-      const result = await api<{ projects: ProjectRecord[] }>(
+      const result = await request<{ projects: ProjectRecord[] }>(
         "/api/manage/projects/catalog",
         { cache: "no-store" },
       );
@@ -48,13 +50,13 @@ export function ProjectSettings({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [request]);
 
   useEffect(() => {
     let active = true;
     async function loadProjects() {
       try {
-        const result = await api<{ projects: ProjectRecord[] }>(
+        const result = await request<{ projects: ProjectRecord[] }>(
           "/api/manage/projects/catalog",
           { cache: "no-store" },
         );
@@ -71,7 +73,7 @@ export function ProjectSettings({
     return () => {
       active = false;
     };
-  }, [organizationId]);
+  }, [organizationId, request]);
 
   useEffect(() => {
     if (!deleteTarget) return;
@@ -127,7 +129,7 @@ export function ProjectSettings({
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     await run(async () => {
-      const result = await api<{ project: ProjectRecord }>(
+      const result = await request<{ project: ProjectRecord }>(
         `/api/manage/projects/catalog/${encodeURIComponent(projectId)}`,
         {
           method: "PATCH",
@@ -149,7 +151,7 @@ export function ProjectSettings({
 
   async function setArchived(project: ProjectRecord, archived: boolean) {
     await run(async () => {
-      const result = await api<{ project: ProjectRecord }>(
+      const result = await request<{ project: ProjectRecord }>(
         `/api/manage/projects/catalog/${encodeURIComponent(project.id)}`,
         {
           method: "PATCH",
@@ -181,7 +183,7 @@ export function ProjectSettings({
       let done = false;
       let deleted = 0;
       while (!done) {
-        const result = await api<{
+        const result = await request<{
           done: boolean;
           deletedObjects: number;
           retryAfterMs?: number;
@@ -236,7 +238,11 @@ export function ProjectSettings({
         </div>
       </div>
       <Notice error={error} message={message} />
-      <ProjectCreationForm isPlatformAdmin onCreated={refresh} />
+      <ProjectCreationForm
+        isPlatformAdmin
+        onCreated={refresh}
+        request={request}
+      />
 
       <section className={styles.panel}>
         <div className={styles.panelHeading}>

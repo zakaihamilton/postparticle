@@ -13,6 +13,7 @@ import type {
   Project,
   Role,
   WorkspaceDashboardResult,
+  ContentListData,
 } from "@/lib/types";
 import { OrganizationSwitcher } from "./organization-switcher";
 import { api, Brand, Icon, Notice, ThemeSwitch } from "./ui";
@@ -53,6 +54,8 @@ function WorkspaceContent({
   initialMedia,
   initialMediaUrl,
   initialDashboard,
+  previewContent,
+  previewRequest,
 }: {
   actor: Actor;
   role: Role;
@@ -61,6 +64,8 @@ function WorkspaceContent({
   initialMedia: Media | null;
   initialMediaUrl: string | null;
   initialDashboard: Promise<WorkspaceDashboardResult>;
+  previewContent?: ContentListData;
+  previewRequest?: typeof api;
 }) {
   const router = useRouter();
   const { confirmNavigation } = useNavigationGuard();
@@ -310,12 +315,14 @@ function WorkspaceContent({
                 id={view[1]}
                 projectId={project.id}
                 canEdit={canEdit}
+                request={previewRequest}
               />
             ) : (
               <ContentList
                 kind={tab as "articles" | "documents"}
                 projectId={project.id}
                 canEdit={canEdit}
+                previewData={previewContent}
               />
             ))}
           {tab === "media" &&
@@ -326,16 +333,24 @@ function WorkspaceContent({
                 media={initialMedia}
                 previewUrl={initialMediaUrl}
                 canEdit={canEdit}
+                request={previewRequest}
               />
             ) : (
-              <MediaLibrary projectId={project.id} canEdit={canEdit} />
+              <MediaLibrary
+                projectId={project.id}
+                canEdit={canEdit}
+                request={previewRequest}
+              />
             ))}
-          {tab === "members" && <Members projectId={project.id} />}
+          {tab === "members" && (
+            <Members projectId={project.id} request={previewRequest} />
+          )}
           {tab === "settings" && (
             <IntegrationSettings
               projectId={project.id}
               organizationId={actor.organizationId}
               canAdmin={role === "admin"}
+              request={previewRequest}
             />
           )}
         </main>

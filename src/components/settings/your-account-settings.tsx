@@ -11,8 +11,10 @@ import {
 import styles from "../workspace.module.css";
 export function YourAccountSettings({
   minimumPasswordLength,
+  request = api,
 }: {
   minimumPasswordLength: number;
+  request?: typeof api;
 }) {
   const router = useRouter();
   const validationId = useId().replace(/:/g, "");
@@ -66,7 +68,7 @@ export function YourAccountSettings({
             }
             const data = new FormData(form);
             void run(async () => {
-              await api("/api/auth/password", {
+              await request("/api/auth/password", {
                 method: "POST",
                 body: JSON.stringify({
                   currentPassword: data.get("currentPassword"),

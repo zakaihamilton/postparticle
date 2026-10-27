@@ -11,7 +11,13 @@ type Member = {
   role: Role | null;
 };
 
-export function Members({ projectId }: { projectId: string }) {
+export function Members({
+  projectId,
+  request = api,
+}: {
+  projectId: string;
+  request?: typeof api;
+}) {
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -21,7 +27,7 @@ export function Members({ projectId }: { projectId: string }) {
   const endpoint = `/api/manage/projects/${projectId}/members`;
   useEffect(() => {
     let active = true;
-    api<Member[]>(endpoint)
+    request<Member[]>(endpoint)
       .then((m) => {
         if (active) setMembers(m);
       })
@@ -31,7 +37,7 @@ export function Members({ projectId }: { projectId: string }) {
     return () => {
       active = false;
     };
-  }, [endpoint]);
+  }, [endpoint, request]);
   return (
     <>
       <div className={styles.pageHeading}>
@@ -55,11 +61,11 @@ export function Members({ projectId }: { projectId: string }) {
             setError("");
             setMessage("");
             try {
-              await api(endpoint, {
+              await request(endpoint, {
                 method: "POST",
                 body: JSON.stringify({ username, role: addRole }),
               });
-              setMembers(await api<Member[]>(endpoint));
+              setMembers(await request<Member[]>(endpoint));
               setAddUsername("");
               setMessage("Project access updated.");
             } catch (e) {
@@ -135,7 +141,7 @@ export function Members({ projectId }: { projectId: string }) {
                         setError("");
                         const role = value === "none" ? null : (value as Role);
                         try {
-                          await api(endpoint, {
+                          await request(endpoint, {
                             method: "POST",
                             body: JSON.stringify({
                               username: m.username,

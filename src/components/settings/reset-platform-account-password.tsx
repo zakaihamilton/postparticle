@@ -22,10 +22,12 @@ export function ResetPlatformAccountPassword({
   currentUsername,
   initialUsername,
   minimumPasswordLength,
+  request = api,
 }: {
   currentUsername: string;
   initialUsername: string;
   minimumPasswordLength: number;
+  request?: typeof api;
 }) {
   const validationId = useId().replace(/:/g, "");
   const [users, setUsers] = useState<PlatformUser[]>([]);
@@ -41,7 +43,7 @@ export function ResetPlatformAccountPassword({
 
   useEffect(() => {
     let active = true;
-    api<PlatformUser[]>("/api/manage/users")
+    request<PlatformUser[]>("/api/manage/users")
       .then((accounts) => {
         if (!active) return;
         setUsers(accounts);
@@ -63,7 +65,7 @@ export function ResetPlatformAccountPassword({
     return () => {
       active = false;
     };
-  }, [currentUsername]);
+  }, [currentUsername, request]);
 
   return (
     <>
@@ -106,10 +108,13 @@ export function ResetPlatformAccountPassword({
               }
               const data = new FormData(form);
               setBusy(true);
-              void api("/api/manage/users/" + encodeURIComponent(username), {
-                method: "PATCH",
-                body: JSON.stringify({ password: data.get("password") }),
-              })
+              void request(
+                "/api/manage/users/" + encodeURIComponent(username),
+                {
+                  method: "PATCH",
+                  body: JSON.stringify({ password: data.get("password") }),
+                },
+              )
                 .then(() => {
                   form.reset();
                   setMessage(

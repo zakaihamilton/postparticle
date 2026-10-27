@@ -15,8 +15,10 @@ type ProjectAccess = {
 
 export function PlatformAccountProjectAccess({
   username,
+  request = api,
 }: {
   username: string;
+  request?: typeof api;
 }) {
   const [projects, setProjects] = useState<ProjectAccess[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,7 @@ export function PlatformAccountProjectAccess({
 
   useEffect(() => {
     let active = true;
-    api<{ projects: ProjectAccess[] }>(endpoint)
+    request<{ projects: ProjectAccess[] }>(endpoint)
       .then((result) => {
         if (active) setProjects(result.projects);
       })
@@ -41,14 +43,14 @@ export function PlatformAccountProjectAccess({
     return () => {
       active = false;
     };
-  }, [endpoint]);
+  }, [endpoint, request]);
 
   async function updateRole(projectId: string, role: Role | null) {
     setBusy(true);
     setError("");
     setMessage("");
     try {
-      await api(endpoint, {
+      await request(endpoint, {
         method: "POST",
         body: JSON.stringify({ projectId, role }),
       });

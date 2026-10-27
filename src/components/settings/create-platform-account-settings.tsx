@@ -13,8 +13,10 @@ import styles from "../workspace.module.css";
 
 export function CreatePlatformAccountSettings({
   minimumPasswordLength,
+  request = api,
 }: {
   minimumPasswordLength: number;
+  request?: typeof api;
 }) {
   const validationId = useId().replace(/:/g, "");
   const [error, setError] = useState("");
@@ -59,7 +61,7 @@ export function CreatePlatformAccountSettings({
             }
             const data = new FormData(form);
             setBusy(true);
-            void api<{ created?: boolean }>("/api/manage/users", {
+            void request<{ created?: boolean }>("/api/manage/users", {
               method: "POST",
               body: JSON.stringify({
                 username: data.get("username"),

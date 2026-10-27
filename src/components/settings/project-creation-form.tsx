@@ -7,9 +7,11 @@ import styles from "../workspace.module.css";
 export function ProjectCreationForm({
   isPlatformAdmin = false,
   onCreated,
+  request = api,
 }: {
   isPlatformAdmin?: boolean;
   onCreated?: () => Promise<void>;
+  request?: typeof api;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -23,7 +25,7 @@ export function ProjectCreationForm({
     setMessage("");
     setBusy(true);
     try {
-      await api("/api/manage/projects/catalog", {
+      await request("/api/manage/projects/catalog", {
         method: "POST",
         body: JSON.stringify({
           id: data.get("id"),
