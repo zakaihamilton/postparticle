@@ -354,8 +354,8 @@ export default function Editor({
                   placeholder="a-little-room-for-ideas"
                 />
                 <small>
-                  The API identifier becomes permanent after the first save. Use lowercase letters, numbers,
-                  hyphens, and underscores.
+                  The API identifier becomes permanent after the first save. Use
+                  lowercase letters, numbers, hyphens, and underscores.
                 </small>
               </label>
               {isArticle && (
