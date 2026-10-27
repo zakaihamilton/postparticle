@@ -461,7 +461,7 @@ export default function MediaLibrary({
           {q.trim() ? (
             <Empty title="No matching media">Try another filename.</Empty>
           ) : (
-            <Empty title="Give your stories something to show">
+            <Empty title="No media yet" icon="image">
               Upload images or videos, add their details, and use them across
               your content.
             </Empty>

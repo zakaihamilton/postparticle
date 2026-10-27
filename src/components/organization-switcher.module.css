@@ -1,7 +1,7 @@
 .switcher {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 8px;
   min-width: 0;
 }
 .label,
@@ -13,6 +13,9 @@
 }
 .label {
   flex-shrink: 0;
+}
+.mobileLabel {
+  display: none;
 }
 .single {
   max-width: 220px;
@@ -42,6 +45,12 @@
   }
   .label {
     display: none;
+  }
+  .mobileLabel {
+    display: inline;
+    color: var(--muted);
+    font-size: 12px;
+    white-space: nowrap;
   }
   .single {
     max-width: clamp(80px, 30vw, 140px);

@@ -266,7 +266,7 @@ export default function Editor({
       <div className={styles.pageHeading}>
         <div>
           <div className={styles.eyebrow}>
-            {isArticle ? "YOUR NEXT STORY" : "FLEXIBLE CONTENT"}
+            {isArticle ? "ARTICLE" : "JSON DOCUMENT"}
           </div>
           <h1>
             {isNew
@@ -281,7 +281,7 @@ export default function Editor({
               {dirty
                 ? "Unsaved changes"
                 : isNew
-                  ? "Start with an idea. Make it yours."
+                  ? "Add your content, then save a draft."
                   : `Last saved ${new Date(record?.updatedAt || Date.now()).toLocaleString()}`}
             </span>
           </div>
