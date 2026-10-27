@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   perministerAuthorize,
   perministerLogin,
+  perministerRecoveryUrl,
   perministerRoleForProject,
   perministerSession,
 } from "@/lib/perminister-integration";
@@ -22,6 +23,19 @@ afterEach(() => {
 });
 
 describe("Perminister consumer integration", () => {
+  it("uses the configured origin for recovery and hides it when invalid", () => {
+    configure();
+    expect(perministerRecoveryUrl()).toBe(
+      "https://perminister.example/forgot-password",
+    );
+    vi.stubEnv(
+      "PERMINISTER_BASE_URL",
+      "https://user:secret@perminister.example",
+    );
+    expect(perministerRecoveryUrl()).toBeNull();
+    vi.stubEnv("PERMINISTER_BASE_URL", "");
+    expect(perministerRecoveryUrl()).toBeNull();
+  });
   it("sends credentials only to the server-side login endpoint", async () => {
     configure();
     const fetch = vi.fn().mockResolvedValue(

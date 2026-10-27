@@ -13,8 +13,10 @@ import {
 import styles from "./auth.module.css";
 export default function LoginForm({
   initialError = "",
+  recoveryUrl = null,
 }: {
   initialError?: string;
+  recoveryUrl?: string | null;
 }) {
   const router = useRouter();
   const validationId = useId().replace(/:/g, "");
@@ -105,12 +107,11 @@ export default function LoginForm({
               }}
             >
               <label>
-                Username
+                Username or email address
                 <input
                   name="username"
                   autoComplete="username"
                   required
-                  aria-label="Username"
                   aria-invalid={fieldErrors.username ? true : undefined}
                   aria-describedby={
                     fieldErrors.username
@@ -153,8 +154,15 @@ export default function LoginForm({
               </button>
             </form>
             <div className={styles.help}>
-              Forgot your username or password? Contact your platform
-              administrator.
+              {recoveryUrl && (
+                <>
+                  Use Perminister?{" "}
+                  <a href={recoveryUrl}>Reset your Perminister password</a>
+                  .{" "}
+                </>
+              )}
+              For a local account, contact the platform administrator who
+              invited you for help with your username or password.
             </div>
             <Link href="/" className={styles.back}>
               <Icon name="arrow-left" size={14} /> Back to welcome

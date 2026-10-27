@@ -109,6 +109,14 @@ function baseUrl() {
   return url.origin;
 }
 
+export function perministerRecoveryUrl(): string | null {
+  try {
+    return new URL("/forgot-password", baseUrl()).toString();
+  } catch {
+    return null;
+  }
+}
+
 function authConfig(): AuthConfig {
   const clientId = requiredEnv("PERMINISTER_APP_CLIENT_ID");
   const clientSecret = requiredEnvWithFallback(
