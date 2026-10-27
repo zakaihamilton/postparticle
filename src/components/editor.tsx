@@ -55,6 +55,7 @@ export default function Editor({
   const isNew = id === "new";
   const isArticle = kind === "articles";
   const router = useRouter();
+  const [identifierEdited, setIdentifierEdited] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(isNew ? null : id);
   const [content, setContent] = useState<Content>(
     isArticle ? blankArticle() : blankDocument(),
@@ -322,7 +323,7 @@ export default function Editor({
                   value={content.title}
                   onChange={(e) => {
                     update("title", e.target.value);
-                    if (isNew && !savedId)
+                    if (isNew && !savedId && !identifierEdited)
                       update(
                         isArticle ? "slug" : "key",
                         e.target.value
@@ -346,14 +347,15 @@ export default function Editor({
                   value={
                     isArticle ? article.slug : (content as JsonDocument).key
                   }
-                  onChange={(e) =>
-                    update(isArticle ? "slug" : "key", e.target.value)
-                  }
+                  onChange={(e) => {
+                    setIdentifierEdited(true);
+                    update(isArticle ? "slug" : "key", e.target.value);
+                  }}
                   placeholder="a-little-room-for-ideas"
                 />
                 <small>
-                  The permanent API identifier. Lowercase letters, numbers,
-                  hyphens, and underscores.
+                  The API identifier becomes permanent after the first save. Use
+                  lowercase letters, numbers, hyphens, and underscores.
                 </small>
               </label>
               {isArticle && (
