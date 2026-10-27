@@ -19,7 +19,10 @@ const config: NextConfig = {
       {
         source: "/ui-preview/:path*",
         headers: [
-          { key: "Content-Security-Policy", value: "frame-ancestors 'none'; form-action 'none'" },
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors 'none'; form-action 'none'",
+          },
         ],
       },
     ];
