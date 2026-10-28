@@ -6,16 +6,23 @@
   max-width: calc(100vw - 2rem);
   max-height: calc(100vh - 2rem);
   overflow-y: auto;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
   padding: 0.75rem 1rem;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
   color: var(--text);
   box-shadow: 0 4px 24px #0003;
+}
+.toolbar summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.toolbarContents {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
 }
 .toolbar label {
   display: flex;
