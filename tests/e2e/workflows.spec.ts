@@ -18,7 +18,9 @@ test.beforeEach(async ({ page }, info) => {
 });
 async function signIn(page: Page, username = "admin") {
   await page.goto("/login");
-  await page.getByLabel("Username", { exact: true }).fill(username);
+  await page
+    .getByLabel("Username or email address", { exact: true })
+    .fill(username);
   await page
     .getByLabel("Password", { exact: true })
     .fill("fixture-password-123");
@@ -195,7 +197,7 @@ test("public welcome leads to a separate login page, supports themes and reduced
   await page.getByRole("combobox", { name: "Color theme" }).click();
   await page.getByRole("option", { name: "Light", exact: true }).click();
   await page
-    .getByRole("button", { name: "Publish preview", exact: true })
+    .getByRole("button", { name: "Try publishing the demo", exact: true })
     .click();
   await expect(page.getByRole("status")).toContainText("Published");
   await page.getByRole("button", { name: "Back to draft" }).click();
@@ -721,10 +723,9 @@ test("form constraints show inline errors without native validation dialogs", as
   await expect(
     page.getByText("This field is required.", { exact: true }),
   ).toHaveCount(2);
-  await expect(page.getByLabel("Username", { exact: true })).toHaveAttribute(
-    "aria-invalid",
-    "true",
-  );
+  await expect(
+    page.getByLabel("Username or email address", { exact: true }),
+  ).toHaveAttribute("aria-invalid", "true");
   expect(loginRequests).toBe(0);
 
   await signIn(page);

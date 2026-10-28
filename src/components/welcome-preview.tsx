@@ -75,6 +75,25 @@ export function WelcomePreview() {
               Draft saved
             </span>
           </div>
+          <div className={styles.publishRow}>
+            <span
+              role="status"
+              className={
+                published ? styles.publishedStatus : styles.draftStatus
+              }
+            >
+              {published
+                ? "Published · visible to your website"
+                : "Draft · only visible to your team"}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPublished((value) => !value)}
+            >
+              {published ? "Back to draft" : "Try publishing the demo"}
+              <Icon name={published ? "check" : "arrow"} size={15} />
+            </button>
+          </div>
           <Image
             className={styles.editorCover}
             src="/images/welcome/architecture-editorial.webp"
@@ -105,25 +124,6 @@ export function WelcomePreview() {
               <span>Title, description, and social image configured</span>
             </div>
             <Icon name="check" size={16} />
-          </div>
-          <div className={styles.publishRow}>
-            <span
-              role="status"
-              className={
-                published ? styles.publishedStatus : styles.draftStatus
-              }
-            >
-              {published
-                ? "Published · visible to your website"
-                : "Draft · only visible to your team"}
-            </span>
-            <button
-              type="button"
-              onClick={() => setPublished((value) => !value)}
-            >
-              {published ? "Back to draft" : "Publish preview"}
-              <Icon name={published ? "check" : "arrow"} size={15} />
-            </button>
           </div>
         </div>
       </div>

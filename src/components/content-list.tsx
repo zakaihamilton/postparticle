@@ -158,11 +158,13 @@ export function ContentList({
   projectId,
   canEdit,
   previewData,
+  previewError,
 }: {
   kind: Kind;
   projectId: string;
   canEdit: boolean;
   previewData?: ContentListData;
+  previewError?: string;
 }) {
   const [rows, setRows] = useState<ContentListRow[]>([]);
   const [recordCount, setRecordCount] = useState(0);
@@ -174,8 +176,9 @@ export function ContentList({
   const [tag, setTag] = useState("");
   const [status, setStatus] = useState("active");
   const [order, setOrder] = useState("desc");
+  const [retry, setRetry] = useState(0);
   useEffect(() => {
-    if (previewData) return;
+    if (previewData || previewError) return;
     let active = true;
     const timer = window.setTimeout(
       () => {
@@ -208,7 +211,7 @@ export function ContentList({
       active = false;
       window.clearTimeout(timer);
     };
-  }, [projectId, kind, q, previewData]);
+  }, [projectId, kind, q, previewData, previewError, retry]);
   const query = q.trim().toLowerCase();
   const visibleRows = previewData
     ? previewData.rows.filter(
@@ -243,7 +246,11 @@ export function ContentList({
           <div className={styles.eyebrow}>YOUR CONTENT</div>
           <h1>
             {kind === "articles" ? "Articles" : "JSON documents"}
-            <span className={styles.headingCount}>{displayedActiveCount}</span>
+            {!previewError && !error && (
+              <span className={styles.headingCount}>
+                {displayedActiveCount}
+              </span>
+            )}
           </h1>
           <p className={styles.subtitle}>
             {kind === "articles"
@@ -261,7 +268,7 @@ export function ContentList({
           </Link>
         )}
       </div>
-      <Notice error={error} />
+      <Notice error={previewError || error} />
       <section className={styles.panel}>
         <div className={styles.filters}>
           <label className={styles.search}>
@@ -302,7 +309,23 @@ export function ContentList({
             ]}
           />
         </div>
-        {!previewData && busy ? (
+        {previewError || error ? (
+          <div className={styles.loading}>
+            <p>Content could not be loaded.</p>
+            {!previewError && (
+              <button
+                type="button"
+                onClick={() => {
+                  setError("");
+                  setBusy(true);
+                  setRetry((n) => n + 1);
+                }}
+              >
+                Try again
+              </button>
+            )}
+          </div>
+        ) : !previewData && busy ? (
           <div className={styles.loading} role="status">
             Loading your content…
           </div>
@@ -321,12 +344,14 @@ export function ContentList({
               : "Create something new. It will stay private until you publish it."}
           </Empty>
         )}
-        <div className={styles.tableFooter}>
-          {filtered.length} {filtered.length === 1 ? "item" : "items"}
-          <span>
-            Sorted by {kind === "articles" ? "article date" : "last updated"}
-          </span>
-        </div>
+        {!previewError && !error && (
+          <div className={styles.tableFooter}>
+            {filtered.length} {filtered.length === 1 ? "item" : "items"}
+            <span>
+              Sorted by {kind === "articles" ? "article date" : "last updated"}
+            </span>
+          </div>
+        )}
       </section>
     </>
   );

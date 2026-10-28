@@ -55,6 +55,7 @@ function WorkspaceContent({
   initialMediaUrl,
   initialDashboard,
   previewContent,
+  previewContentError,
   previewRequest,
 }: {
   actor: Actor;
@@ -65,6 +66,7 @@ function WorkspaceContent({
   initialMediaUrl: string | null;
   initialDashboard: Promise<WorkspaceDashboardResult>;
   previewContent?: ContentListData;
+  previewContentError?: string;
   previewRequest?: typeof api;
 }) {
   const router = useRouter();
@@ -323,6 +325,7 @@ function WorkspaceContent({
                 projectId={project.id}
                 canEdit={canEdit}
                 previewData={previewContent}
+                previewError={previewContentError}
               />
             ))}
           {tab === "media" &&

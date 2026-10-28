@@ -71,6 +71,7 @@ export default function Editor({
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(!isNew);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
   const [dirty, setDirty] = useState(false);
   const textarea = useRef<HTMLTextAreaElement>(null);
@@ -128,7 +129,7 @@ export default function Editor({
     return () => {
       active = false;
     };
-  }, [applyEditorData, editorInitialEndpoint, isNew, request]);
+  }, [applyEditorData, editorInitialEndpoint, isNew, request, loadAttempt]);
   function update(field: string, value: unknown) {
     if (inFlight.current) return;
     setContent((old) => ({ ...old, [field]: value }));
@@ -257,6 +258,26 @@ export default function Editor({
     area?.focus();
   }
   if (loading) return <div className={styles.loading}>Loading your draft…</div>;
+  if (!isNew && !record) {
+    return (
+      <>
+        <Link
+          href={`/workspace/${projectId}/${kind}`}
+          className={styles.backLink}
+        >
+          <Icon name="arrow-left" size={14} /> All {kind}
+        </Link>
+        <h1>Unable to load this {isArticle ? "article" : "document"}</h1>
+        <Notice error={error || "The content could not be loaded."} />
+        <button
+          className={styles.secondary}
+          onClick={() => setLoadAttempt((n) => n + 1)}
+        >
+          Try again
+        </button>
+      </>
+    );
+  }
   const article = content as Article;
   const images = media.filter((m) => m.contentType.startsWith("image/"));
   const readOnly = !canEdit || !!record?.trashed || busy;
@@ -312,6 +333,11 @@ export default function Editor({
         )}
       </div>
       <Notice error={error} message={message} />
+      {!canEdit && (
+        <p role="status">
+          View-only access. Ask a project administrator for editing access.
+        </p>
+      )}
       <div className={styles.editorGrid}>
         <div>
           <section className={styles.panel}>

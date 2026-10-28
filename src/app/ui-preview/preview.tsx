@@ -464,6 +464,12 @@ export default function Preview() {
             }
             previewRequest={previewRequest}
             previewContent={previewContent}
+            previewContentError={
+              scenario === "error" &&
+              (screen === "articles" || screen === "documents")
+                ? "Preview data is temporarily unavailable."
+                : undefined
+            }
             initialMedia={
               screen === "media-details"
                 ? {

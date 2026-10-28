@@ -111,7 +111,7 @@ test("welcome animations finish, publishing is repeatable, and both themes remai
     });
   }
   const publish = page.getByRole("button", {
-    name: "Publish preview",
+    name: "Try publishing the demo",
     exact: true,
   });
   await publish.focus();

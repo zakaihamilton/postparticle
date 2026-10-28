@@ -25,6 +25,28 @@ afterEach(() => {
 });
 
 describe("media publish confirmation", () => {
+  it("does not expose editing or destructive actions when an existing document fails to load", async () => {
+    const request = vi.fn().mockRejectedValue(new Error("Unable to load"));
+    render(
+      <Editor
+        kind="documents"
+        id="existing"
+        projectId="journal"
+        canEdit={true}
+        request={request}
+      />,
+    );
+    expect(
+      await screen.findByRole("heading", {
+        name: "Unable to load this document",
+      }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Save draft" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Publish" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Move to trash" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+  });
   it("confirms before making referenced media public", async () => {
     const user = userEvent.setup();
     const mediaId = "550e8400-e29b-41d4-a716-446655440099";
