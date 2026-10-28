@@ -18,7 +18,9 @@ test.beforeEach(async ({ page }, info) => {
 });
 async function signIn(page: Page, username = "admin") {
   await page.goto("/login");
-  await page.getByLabel("Username or email address", { exact: true }).fill(username);
+  await page
+    .getByLabel("Username or email address", { exact: true })
+    .fill(username);
   await page
     .getByLabel("Password", { exact: true })
     .fill("fixture-password-123");
@@ -721,10 +723,9 @@ test("form constraints show inline errors without native validation dialogs", as
   await expect(
     page.getByText("This field is required.", { exact: true }),
   ).toHaveCount(2);
-  await expect(page.getByLabel("Username or email address", { exact: true })).toHaveAttribute(
-    "aria-invalid",
-    "true",
-  );
+  await expect(
+    page.getByLabel("Username or email address", { exact: true }),
+  ).toHaveAttribute("aria-invalid", "true");
   expect(loginRequests).toBe(0);
 
   await signIn(page);
