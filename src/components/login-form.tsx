@@ -110,6 +110,7 @@ export default function LoginForm({
                 Username or email address
                 <input
                   name="username"
+                  aria-label="Username or email address"
                   autoComplete="username"
                   required
                   aria-invalid={fieldErrors.username ? true : undefined}
