@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import Select from "@/components/select";
+import { ContentList } from "@/components/content-list";
 import { Members } from "@/components/settings/members";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -60,5 +61,28 @@ describe("member account and grant status", () => {
     expect(await screen.findByText("former-editor")).toBeTruthy();
     expect(screen.getByText("Disabled")).toBeTruthy();
     expect(screen.getByText("Inactive")).toBeTruthy();
+  });
+});
+
+describe("content list preview errors", () => {
+  it("keeps the simulated failure visible on retry without making a request", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    const user = userEvent.setup();
+    render(
+      <ContentList
+        kind="documents"
+        projectId="preview"
+        canEdit
+        previewError="Preview data is temporarily unavailable."
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+    expect(
+      screen.getByText("Preview data is temporarily unavailable."),
+    ).toBeTruthy();
+    expect(screen.getByText("Content could not be loaded.")).toBeTruthy();
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

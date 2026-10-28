@@ -312,18 +312,18 @@ export function ContentList({
         {previewError || error ? (
           <div className={styles.loading}>
             <p>Content could not be loaded.</p>
-            {!previewError && (
-              <button
-                type="button"
-                onClick={() => {
+            <button
+              type="button"
+              onClick={() => {
+                if (!previewError) {
                   setError("");
                   setBusy(true);
                   setRetry((n) => n + 1);
-                }}
-              >
-                Try again
-              </button>
-            )}
+                }
+              }}
+            >
+              Try again
+            </button>
           </div>
         ) : !previewData && busy ? (
           <div className={styles.loading} role="status">

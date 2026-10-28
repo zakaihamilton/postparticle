@@ -1,6 +1,6 @@
 # Local UI preview
 
-Run `pnpm dev` and open http://localhost:3000/ui-preview. This development-only route renders production components with synthetic identity and data. Select a screen and scenario, resize the browser, and use the theme control to review the UI. The route returns 404 outside development and does not bypass authentication on the actual application routes.
+Run `pnpm dev` and open http://localhost:3000/ui-preview. This development-only route renders production components with synthetic identity and data. Open “Preview controls” to select a screen and scenario, resize the browser, and use the theme control to review the UI. Close the controls to inspect content without an overlay. The route returns 404 outside development and does not bypass authentication on the actual application routes.
 
 Preview links and logout are disabled. Fixture requests reject non-GET operations; forms can be filled and validated, but changes cannot be saved. Use synthetic values, not real passwords. This preview does not test authentication, persistence, storage, networking, or integrations.
 
@@ -15,7 +15,7 @@ Preview links and logout are disabled. Fixture requests reject non-GET operation
 | `/account/platform-accounts/create`                          | Create platform account                                 | Form and validation; writes blocked                                                                             |
 | `/account/platform-accounts/reset-password`                  | Reset platform account password                         | Synthetic users and form; writes blocked                                                                        |
 | `/workspace/[projectId]`                                     | Overview                                                | Populated, empty and error dashboard                                                                            |
-| `/workspace/[projectId]/articles` and `/documents`           | Articles; JSON documents                                | Local search and filters; populated and empty list. Error scenario currently displays an empty list             |
+| `/workspace/[projectId]/articles` and `/documents`           | Articles; JSON documents                                | Local search and filters; populated, empty, and error states. Retry remains in the simulated error state        |
 | `/workspace/[projectId]/articles/new` and `/articles/[id]`   | New article editor; Existing article editor             | Synthetic article, draft/published/history variants; writes blocked                                             |
 | `/workspace/[projectId]/documents/new` and `/documents/[id]` | New JSON document editor; Existing JSON document editor | New and existing synthetic documents; writes blocked                                                            |
 | `/workspace/[projectId]/media` and `/media/[id]`             | Media library; Media details                            | Synthetic asset, empty/error library, synthetic image detail; writes blocked                                    |
