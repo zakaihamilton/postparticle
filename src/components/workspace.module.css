@@ -716,6 +716,9 @@ a.secondary:hover {
   font-size: 13px;
   animation: pulse 1.5s ease-in-out infinite;
 }
+.loadError {
+  animation: none;
+}
 .backLink {
   font-size: 14px;
   color: var(--muted);
