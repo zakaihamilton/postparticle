@@ -310,9 +310,10 @@ export function ContentList({
           />
         </div>
         {previewError || error ? (
-          <div className={styles.loading}>
+          <div className={`${styles.loading} ${styles.loadError}`}>
             <p>Content could not be loaded.</p>
             <button
+              className={styles.secondary}
               type="button"
               onClick={() => {
                 if (!previewError) {

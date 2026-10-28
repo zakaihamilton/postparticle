@@ -365,6 +365,93 @@ export default function Preview() {
   }, [scenario, screen]);
   return (
     <>
+      <details className={styles.toolbar}>
+        <summary>Preview controls · synthetic data</summary>
+        <div className={styles.toolbarContents}>
+          <label>
+            Screen{" "}
+            <select
+              value={screen}
+              onChange={(event) => setScreen(event.target.value as Screen)}
+            >
+              <option value="project-picker">Choose a project</option>
+              <option value="account">Your account</option>
+              <option value="project-admin">Project administration</option>
+              <option value="project-create">
+                Create a project (non-admin)
+              </option>
+              <option value="platform-accounts">Platform accounts</option>
+              <option value="platform-account-create">
+                Create platform account
+              </option>
+              <option value="platform-account-reset">
+                Reset platform account password
+              </option>
+              <option value="overview">Overview</option>
+              <option value="articles">Articles</option>
+              <option value="documents">JSON documents</option>
+              <option value="editor">New article editor</option>
+              <option value="existing-article">Existing article editor</option>
+              <option value="new-document">New JSON document editor</option>
+              <option value="document-editor">
+                Existing JSON document editor
+              </option>
+              <option value="media">Media library</option>
+              <option value="media-details">Media details</option>
+              <option value="members">Project members</option>
+              <option value="settings">Settings &amp; API</option>
+            </select>
+          </label>
+          <label>
+            Scenario{" "}
+            {screen === "existing-article" ? (
+              <select
+                value={articleScenario}
+                onChange={(event) =>
+                  setArticleScenario(event.target.value as ArticleScenario)
+                }
+              >
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="history">Revision history</option>
+              </select>
+            ) : (
+              <select
+                value={scenario}
+                onChange={(event) =>
+                  setScenario(event.target.value as Scenario)
+                }
+              >
+                <option value="populated">Populated</option>
+                <option value="empty">Empty</option>
+                <option value="error">Error</option>
+              </select>
+            )}
+          </label>
+          {!screen.startsWith("platform-") &&
+            ![
+              "project-picker",
+              "account",
+              "project-admin",
+              "project-create",
+            ].includes(screen) && (
+              <label>
+                Workspace role{" "}
+                <select
+                  value={previewRole}
+                  onChange={(event) =>
+                    setPreviewRole(event.target.value as Role)
+                  }
+                >
+                  <option value="admin">Admin</option>
+                  <option value="editor">Editor</option>
+                  <option value="viewer">Viewer</option>
+                </select>
+              </label>
+            )}
+          <small>Workspace links and logout are disabled.</small>
+        </div>
+      </details>
       <div
         key={`${screen}-${scenario}-${articleScenario}`}
         onAuxClickCapture={(event) => {
@@ -493,93 +580,6 @@ export default function Preview() {
           />
         )}
       </div>
-      <details className={styles.toolbar}>
-        <summary>Preview controls · synthetic data</summary>
-        <div className={styles.toolbarContents}>
-          <label>
-            Screen{" "}
-            <select
-              value={screen}
-              onChange={(event) => setScreen(event.target.value as Screen)}
-            >
-              <option value="project-picker">Choose a project</option>
-              <option value="account">Your account</option>
-              <option value="project-admin">Project administration</option>
-              <option value="project-create">
-                Create a project (non-admin)
-              </option>
-              <option value="platform-accounts">Platform accounts</option>
-              <option value="platform-account-create">
-                Create platform account
-              </option>
-              <option value="platform-account-reset">
-                Reset platform account password
-              </option>
-              <option value="overview">Overview</option>
-              <option value="articles">Articles</option>
-              <option value="documents">JSON documents</option>
-              <option value="editor">New article editor</option>
-              <option value="existing-article">Existing article editor</option>
-              <option value="new-document">New JSON document editor</option>
-              <option value="document-editor">
-                Existing JSON document editor
-              </option>
-              <option value="media">Media library</option>
-              <option value="media-details">Media details</option>
-              <option value="members">Project members</option>
-              <option value="settings">Settings &amp; API</option>
-            </select>
-          </label>
-          <label>
-            Scenario{" "}
-            {screen === "existing-article" ? (
-              <select
-                value={articleScenario}
-                onChange={(event) =>
-                  setArticleScenario(event.target.value as ArticleScenario)
-                }
-              >
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="history">Revision history</option>
-              </select>
-            ) : (
-              <select
-                value={scenario}
-                onChange={(event) =>
-                  setScenario(event.target.value as Scenario)
-                }
-              >
-                <option value="populated">Populated</option>
-                <option value="empty">Empty</option>
-                <option value="error">Error</option>
-              </select>
-            )}
-          </label>
-          {!screen.startsWith("platform-") &&
-            ![
-              "project-picker",
-              "account",
-              "project-admin",
-              "project-create",
-            ].includes(screen) && (
-              <label>
-                Workspace role{" "}
-                <select
-                  value={previewRole}
-                  onChange={(event) =>
-                    setPreviewRole(event.target.value as Role)
-                  }
-                >
-                  <option value="admin">Admin</option>
-                  <option value="editor">Editor</option>
-                  <option value="viewer">Viewer</option>
-                </select>
-              </label>
-            )}
-          <small>Workspace links and logout are disabled.</small>
-        </div>
-      </details>
     </>
   );
 }
