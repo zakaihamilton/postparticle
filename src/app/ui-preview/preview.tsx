@@ -16,7 +16,7 @@ import type {
   WorkspaceDashboardResult,
   Role,
 } from "@/lib/types";
-import { PreviewDropdown, PreviewToolbar } from "@zakaihamilton/ui-preview-kit";
+import { PreviewDropdown, PreviewToolbar } from "ui-preview-kit";
 
 const actor = {
   username: "Alex Morgan",
