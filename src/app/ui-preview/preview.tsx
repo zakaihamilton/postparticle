@@ -378,15 +378,24 @@ export default function Preview() {
             { value: "project-admin", label: "Project administration" },
             { value: "project-create", label: "Create a project (non-admin)" },
             { value: "platform-accounts", label: "Platform accounts" },
-            { value: "platform-account-create", label: "Create platform account" },
-            { value: "platform-account-reset", label: "Reset platform account password" },
+            {
+              value: "platform-account-create",
+              label: "Create platform account",
+            },
+            {
+              value: "platform-account-reset",
+              label: "Reset platform account password",
+            },
             { value: "overview", label: "Overview" },
             { value: "articles", label: "Articles" },
             { value: "documents", label: "JSON documents" },
             { value: "editor", label: "New article editor" },
             { value: "existing-article", label: "Existing article editor" },
             { value: "new-document", label: "New JSON document editor" },
-            { value: "document-editor", label: "Existing JSON document editor" },
+            {
+              value: "document-editor",
+              label: "Existing JSON document editor",
+            },
             { value: "media", label: "Media library" },
             { value: "media-details", label: "Media details" },
             { value: "members", label: "Project members" },
@@ -397,24 +406,32 @@ export default function Preview() {
         <PreviewDropdown
           label="Scenario"
           value={screen === "existing-article" ? articleScenario : scenario}
-          options={screen === "existing-article"
-            ? [
-                { value: "draft", label: "Draft" },
-                { value: "published", label: "Published" },
-                { value: "history", label: "Revision history" },
-              ]
-            : [
-                { value: "populated", label: "Populated" },
-                { value: "empty", label: "Empty" },
-                { value: "error", label: "Error" },
-              ]}
+          options={
+            screen === "existing-article"
+              ? [
+                  { value: "draft", label: "Draft" },
+                  { value: "published", label: "Published" },
+                  { value: "history", label: "Revision history" },
+                ]
+              : [
+                  { value: "populated", label: "Populated" },
+                  { value: "empty", label: "Empty" },
+                  { value: "error", label: "Error" },
+                ]
+          }
           onSelect={(value) => {
-            if (screen === "existing-article") setArticleScenario(value as ArticleScenario);
+            if (screen === "existing-article")
+              setArticleScenario(value as ArticleScenario);
             else setScenario(value as Scenario);
           }}
         />
         {!screen.startsWith("platform-") &&
-          !["project-picker", "account", "project-admin", "project-create"].includes(screen) && (
+          ![
+            "project-picker",
+            "account",
+            "project-admin",
+            "project-create",
+          ].includes(screen) && (
             <PreviewDropdown
               label="Workspace role"
               value={previewRole}
