@@ -14,9 +14,6 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.1146.0
         version: 3.1146.0
-      '@zakaihamilton/ui-preview-kit':
-        specifier: github:zakaihamilton/ui-preview-kit#v0.1.1
-        version: https://codeload.github.com/zakaihamilton/ui-preview-kit/tar.gz/e7c65cdedd160b20ffc2c742345de69a117cb818(react@19.3.0)
       lucide-react:
         specifier: ^1.52.0
         version: 1.52.0(@types/react@19.3.0)(react@19.3.0)
@@ -41,6 +38,9 @@ importers:
       sharp:
         specifier: ^0.35.5
         version: 0.35.5(@types/node@26.6.4)
+      ui-preview-kit:
+        specifier: ^0.1.2
+        version: 0.1.2(react@19.3.0)
       zod:
         specifier: ^4.6.5
         version: 4.6.5
@@ -1507,13 +1507,6 @@ packages:
 
   '@vitest/spy@5.0.3':
     resolution: {integrity: sha512-XhFysQTB8AZ+P4gMi+Lpo99vg2AZi0qKpaB9yXQl37+CaMEAPO3iH/wGVnSyL5MPERiLezpqTVtrR6UZH5GCXg==}
-
-  '@zakaihamilton/ui-preview-kit@https://codeload.github.com/zakaihamilton/ui-preview-kit/tar.gz/e7c65cdedd160b20ffc2c742345de69a117cb818':
-    resolution: {tarball: https://codeload.github.com/zakaihamilton/ui-preview-kit/tar.gz/e7c65cdedd160b20ffc2c742345de69a117cb818}
-    version: 0.1.1
-    hasBin: true
-    peerDependencies:
-      react: '>=19.0.0 <20'
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -3560,6 +3553,12 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  ui-preview-kit@0.1.2:
+    resolution: {integrity: sha512-Vz1+jFyr3kwphrw5/yXuqHNe2Vp1rIXgoxgHwxPTwL2Y02Z3s90dg63F5Nx6L2QJ1avf2nOogGQgYFrIb3LqXQ==}
+    hasBin: true
+    peerDependencies:
+      react: '>=19.0.0 <20'
+
   unbash@4.0.12:
     resolution: {integrity: sha512-PnKvRX+Fbxl/usVlTr/31tXIOVAH+8OdC9qaxUQcvurwEnoc3Vk/ipi2Ce8IjMxzK9byfSGdsUBjqqJGc1o5lw==}
     engines: {node: '>=14'}
@@ -4365,8 +4364,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@img/colour@1.1.0':
-    optional: true
+  '@img/colour@1.1.0': {}
 
   '@img/sharp-darwin-arm64@0.35.5':
     optionalDependencies:
@@ -5026,10 +5024,6 @@ snapshots:
       vite: 8.3.2(@types/node@26.6.4)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
 
   '@vitest/spy@5.0.3': {}
-
-  '@zakaihamilton/ui-preview-kit@https://codeload.github.com/zakaihamilton/ui-preview-kit/tar.gz/e7c65cdedd160b20ffc2c742345de69a117cb818(react@19.3.0)':
-    dependencies:
-      react: 19.3.0
 
   acorn-jsx@5.3.2(acorn@8.18.0):
     dependencies:
@@ -7315,7 +7309,6 @@ snapshots:
       '@img/sharp-win32-ia32': 0.35.5
       '@img/sharp-win32-x64': 0.35.5
       '@types/node': 26.6.4
-    optional: true
 
   shebang-command@2.0.0:
     dependencies:
@@ -7670,6 +7663,10 @@ snapshots:
       - supports-color
 
   typescript@6.0.3: {}
+
+  ui-preview-kit@0.1.2(react@19.3.0):
+    dependencies:
+      react: 19.3.0
 
   unbash@4.0.12: {}
 
