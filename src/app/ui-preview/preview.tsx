@@ -16,7 +16,7 @@ import type {
   WorkspaceDashboardResult,
   Role,
 } from "@/lib/types";
-import styles from "./preview.module.css";
+import { PreviewDropdown, PreviewToolbar } from "@zakaihamilton/ui-preview-kit";
 
 const actor = {
   username: "Alex Morgan",
@@ -365,93 +365,85 @@ export default function Preview() {
   }, [scenario, screen]);
   return (
     <>
-      <details className={styles.toolbar}>
-        <summary>Preview controls · synthetic data</summary>
-        <div className={styles.toolbarContents}>
-          <label>
-            Screen{" "}
-            <select
-              value={screen}
-              onChange={(event) => setScreen(event.target.value as Screen)}
-            >
-              <option value="project-picker">Choose a project</option>
-              <option value="account">Your account</option>
-              <option value="project-admin">Project administration</option>
-              <option value="project-create">
-                Create a project (non-admin)
-              </option>
-              <option value="platform-accounts">Platform accounts</option>
-              <option value="platform-account-create">
-                Create platform account
-              </option>
-              <option value="platform-account-reset">
-                Reset platform account password
-              </option>
-              <option value="overview">Overview</option>
-              <option value="articles">Articles</option>
-              <option value="documents">JSON documents</option>
-              <option value="editor">New article editor</option>
-              <option value="existing-article">Existing article editor</option>
-              <option value="new-document">New JSON document editor</option>
-              <option value="document-editor">
-                Existing JSON document editor
-              </option>
-              <option value="media">Media library</option>
-              <option value="media-details">Media details</option>
-              <option value="members">Project members</option>
-              <option value="settings">Settings &amp; API</option>
-            </select>
-          </label>
-          <label>
-            Scenario{" "}
-            {screen === "existing-article" ? (
-              <select
-                value={articleScenario}
-                onChange={(event) =>
-                  setArticleScenario(event.target.value as ArticleScenario)
-                }
-              >
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="history">Revision history</option>
-              </select>
-            ) : (
-              <select
-                value={scenario}
-                onChange={(event) =>
-                  setScenario(event.target.value as Scenario)
-                }
-              >
-                <option value="populated">Populated</option>
-                <option value="empty">Empty</option>
-                <option value="error">Error</option>
-              </select>
-            )}
-          </label>
-          {!screen.startsWith("platform-") &&
-            ![
-              "project-picker",
-              "account",
-              "project-admin",
-              "project-create",
-            ].includes(screen) && (
-              <label>
-                Workspace role{" "}
-                <select
-                  value={previewRole}
-                  onChange={(event) =>
-                    setPreviewRole(event.target.value as Role)
-                  }
-                >
-                  <option value="admin">Admin</option>
-                  <option value="editor">Editor</option>
-                  <option value="viewer">Viewer</option>
-                </select>
-              </label>
-            )}
-          <small>Workspace links and logout are disabled.</small>
-        </div>
-      </details>
+      <PreviewToolbar
+        subtitle="Synthetic data · local preview"
+        note="Workspace links and logout are disabled."
+      >
+        <PreviewDropdown
+          label="Screen"
+          value={screen}
+          options={[
+            { value: "project-picker", label: "Choose a project" },
+            { value: "account", label: "Your account" },
+            { value: "project-admin", label: "Project administration" },
+            { value: "project-create", label: "Create a project (non-admin)" },
+            { value: "platform-accounts", label: "Platform accounts" },
+            {
+              value: "platform-account-create",
+              label: "Create platform account",
+            },
+            {
+              value: "platform-account-reset",
+              label: "Reset platform account password",
+            },
+            { value: "overview", label: "Overview" },
+            { value: "articles", label: "Articles" },
+            { value: "documents", label: "JSON documents" },
+            { value: "editor", label: "New article editor" },
+            { value: "existing-article", label: "Existing article editor" },
+            { value: "new-document", label: "New JSON document editor" },
+            {
+              value: "document-editor",
+              label: "Existing JSON document editor",
+            },
+            { value: "media", label: "Media library" },
+            { value: "media-details", label: "Media details" },
+            { value: "members", label: "Project members" },
+            { value: "settings", label: "Settings & API" },
+          ]}
+          onSelect={(value) => setScreen(value as Screen)}
+        />
+        <PreviewDropdown
+          label="Scenario"
+          value={screen === "existing-article" ? articleScenario : scenario}
+          options={
+            screen === "existing-article"
+              ? [
+                  { value: "draft", label: "Draft" },
+                  { value: "published", label: "Published" },
+                  { value: "history", label: "Revision history" },
+                ]
+              : [
+                  { value: "populated", label: "Populated" },
+                  { value: "empty", label: "Empty" },
+                  { value: "error", label: "Error" },
+                ]
+          }
+          onSelect={(value) => {
+            if (screen === "existing-article")
+              setArticleScenario(value as ArticleScenario);
+            else setScenario(value as Scenario);
+          }}
+        />
+        {!screen.startsWith("platform-") &&
+          ![
+            "project-picker",
+            "account",
+            "project-admin",
+            "project-create",
+          ].includes(screen) && (
+            <PreviewDropdown
+              label="Workspace role"
+              value={previewRole}
+              options={[
+                { value: "admin", label: "Admin" },
+                { value: "editor", label: "Editor" },
+                { value: "viewer", label: "Viewer" },
+              ]}
+              onSelect={(value) => setPreviewRole(value as Role)}
+            />
+          )}
+      </PreviewToolbar>
       <div
         key={`${screen}-${scenario}-${articleScenario}`}
         onAuxClickCapture={(event) => {
