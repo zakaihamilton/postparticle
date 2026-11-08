@@ -1,5 +1,5 @@
 {
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@12.18.0",
   "name": "postparticle",
   "version": "0.1.0",
   "private": true,
@@ -10,8 +10,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit && tsc --noEmit -p examples/next-blog/tsconfig.json",
     "lint": "eslint .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
     "test": "vitest run",
     "test:run": "vitest run",
     "test:e2e": "pnpm run build && pnpm run example:build && playwright test --grep-invert='matches the reviewed'",
@@ -56,7 +56,6 @@
     "eslint-config-next": "^16.4.1",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "knip": "^6.39.0",
-    "prettier": "^3.9.9",
     "repnix": "^1.1.0",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
@@ -67,6 +66,7 @@
     "@testing-library/user-event": "^14.6.1",
     "jsdom": "^26.1.0",
     "stylelint": "^17.11.1",
-    "stylelint-config-standard": "^40.0.0"
+    "stylelint-config-standard": "^40.0.0",
+    "@biomejs/biome": "2.6.6"
   }
 }
