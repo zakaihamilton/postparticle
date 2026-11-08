@@ -1,9 +1,0 @@
-node_modules
-.next
-package-lock.json
-pnpm-lock.yaml
-coverage
-playwright-report
-test-results
-next-env.d.ts
-.local-storage
