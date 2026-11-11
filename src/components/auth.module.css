@@ -257,3 +257,63 @@
     padding: 30px;
   }
 }
+
+/* Compact the editorial introduction on phones so sign-in controls appear sooner. */
+@media (max-width: 600px) {
+  .story {
+    padding: 0;
+  }
+
+  .story h1 {
+    margin: 12px 0 8px;
+    font-size: 31px;
+    line-height: 1.08;
+  }
+
+  .story > p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .storyFooter {
+    display: none;
+  }
+
+  .formPanel {
+    padding: 22px 18px;
+  }
+
+  .formInner h2 {
+    margin: 12px 0 8px;
+    font-size: 30px;
+  }
+
+  .formInner > p {
+    margin: 0 0 18px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .authDivider {
+    margin: 14px 0 0;
+  }
+
+  .formInner label {
+    gap: 7px;
+    margin: 14px 0;
+  }
+
+  .formInner button {
+    margin-top: 16px;
+  }
+
+  .help {
+    margin-top: 16px;
+  }
+
+  .back {
+    margin-top: 20px;
+  }
+
+}
