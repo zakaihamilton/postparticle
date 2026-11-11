@@ -200,10 +200,10 @@
   letter-spacing: 0.7px;
 }
 .main {
-  padding: 37px;
-  max-width: 1550px;
+  padding: 0;
+  max-width: none;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
   flex: 1;
   animation: enter var(--motion-enter) var(--ease-out);
 }
@@ -216,7 +216,7 @@
 .workspaceFooter {
   display: flex;
   justify-content: space-between;
-  margin: 0 37px;
+  margin: 0;
   border-top: 1px solid var(--border);
   padding: 22px 0;
   color: var(--muted);
@@ -1789,16 +1789,6 @@ a.secondary:hover {
   white-space: nowrap;
 }
 
-.main {
-  padding: 0;
-  max-width: none;
-  width: 100%;
-  margin: 0;
-}
-
-.workspaceFooter {
-  margin: 0;
-}
 
 @media (max-width: 700px) {
   .sharedToolbar {
