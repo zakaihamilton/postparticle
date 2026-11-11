@@ -23,9 +23,7 @@
 .story {
   position: relative;
   overflow: hidden;
-  background: var(--surface-alt);
   color: var(--text);
-  padding: 48px 40px 32px;
   display: flex;
   flex-direction: column;
 }
@@ -252,7 +250,7 @@
     box-shadow: none;
     margin: 10px;
   }
-  .story {
+  .storyImage {
     display: none;
   }
   .formPanel {

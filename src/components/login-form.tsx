@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { AuthCard, AuthShell } from "panel-frame-ui";
 import Image from "next/image";
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -24,12 +25,10 @@ export default function LoginForm({
   const [busy, setBusy] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   return (
-    <div className={styles.page}>
-      <header>
-        <Brand />
-        <ThemeSwitch />
-      </header>
-      <main className={styles.layout}>
+    <AuthShell
+      brand={<Brand />}
+      utility={<ThemeSwitch />}
+      aside={
         <section className={styles.story}>
           <span className={styles.eyebrow}>THE EDITORIAL WORKSPACE</span>
           <h1>
@@ -55,8 +54,10 @@ export default function LoginForm({
             publish.
           </div>
         </section>
-        <section className={styles.formPanel}>
-          <div className={styles.formInner}>
+      }
+    >
+      <AuthCard>
+        <div className={styles.formInner}>
             <span className={styles.smallIcon}>
               <Icon name="article" size={25} />
             </span>
@@ -168,9 +169,8 @@ export default function LoginForm({
             <Link href="/" className={styles.back}>
               <Icon name="arrow-left" size={14} /> Back to welcome
             </Link>
-          </div>
-        </section>
-      </main>
-    </div>
+        </div>
+      </AuthCard>
+    </AuthShell>
   );
 }

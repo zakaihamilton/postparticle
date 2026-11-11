@@ -1760,3 +1760,42 @@ a.secondary:hover {
     margin-left: auto;
   }
 }
+
+
+.sharedToolbar {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.toolbarLocation {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 15px;
+  overflow: hidden;
+}
+
+.toolbarLocation strong {
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.main {
+  padding: 0;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+}
+
+.workspaceFooter {
+  margin: 0;
+}

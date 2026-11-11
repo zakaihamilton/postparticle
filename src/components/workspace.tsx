@@ -6,7 +6,8 @@ import {
 } from "./navigation-guard";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState, type ComponentProps } from "react";
+import { useState, type ComponentProps } from "react";
+import { DashboardShell as PanelFrameDashboardShell } from "panel-frame-ui";
 import type {
   Actor,
   Media,
@@ -71,109 +72,16 @@ function WorkspaceContent({
 }) {
   const router = useRouter();
   const { confirmNavigation } = useNavigationGuard();
-  const base = `/workspace/${project.id}`;
+  const base = "/workspace/" + project.id;
   const tab = view[0] || "";
   const [error, setError] = useState("");
-  const [menu, setMenu] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const menuButton = useRef<HTMLButtonElement>(null);
-  const sidebar = useRef<HTMLElement>(null);
   const canEdit = role !== "viewer";
 
-  function closeMenu(restoreFocus = false) {
-    setMenu(false);
-    if (restoreFocus && isMobile) menuButton.current?.focus();
-  }
-
-  useEffect(() => {
-    const media = window.matchMedia("(max-width: 700px)");
-    function updateViewport() {
-      setIsMobile(media.matches);
-      if (!media.matches) setMenu(false);
-    }
-    updateViewport();
-    media.addEventListener("change", updateViewport);
-    return () => media.removeEventListener("change", updateViewport);
-  }, []);
-
-  useEffect(() => {
-    if (!menu || !isMobile) return;
-    const panel = sidebar.current;
-    const selector =
-      'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
-    const focusable = () =>
-      Array.from(panel?.querySelectorAll<HTMLElement>(selector) ?? []).filter(
-        (element) => !element.hasAttribute("hidden"),
-      );
-    focusable()[0]?.focus();
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setMenu(false);
-        menuButton.current?.focus();
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const elements = focusable();
-      const first = elements[0];
-      const last = elements.at(-1);
-      if (!first || !last) {
-        event.preventDefault();
-      } else if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      } else if (!panel?.contains(document.activeElement)) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-
-    function handlePointerDown(event: PointerEvent) {
-      const target = event.target as Node;
-      if (
-        target instanceof Element &&
-        target.closest("[data-navigation-guard-overlay]")
-      )
-        return;
-      if (!panel?.contains(target) && !menuButton.current?.contains(target)) {
-        if (panel?.contains(document.activeElement))
-          menuButton.current?.focus();
-        setMenu(false);
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [isMobile, menu]);
-
   return (
-    <div className={styles.shell}>
-      <aside
-        ref={sidebar}
-        id="workspace-sidebar"
-        className={`${styles.sidebar} ${menu ? styles.sidebarOpen : ""}`}
-        role={isMobile && menu ? "dialog" : undefined}
-        aria-label={isMobile && menu ? "Workspace navigation" : undefined}
-        aria-modal={isMobile && menu ? true : undefined}
-        aria-hidden={isMobile && !menu ? true : undefined}
-        inert={isMobile && !menu}
-      >
-        <div className={styles.sidebarBrand}>
-          <Brand href="/projects" />
-        </div>
-        <Link
-          href="/projects"
-          className={styles.projectSwitch}
-          onClick={() => closeMenu(true)}
-        >
+    <PanelFrameDashboardShell
+      brand={<Brand href="/projects" />}
+      sidebarContext={
+        <Link href="/projects" className={styles.projectSwitch}>
           <span className={styles.projectAvatar}>{project.name[0]}</span>
           <span>
             <strong>{project.name}</strong>
@@ -183,39 +91,49 @@ function WorkspaceContent({
             <Icon name="chevron" size={16} />
           </span>
         </Link>
-        <div className={styles.navCaption}>WORKSPACE</div>
-        <nav aria-label="Workspace">
-          {navigation.map((n) => (
+      }
+      navigation={
+        <>
+          <div className="pf-sidebar-group">
+            <p className="pf-sidebar-group-label">Workspace</p>
+            <nav aria-label="Workspace">
+              {navigation.map((item) => (
+                <Link
+                  aria-current={tab === item.id ? "page" : undefined}
+                  className="pf-sidebar-link"
+                  href={base + "/" + item.id}
+                  key={item.id}
+                >
+                  <Icon name={item.icon} size={18} />
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <div className="pf-sidebar-group">
+            <p className="pf-sidebar-group-label">Manage</p>
+            {role === "admin" ? (
+              <Link
+                aria-current={tab === "members" ? "page" : undefined}
+                className="pf-sidebar-link"
+                href={base + "/members"}
+              >
+                <Icon name="users" size={18} />
+                Members
+              </Link>
+            ) : null}
             <Link
-              key={n.id}
-              href={`${base}/${n.id}`}
-              className={`${styles.navItem} ${tab === n.id ? styles.navActive : ""}`}
-              onClick={() => closeMenu(true)}
+              aria-current={tab === "settings" ? "page" : undefined}
+              className="pf-sidebar-link"
+              href={base + "/settings"}
             >
-              <Icon name={n.icon} size={18} />
-              {n.label}
+              <Icon name="settings" size={18} />
+              Settings &amp; API
             </Link>
-          ))}
-          <div className={styles.navCaption}>MANAGE</div>
-          {role === "admin" && (
-            <Link
-              href={`${base}/members`}
-              className={`${styles.navItem} ${tab === "members" ? styles.navActive : ""}`}
-              onClick={() => closeMenu(true)}
-            >
-              <Icon name="users" size={18} />
-              Members
-            </Link>
-          )}
-          <Link
-            href={`${base}/settings`}
-            className={`${styles.navItem} ${tab === "settings" ? styles.navActive : ""}`}
-            onClick={() => closeMenu(true)}
-          >
-            <Icon name="settings" size={18} />
-            Settings & API
-          </Link>
-        </nav>
+          </div>
+        </>
+      }
+      sidebarFooter={
         <div className={styles.sidebarBottom}>
           <div className={styles.storageNote}>
             <span className={styles.onlineDot} />
@@ -234,7 +152,6 @@ function WorkspaceContent({
               className={styles.iconButton}
               onClick={async () => {
                 if (!(await confirmNavigation("Log out and discard"))) return;
-                closeMenu(true);
                 try {
                   await api("/api/auth/logout", { method: "POST" });
                   router.push("/login");
@@ -243,125 +160,105 @@ function WorkspaceContent({
                   setError((e as Error).message);
                 }
               }}
+              type="button"
             >
               <Icon name="logout" size={17} />
             </button>
           </div>
         </div>
-      </aside>
-      {isMobile && menu && (
-        <button
-          type="button"
-          className={styles.sidebarBackdrop}
-          aria-label="Close workspace navigation"
-          tabIndex={-1}
-          onClick={() => closeMenu(true)}
-        />
-      )}
-      <div className={styles.contentArea}>
-        <header className={styles.topbar}>
-          <div>
-            <button
-              className={styles.mobileMenu}
-              ref={menuButton}
-              aria-label={`${menu ? "Close" : "Open"} workspace navigation`}
-              aria-expanded={menu}
-              aria-controls="workspace-sidebar"
-              onClick={() => setMenu(!menu)}
-            >
-              <Icon name="menu" size={20} />
-            </button>
+      }
+      toolbar={
+        <div className={styles.sharedToolbar}>
+          <div className={styles.toolbarLocation}>
             <span>{project.name}</span>
             <span className={styles.breadcrumb}>/</span>
             <strong>
-              {navigation.find((n) => n.id === tab)?.label ||
+              {navigation.find((item) => item.id === tab)?.label ||
                 (tab === "members" ? "Members" : "Settings")}
             </strong>
-            {tab === "media" && initialMedia && (
+            {tab === "media" && initialMedia ? (
               <>
                 <span className={styles.breadcrumb}>/</span>
-                <strong title={initialMedia.filename}>
-                  {initialMedia.filename}
-                </strong>
+                <strong title={initialMedia.filename}>{initialMedia.filename}</strong>
               </>
-            )}
+            ) : null}
           </div>
-          <div className={styles.topRight}>
+          <div className={styles.accountHeaderActions}>
             <OrganizationSwitcher
               key={actor.organizationId}
               actor={actor}
-              onBeforeChange={() =>
-                confirmNavigation("Switch organization and discard")
-              }
+              onBeforeChange={() => confirmNavigation("Switch organization and discard")}
             />
             <span className={styles.projectType}>Content Workspace</span>
             <ThemeSwitch />
           </div>
-        </header>
-        <main className={styles.main}>
-          <Notice error={error} />
-          {!tab && (
-            <Dashboard
-              key={project.id}
+        </div>
+      }
+      contentAsMain={false}
+    >
+      <main className={styles.main}>
+        <Notice error={error} />
+        {!tab && (
+          <Dashboard
+            key={project.id}
+            projectId={project.id}
+            username={actor.username}
+            canEdit={canEdit}
+            initialDashboard={initialDashboard}
+          />
+        )}
+        {["articles", "documents"].includes(tab) &&
+          (view[1] ? (
+            <Editor
+              key={tab + "/" + view[1]}
+              kind={tab as "articles" | "documents"}
+              id={view[1]}
               projectId={project.id}
-              username={actor.username}
               canEdit={canEdit}
-              initialDashboard={initialDashboard}
-            />
-          )}
-          {["articles", "documents"].includes(tab) &&
-            (view[1] ? (
-              <Editor
-                key={`${tab}/${view[1]}`}
-                kind={tab as "articles" | "documents"}
-                id={view[1]}
-                projectId={project.id}
-                canEdit={canEdit}
-                request={previewRequest}
-              />
-            ) : (
-              <ContentList
-                kind={tab as "articles" | "documents"}
-                projectId={project.id}
-                canEdit={canEdit}
-                previewData={previewContent}
-                previewError={previewContentError}
-              />
-            ))}
-          {tab === "media" &&
-            (initialMedia && initialMediaUrl ? (
-              <MediaDetails
-                key={initialMedia.id}
-                projectId={project.id}
-                media={initialMedia}
-                previewUrl={initialMediaUrl}
-                canEdit={canEdit}
-                request={previewRequest}
-              />
-            ) : (
-              <MediaLibrary
-                projectId={project.id}
-                canEdit={canEdit}
-                request={previewRequest}
-              />
-            ))}
-          {tab === "members" && (
-            <Members projectId={project.id} request={previewRequest} />
-          )}
-          {tab === "settings" && (
-            <IntegrationSettings
-              projectId={project.id}
-              organizationId={actor.organizationId}
-              canAdmin={role === "admin"}
               request={previewRequest}
             />
-          )}
-        </main>
-        <footer className={styles.workspaceFooter}>
-          <span>Your content, thoughtfully managed.</span>
-          <span>postparticle</span>
-        </footer>
-      </div>
-    </div>
+          ) : (
+            <ContentList
+              kind={tab as "articles" | "documents"}
+              projectId={project.id}
+              canEdit={canEdit}
+              previewData={previewContent}
+              previewError={previewContentError}
+            />
+          ))}
+        {tab === "media" &&
+          (initialMedia && initialMediaUrl ? (
+            <MediaDetails
+              key={initialMedia.id}
+              projectId={project.id}
+              media={initialMedia}
+              previewUrl={initialMediaUrl}
+              canEdit={canEdit}
+              request={previewRequest}
+            />
+          ) : (
+            <MediaLibrary
+              projectId={project.id}
+              canEdit={canEdit}
+              request={previewRequest}
+            />
+          ))}
+        {tab === "members" ? (
+          <Members projectId={project.id} request={previewRequest} />
+        ) : null}
+        {tab === "settings" ? (
+          <IntegrationSettings
+            projectId={project.id}
+            organizationId={actor.organizationId}
+            canAdmin={role === "admin"}
+            request={previewRequest}
+          />
+        ) : null}
+      </main>
+      <footer className={styles.workspaceFooter}>
+        <span>Your content, thoughtfully managed.</span>
+        <span>postparticle</span>
+      </footer>
+    </PanelFrameDashboardShell>
   );
 }
