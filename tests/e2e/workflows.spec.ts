@@ -28,7 +28,7 @@ async function signIn(page: Page, username = "admin") {
   await expect(page).toHaveURL(/\/projects$/);
 }
 function workspaceNavigationToggle(page: Page) {
-  return page.locator('button[aria-controls="workspace-sidebar"]');
+  return page.locator('button[aria-controls="pf-dashboard-sidebar"]');
 }
 test("email usernames support account creation, resets, membership, and sign-in", async ({
   page,
