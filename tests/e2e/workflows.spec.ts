@@ -415,7 +415,7 @@ test("custom dropdown supports keyboard selection, dismissal and a rotating inse
   await expect(control).toHaveAttribute("aria-expanded", "false");
   await expect
     .poll(() => arrow.evaluate((el) => getComputedStyle(el).transform))
-    .toBe("matrix(1, 0, 0, 1, 0, 0)");
+    .toBe("none");
   await control.press("Enter");
   await control.press("Escape");
   await expect(control).toHaveAttribute("aria-expanded", "false");
