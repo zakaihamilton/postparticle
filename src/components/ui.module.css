@@ -34,7 +34,7 @@
 .themeControl .pf-input {
   font-size: 14px;
   color: var(--muted);
-  padding: 8px 12px;
+  padding: 8px 14px;
   gap: 10px;
 }
 .error,
