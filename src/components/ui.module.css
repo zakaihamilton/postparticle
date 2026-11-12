@@ -31,7 +31,7 @@
   min-width: 140px;
   width: 140px;
 }
-.themeControl > button {
+.themeControl .pf-input {
   font-size: 14px;
   color: var(--muted);
   padding: 8px 12px;

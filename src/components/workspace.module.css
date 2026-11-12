@@ -1085,29 +1085,25 @@ a.secondary:hover {
   height: 16px;
   margin: 0;
 }
-.projectDeleteOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-}
-.projectDeleteBackdrop {
-  position: absolute;
-  inset: 0;
-  border: 0;
-  background: var(--overlay);
-}
 .projectDeleteDialog {
-  position: relative;
-  width: min(100%, 520px);
-  padding: 25px;
-  border: 1px solid var(--border);
+  width: min(560px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.projectDeleteDialog :global(.pf-dialog-panel) {
   border-radius: 8px;
   background: var(--surface);
   color: var(--text);
-  box-shadow: var(--shadow);
+}
+.projectDeleteDialog :global(.pf-dialog-header) {
+  padding: 25px 25px 0;
+}
+.projectDeleteDialog :global(.pf-dialog-body) {
+  padding: 0 25px 25px;
 }
 .projectDeleteDialog h2 {
   margin: 0 0 13px;

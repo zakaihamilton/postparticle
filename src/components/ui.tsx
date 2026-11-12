@@ -1,6 +1,6 @@
 "use client";
 import { GuardedLink as Link } from "./navigation-guard";
-import { useSyncExternalStore } from "react";
+import { ThemeControl as PanelThemeControl } from "panel-frame-ui";
 import {
   ArrowDown,
   ArrowDownRight,
@@ -33,7 +33,6 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import Select from "./select";
 import styles from "./ui.module.css";
 function Wordmark() {
   return (
@@ -56,6 +55,14 @@ function Wordmark() {
     </span>
   );
 }
+export function BrandContent() {
+  return (
+    <span className={`${styles.brand} pf-brand`}>
+      <Wordmark />
+    </span>
+  );
+}
+
 export function Brand({ href = "/" }: { href?: string }) {
   return (
     <Link className={styles.brand} href={href} aria-label="Postparticle home">
@@ -64,48 +71,7 @@ export function Brand({ href = "/" }: { href?: string }) {
   );
 }
 export function ThemeSwitch() {
-  const theme = useSyncExternalStore(subscribeTheme, readTheme, () => "system");
-  return (
-    <Select
-      label="Color theme"
-      className={styles.themeControl}
-      value={theme}
-      options={[
-        {
-          value: "system",
-          label: "System",
-          icon: <Icon name="monitor" size={14} />,
-        },
-        { value: "light", label: "Light", icon: <Icon name="sun" size={14} /> },
-        { value: "dark", label: "Dark", icon: <Icon name="moon" size={14} /> },
-      ]}
-      onValueChange={(value) => {
-        try {
-          localStorage.setItem("postparticle-theme", value);
-        } catch {
-          /* Theme still works when storage is unavailable. */
-        }
-        document.documentElement.dataset.theme = value;
-        window.dispatchEvent(new Event("postparticle-theme"));
-      }}
-    />
-  );
-}
-function readTheme() {
-  let theme;
-  try {
-    theme = localStorage.getItem("postparticle-theme");
-  } catch {}
-  theme ||= document.documentElement.dataset.theme;
-  return ["light", "dark"].includes(theme || "") ? theme! : "system";
-}
-function subscribeTheme(callback: () => void) {
-  window.addEventListener("storage", callback);
-  window.addEventListener("postparticle-theme", callback);
-  return () => {
-    window.removeEventListener("storage", callback);
-    window.removeEventListener("postparticle-theme", callback);
-  };
+  return <PanelThemeControl className={styles.themeControl} label="Color theme" />;
 }
 const icons: Record<string, LucideIcon> = {
   grid: LayoutGrid,

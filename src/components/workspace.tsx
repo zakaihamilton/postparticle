@@ -17,7 +17,7 @@ import type {
   ContentListData,
 } from "@/lib/types";
 import { OrganizationSwitcher } from "./organization-switcher";
-import { api, Brand, Icon, Notice, ThemeSwitch } from "./ui";
+import { api, BrandContent, Icon, Notice, ThemeSwitch } from "./ui";
 import { ContentList, Dashboard } from "./content-list";
 import styles from "./workspace.module.css";
 
@@ -79,7 +79,7 @@ function WorkspaceContent({
 
   return (
     <PanelFrameDashboardShell
-      brand={<Brand href="/projects" />}
+      brand={<BrandContent />}
       sidebarContext={
         <Link href="/projects" className={styles.projectSwitch}>
           <span className={styles.projectAvatar}>{project.name[0]}</span>

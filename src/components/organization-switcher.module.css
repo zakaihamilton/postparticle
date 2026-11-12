@@ -27,7 +27,7 @@
   min-width: 130px;
   max-width: 220px;
 }
-.select > button {
+.select .pf-select-trigger {
   min-height: 40px;
   padding: 7px 10px;
   font-size: 13px;
@@ -59,7 +59,7 @@
     min-width: 0;
     max-width: min(150px, 36vw);
   }
-  .select > button {
+  .select .pf-select-trigger {
     min-height: 40px;
     padding: 6px 8px;
     font-size: 12px;

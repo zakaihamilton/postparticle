@@ -7,6 +7,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { AlertDialog } from "panel-frame-ui";
 import { api, Notice } from "../ui";
 import styles from "../workspace.module.css";
 import { ProjectCreationForm } from "./project-creation-form";
@@ -35,7 +36,7 @@ export function ProjectSettings({
   const [message, setMessage] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<ProjectRecord | null>(null);
   const [typedId, setTypedId] = useState("");
-  const deleteDialog = useRef<HTMLElement>(null);
+  const deleteInput = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -74,40 +75,6 @@ export function ProjectSettings({
       active = false;
     };
   }, [organizationId, request]);
-
-  useEffect(() => {
-    if (!deleteTarget) return;
-    const previousFocus =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    deleteDialog.current?.querySelector<HTMLInputElement>("input")?.focus();
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setDeleteTarget(null);
-      } else if (event.key === "Tab") {
-        const controls = deleteDialog.current?.querySelectorAll<HTMLElement>(
-          "button:not(:disabled), input:not(:disabled)",
-        );
-        if (!controls?.length) return;
-        const first = controls[0];
-        const last = controls[controls.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
-      }
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      previousFocus?.focus();
-    };
-  }, [deleteTarget]);
 
   async function run(task: () => Promise<void>) {
     setError("");
@@ -372,31 +339,18 @@ export function ProjectSettings({
         )}
       </section>
 
-      {deleteTarget && (
-        <div className={styles.projectDeleteOverlay}>
-          <button
-            type="button"
-            className={styles.projectDeleteBackdrop}
-            aria-label="Cancel project deletion"
-            onClick={() => setDeleteTarget(null)}
-          />
-          <section
-            ref={deleteDialog}
-            className={styles.projectDeleteDialog}
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="project-delete-title"
-            aria-describedby="project-delete-description project-delete-cache-note project-delete-uploads-note"
-          >
-            <h2 id="project-delete-title">
-              Permanently delete {deleteTarget.name}?
-            </h2>
-            <p id="project-delete-description">
-              This removes the project and all of its stored content and media
-              from S3, revokes its explicit project grants, and stops its API
-              responses. Its project ID will stay retired. This cannot be
-              undone.
-            </p>
+      {deleteTarget ? (
+        <AlertDialog
+          aria-busy={busy}
+          className={styles.projectDeleteDialog}
+          description="This removes the project and its stored content and media, revokes its project grants, and stops its API responses. Its project ID stays retired. This cannot be undone."
+          initialFocusRef={deleteInput}
+          onOpenChange={(open) => {
+            if (!open) setDeleteTarget(null);
+          }}
+          open
+          title={`Permanently delete ${deleteTarget.name}?`}
+        >
             <p id="project-delete-cache-note">
               Published media already cached by a CDN may remain available until
               that cache expires.
@@ -408,6 +362,7 @@ export function ProjectSettings({
             <label>
               Type <code>{deleteTarget.id}</code> to confirm
               <input
+                ref={deleteInput}
                 value={typedId}
                 onChange={(event) => setTypedId(event.target.value)}
                 autoCapitalize="none"
@@ -434,9 +389,8 @@ export function ProjectSettings({
                   : "Delete project and data"}
               </button>
             </div>
-          </section>
-        </div>
-      )}
+        </AlertDialog>
+      ) : null}
     </>
   );
 }
