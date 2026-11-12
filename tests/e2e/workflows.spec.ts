@@ -28,7 +28,7 @@ async function signIn(page: Page, username = "admin") {
   await expect(page).toHaveURL(/\/projects$/);
 }
 function workspaceNavigationToggle(page: Page) {
-  return page.locator('button[aria-controls="pf-dashboard-sidebar"]');
+  return page.locator("button.pf-mobile-menu-button");
 }
 test("email usernames support account creation, resets, membership, and sign-in", async ({
   page,
@@ -818,7 +818,7 @@ test("saving freezes editor fields and failed saves retain the unsaved draft", a
   await expect(title).toHaveValue("Retained after failure");
   await expect(title).not.toHaveAttribute("readonly", "");
   await expect(
-    page.getByText("Unsaved changes", { exact: true }),
+    page.getByRole("main").getByText("Unsaved changes", { exact: true }),
   ).toBeVisible();
 });
 
