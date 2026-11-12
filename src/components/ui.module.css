@@ -40,7 +40,7 @@
 @media (max-width: 420px) {
   .themeControl:global(.pf-theme-select) :global(.pf-select-trigger) {
     font-size: 12px;
-    padding: 5px 9px;
+    padding: 5px 12px;
   }
 }
 .error,
