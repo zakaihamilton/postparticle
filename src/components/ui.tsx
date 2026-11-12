@@ -38,7 +38,7 @@ function Wordmark() {
   return (
     <span className={styles.wordmark}>
       <span className={styles.logoGlyph} aria-hidden="true">
-        <svg width="31" height="33" viewBox="0 0 31 33" fill="none">
+        <svg aria-hidden="true" width="31" height="33" viewBox="0 0 31 33" fill="none">
           <path
             d="M10 27V12h6a5 5 0 0 1 0 10h-6"
             stroke="currentColor"

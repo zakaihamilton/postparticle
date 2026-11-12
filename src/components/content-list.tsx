@@ -177,6 +177,7 @@ export function ContentList({
   const [status, setStatus] = useState("active");
   const [order, setOrder] = useState("desc");
   const [retry, setRetry] = useState(0);
+// biome-ignore lint/correctness/useExhaustiveDependencies: retry is an explicit trigger after the user requests another load.
   useEffect(() => {
     if (previewData || previewError) return;
     let active = true;

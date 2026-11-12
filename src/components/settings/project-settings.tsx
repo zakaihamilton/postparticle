@@ -53,6 +53,7 @@ export function ProjectSettings({
     }
   }, [request]);
 
+// biome-ignore lint/correctness/useExhaustiveDependencies: organization changes should reload the project list.
   useEffect(() => {
     let active = true;
     async function loadProjects() {

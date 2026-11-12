@@ -52,7 +52,7 @@ export default function OpenGraphImage() {
                 backgroundColor: "#b9dcff",
               }}
             >
-              <svg width="34" height="36" viewBox="0 0 31 33" fill="none">
+              <svg aria-hidden="true" width="34" height="36" viewBox="0 0 31 33" fill="none">
                 <path
                   d="M10 27V12h6a5 5 0 0 1 0 10h-6"
                   stroke="#123e60"
@@ -209,7 +209,7 @@ export default function OpenGraphImage() {
                 fontSize: 16,
               }}
             >
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 13 13" fill="none">
                 <path
                   d="m2 6.5 3 3L11 3"
                   stroke="#245b87"

@@ -106,6 +106,7 @@ export default function MediaLibrary({
     };
   }, [endpoint, q, request]);
 
+// biome-ignore lint/correctness/useExhaustiveDependencies: endpoint changes must abort the previous request.
   useEffect(() => () => abort.current?.abort(), [endpoint]);
 
   async function reload() {
