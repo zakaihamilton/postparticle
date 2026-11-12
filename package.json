@@ -38,7 +38,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1146.0",
     "lucide-react": "^1.52.0",
     "next": "^16.4.1",
-    "panel-frame-ui": "^0.2.4",
+    "panel-frame-ui": "^0.2.5",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-markdown": "^10.1.0",
