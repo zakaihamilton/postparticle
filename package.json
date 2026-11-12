@@ -5,6 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "link": "node ../panel-frame-ui/scripts/link-local.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
