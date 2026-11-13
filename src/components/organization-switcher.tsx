@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Actor } from "@/lib/types";
 import { api } from "./ui";
-import Select from "./select";
+import { ContextSwitcher } from "panel-frame-ui";
 import styles from "./organization-switcher.module.css";
 
 export function OrganizationSwitcher({
@@ -63,7 +63,7 @@ export function OrganizationSwitcher({
         <>
           <span className={styles.label}>Organization</span>
           <span className={styles.mobileLabel}>Org.</span>
-          <Select
+          <ContextSwitcher
             label="Organization"
             value={selected}
             options={actor.organizations.map((organization) => ({

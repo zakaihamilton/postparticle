@@ -138,6 +138,7 @@ export default function DatePicker({
     };
   }, [close, open, updatePosition]);
 
+// biome-ignore lint/correctness/useExhaustiveDependencies: changing the month mounts the day button that this effect focuses.
   useEffect(() => {
     if (!open) return;
     calendar.current

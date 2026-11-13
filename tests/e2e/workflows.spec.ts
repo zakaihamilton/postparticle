@@ -28,7 +28,7 @@ async function signIn(page: Page, username = "admin") {
   await expect(page).toHaveURL(/\/projects$/);
 }
 function workspaceNavigationToggle(page: Page) {
-  return page.locator('button[aria-controls="workspace-sidebar"]');
+  return page.locator("button.pf-mobile-menu-button");
 }
 test("email usernames support account creation, resets, membership, and sign-in", async ({
   page,
@@ -415,7 +415,7 @@ test("custom dropdown supports keyboard selection, dismissal and a rotating inse
   await expect(control).toHaveAttribute("aria-expanded", "false");
   await expect
     .poll(() => arrow.evaluate((el) => getComputedStyle(el).transform))
-    .toBe("matrix(1, 0, 0, 1, 0, 0)");
+    .toBe("none");
   await control.press("Enter");
   await control.press("Escape");
   await expect(control).toHaveAttribute("aria-expanded", "false");
@@ -818,7 +818,7 @@ test("saving freezes editor fields and failed saves retain the unsaved draft", a
   await expect(title).toHaveValue("Retained after failure");
   await expect(title).not.toHaveAttribute("readonly", "");
   await expect(
-    page.getByText("Unsaved changes", { exact: true }),
+    page.getByRole("main").getByText("Unsaved changes", { exact: true }),
   ).toBeVisible();
 });
 

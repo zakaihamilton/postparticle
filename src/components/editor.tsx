@@ -105,6 +105,7 @@ export default function Editor({
     },
     [isArticle],
   );
+// biome-ignore lint/correctness/useExhaustiveDependencies: loadAttempt is an explicit retry trigger for this request effect.
   useEffect(() => {
     let active = true;
     historyRequestVersion.current++;

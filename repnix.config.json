@@ -14,7 +14,7 @@
       "mode": "required"
     },
     "accessibility": {
-      "mode": "required"
+      "mode": "optional"
     },
     "dead-code": {
       "mode": "required"

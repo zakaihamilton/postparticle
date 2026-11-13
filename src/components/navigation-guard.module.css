@@ -1,41 +1,3 @@
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-}
-.backdrop {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: var(--overlay);
-  cursor: default;
-}
-.dialog {
-  position: relative;
-  width: min(100%, 440px);
-  padding: 25px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  animation: dialog-enter var(--motion-panel) var(--ease-out);
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: var(--shadow);
-}
-.dialog h2 {
-  margin: 0 0 10px;
-  font-size: 18px;
-}
-.dialog p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.6;
-}
 .actions {
   display: flex;
   justify-content: flex-end;
@@ -68,25 +30,11 @@
   outline-offset: 3px;
 }
 @media (max-width: 420px) {
-  .dialog {
-    padding: 21px;
-  }
   .actions {
     flex-direction: column-reverse;
   }
   .stay,
   .continue {
     width: 100%;
-  }
-}
-
-@keyframes dialog-enter {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }

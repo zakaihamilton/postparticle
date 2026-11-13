@@ -34,8 +34,8 @@ export default function CodeBlock({
               : "Copy"}
         </button>
       </div>
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Focus enables keyboard scrolling of long code. */}
-      <pre tabIndex={0} aria-label={`${filename} source`}>
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: Focus enables keyboard scrolling of long code. */}
+      <pre role="region" tabIndex={0} aria-label={`${filename} source`}>
         <code>{code}</code>
       </pre>
       <span className={styles.copyStatus} role="status">

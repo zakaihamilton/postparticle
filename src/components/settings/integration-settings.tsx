@@ -313,7 +313,7 @@ export function IntegrationSettings({
                   : "Use the base URL readers will visit, without a trailing slash."}
             </small>
           </label>
-          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Focus enables keyboard scrolling of integration parameters. */}
+          {/* biome-ignore lint/a11y/noNoninteractiveTabindex: Focus enables keyboard scrolling of integration parameters. */}
           <pre className={styles.codeBlock} tabIndex={0}>
             {promptDetails}
           </pre>
@@ -352,7 +352,7 @@ export function IntegrationSettings({
             `/api/v1/projects/${projectId}/articles/{slug}?organizationId=${organizationId}`,
             `/api/v1/projects/${projectId}/documents/{key}?organizationId=${organizationId}`,
           ].map((url) => (
-            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Keyboard users must be able to scroll these API examples.
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users must be able to scroll these API examples.
             <pre className={styles.codeBlock} key={url} tabIndex={0}>
               GET {url}
             </pre>

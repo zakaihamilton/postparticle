@@ -200,10 +200,10 @@
   letter-spacing: 0.7px;
 }
 .main {
-  padding: 37px;
-  max-width: 1550px;
+  padding: 0;
+  max-width: none;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
   flex: 1;
   animation: enter var(--motion-enter) var(--ease-out);
 }
@@ -216,7 +216,7 @@
 .workspaceFooter {
   display: flex;
   justify-content: space-between;
-  margin: 0 37px;
+  margin: 0;
   border-top: 1px solid var(--border);
   padding: 22px 0;
   color: var(--muted);
@@ -1085,29 +1085,25 @@ a.secondary:hover {
   height: 16px;
   margin: 0;
 }
-.projectDeleteOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-}
-.projectDeleteBackdrop {
-  position: absolute;
-  inset: 0;
-  border: 0;
-  background: var(--overlay);
-}
 .projectDeleteDialog {
-  position: relative;
-  width: min(100%, 520px);
-  padding: 25px;
-  border: 1px solid var(--border);
+  width: min(560px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.projectDeleteDialog :global(.pf-dialog-panel) {
   border-radius: 8px;
   background: var(--surface);
   color: var(--text);
-  box-shadow: var(--shadow);
+}
+.projectDeleteDialog :global(.pf-dialog-header) {
+  padding: 25px 25px 0;
+}
+.projectDeleteDialog :global(.pf-dialog-body) {
+  padding: 0 25px 25px;
 }
 .projectDeleteDialog h2 {
   margin: 0 0 13px;
@@ -1758,5 +1754,61 @@ a.secondary:hover {
   .topbar > .topRight,
   .topbar > .accountHeaderActions {
     margin-left: auto;
+  }
+}
+
+
+.sharedToolbar {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.toolbarLocation {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 15px;
+  overflow: hidden;
+}
+
+.toolbarLocation strong {
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+@media (max-width: 700px) {
+  .sharedToolbar {
+    flex-wrap: wrap;
+    gap: 6px 8px;
+  }
+
+  .toolbarLocation {
+    width: 100%;
+    flex: 1 1 100%;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .toolbarLocation > span:first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .accountHeaderActions {
+    width: 100%;
+    flex: 1 1 100%;
+    justify-content: flex-end;
   }
 }

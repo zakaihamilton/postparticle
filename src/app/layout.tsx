@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Source_Sans_3, Lora } from "next/font/google";
+import { getThemeBootstrapScript, ThemeProvider } from "panel-frame-ui";
 import "./globals.css";
+
+const themePersistence = { type: "localStorage" as const, key: "postparticle-theme" };
 
 const sans = Source_Sans_3({
   subsets: ["latin"],
@@ -53,7 +56,7 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: dark)", color: "#101c29" },
   ],
 };
-const themeScript = `try{document.documentElement.dataset.theme=localStorage.getItem('postparticle-theme')||'system'}catch{}`;
+const themeScript = getThemeBootstrapScript(themePersistence);
 export default function RootLayout({
   children,
 }: {
@@ -69,7 +72,9 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <ThemeProvider persistence={themePersistence}>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

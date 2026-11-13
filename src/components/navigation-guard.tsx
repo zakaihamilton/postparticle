@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AlertDialog } from "panel-frame-ui";
 import {
   createContext,
   useCallback,
@@ -39,7 +40,6 @@ export function NavigationGuardProvider({ children }: { children: ReactNode }) {
   const [prompt, setPrompt] = useState<ConfirmationPrompt | null>(null);
   const stayButton = useRef<HTMLButtonElement>(null);
   const continueButton = useRef<HTMLButtonElement>(null);
-  const dialog = useRef<HTMLElement>(null);
 
   const isBlocked = useCallback(
     () => [...blockers.current.values()].some(Boolean),
@@ -76,72 +76,19 @@ export function NavigationGuardProvider({ children }: { children: ReactNode }) {
     [confirmNavigation, isBlocked],
   );
 
-  useEffect(() => {
-    if (!prompt) return;
-
-    const previouslyFocused =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    stayButton.current?.focus();
-
-    function onKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        settlePrompt(false);
-      } else if (event.key === "Tab") {
-        if (!dialog.current?.contains(document.activeElement)) {
-          event.preventDefault();
-          stayButton.current?.focus();
-        } else if (
-          event.shiftKey &&
-          document.activeElement === stayButton.current
-        ) {
-          event.preventDefault();
-          continueButton.current?.focus();
-        } else if (
-          !event.shiftKey &&
-          document.activeElement === continueButton.current
-        ) {
-          event.preventDefault();
-          stayButton.current?.focus();
-        }
-      }
-    }
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      previouslyFocused?.focus();
-    };
-  }, [prompt, settlePrompt]);
-
   return (
     <NavigationGuard.Provider value={guard}>
       {children}
-      {prompt && (
-        <div className={styles.overlay} data-navigation-guard-overlay>
-          <button
-            type="button"
-            className={styles.backdrop}
-            aria-label="Stay on this page"
-            tabIndex={-1}
-            onClick={() => settlePrompt(false)}
-          />
-          <section
-            ref={dialog}
-            className={styles.dialog}
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="navigation-confirm-title"
-            aria-describedby="navigation-confirm-description"
-          >
-            <h2 id="navigation-confirm-title">Unsaved changes</h2>
-            <p id="navigation-confirm-description">
-              You have unsaved changes or an operation in progress. Continue and
-              discard your unsaved changes?
-            </p>
-            <div className={styles.actions}>
+      <AlertDialog
+        initialFocusRef={stayButton}
+        onOpenChange={(open) => {
+          if (!open) settlePrompt(false);
+        }}
+        open={Boolean(prompt)}
+        title="Unsaved changes"
+        description="You have unsaved changes or an operation in progress. Continue and discard your unsaved changes?"
+      >
+        <div className={styles.actions}>
               <button
                 ref={stayButton}
                 type="button"
@@ -156,12 +103,10 @@ export function NavigationGuardProvider({ children }: { children: ReactNode }) {
                 className={styles.continue}
                 onClick={() => settlePrompt(true)}
               >
-                {prompt.confirmLabel}
+                {prompt?.confirmLabel ?? "Leave and discard"}
               </button>
-            </div>
-          </section>
         </div>
-      )}
+      </AlertDialog>
     </NavigationGuard.Provider>
   );
 }
