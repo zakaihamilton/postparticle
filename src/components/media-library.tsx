@@ -36,24 +36,32 @@ export default function MediaLibrary({
   projectId,
   canEdit,
   request = api,
+  previewUploadState,
+  previewInitialQuery = "",
 }: {
   projectId: string;
   canEdit: boolean;
   request?: typeof api;
+  previewUploadState?: "uploading" | "failed";
+  previewInitialQuery?: string;
 }) {
   const endpoint = `/api/manage/projects/${projectId}/media`;
   const [items, setItems] = useState<MediaLibraryItem[]>([]);
   const [total, setTotal] = useState(0);
   const [nextOffset, setNextOffset] = useState<number | null>(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    previewUploadState === "failed" ? "Upload failed. Check your connection and retry." : "",
+  );
   const [message, setMessage] = useState("");
   const [loadedQuery, setLoadedQuery] = useState<string | null>(null);
-  const [progress, setProgress] = useState<number | null>(null);
+  const [progress, setProgress] = useState<number | null>(
+    previewUploadState === "uploading" ? 56 : null,
+  );
   const [pendingUpload, setPendingUpload] = useState<PendingUpload | null>(
     null,
   );
   const [busy, setBusy] = useState(false);
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(previewInitialQuery);
   const [dragging, setDragging] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});

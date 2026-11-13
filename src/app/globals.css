@@ -37,6 +37,20 @@
   --danger-bg: #fff0ed;
   --shadow: 0 8px 35px #182c400d;
   --overlay: #182c4099;
+  --pf-background: var(--bg);
+  --pf-surface: var(--surface);
+  --pf-surface-raised: var(--surface);
+  --pf-text: var(--text);
+  --pf-muted: var(--muted);
+  --pf-border: var(--border);
+  --pf-accent: var(--accent-ink);
+  --pf-accent-contrast: var(--on-accent);
+  --pf-danger: var(--danger);
+  --pf-danger-surface: var(--danger-bg);
+  --pf-success: var(--green);
+  --pf-success-surface: var(--green-bg);
+  --pf-warning: #795920;
+  --pf-warning-surface: #fbf1d8;
   color-scheme: light;
 }
 :root[data-theme="dark"] {
@@ -58,6 +72,8 @@
   --danger-bg: #402823;
   --shadow: 0 8px 35px #0002;
   --overlay: #081421b3;
+  --pf-warning: #e6bd72;
+  --pf-warning-surface: #3a2e1c;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
