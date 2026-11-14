@@ -45,12 +45,14 @@ export default function Editor({
   projectId,
   canEdit,
   request = api,
+  initialDirty = false,
 }: {
   kind: Kind;
   id: string;
   projectId: string;
   canEdit: boolean;
   request?: typeof api;
+  initialDirty?: boolean;
 }) {
   const isNew = id === "new";
   const isArticle = kind === "articles";
@@ -78,6 +80,9 @@ export default function Editor({
   const inFlight = useRef(false);
   const historyRequestVersion = useRef(0);
   useUnsavedChanges(dirty || busy);
+  useEffect(() => {
+    if (initialDirty && !loading) setDirty(true);
+  }, [initialDirty, loading]);
   const endpoint = `/api/manage/projects/${projectId}/${kind}`;
   const editorDataQuery = new URLSearchParams({ kind, id });
   const editorDataEndpoint = `/api/manage/projects/${projectId}/editor?${editorDataQuery}`;
