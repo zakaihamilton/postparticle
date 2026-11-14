@@ -131,7 +131,7 @@ test("branded app assets and metadata are available without changing noindex", a
     }),
   ]);
   await page.goto("/projects");
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/127\.0\.0\.1:3102\/oauth\/authorize/);
 
   for (const [path, expectedSize] of [
     ["/icons/postparticle-192.png", 192],

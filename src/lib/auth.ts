@@ -17,7 +17,6 @@ import {
   perministerCreateAccount,
   perministerExchangeAuthorizationCode,
   perministerHasProductAdminAccess,
-  perministerLogin,
   perministerLogout,
   perministerProjectMembers,
   perministerRoleForProject,
@@ -467,20 +466,19 @@ export async function authorizeResolvedProject(
   };
 }
 
-export async function login(username: string, password: string) {
-  const { token, expiresAt } = await perministerLogin(username, password);
-  await establishPerministerSession(token, expiresAt);
-}
-
 export async function loginWithPerministerAuthorizationCode(
   code: string,
   codeVerifier: string,
+  nonce: string,
+  redirectUri: string,
 ) {
-  const { token, expiresAt } = await perministerExchangeAuthorizationCode(
+  const { accessToken, expiresAt } = await perministerExchangeAuthorizationCode(
     code,
     codeVerifier,
+    nonce,
+    redirectUri,
   );
-  await establishPerministerSession(token, expiresAt);
+  await establishPerministerSession(accessToken, expiresAt);
 }
 
 async function establishPerministerSession(token: string, expiresAt?: string) {

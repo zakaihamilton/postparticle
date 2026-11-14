@@ -3,6 +3,7 @@ import "server-only";
 import { HttpError } from "./config";
 import { isDevelopmentLoopbackOrigin } from "./origin";
 import type { Role } from "./types";
+import { exchangePerministerOidcCode } from "./perminister-oidc";
 
 const productId = "postparticle";
 const requestTimeoutMs = 12_000;
@@ -144,7 +145,9 @@ export function perministerClientSecretForSso() {
 export function perministerAuthorizationUrl(
   state: string,
   challenge: string,
+  nonce: string,
   requestOrigin?: string,
+  prompt?: "login",
 ): string {
   const config = authConfig();
   const appOrigin = new URL(requiredEnv("APP_ORIGIN")).origin;
@@ -158,7 +161,10 @@ export function perministerAuthorizationUrl(
     client_id: config.clientId,
     redirect_uri: redirectUri.toString(),
     response_type: "code",
+    scope: "openid profile email perminister_api",
     state,
+    nonce,
+    ...(prompt ? { prompt } : {}),
     code_challenge: challenge,
     code_challenge_method: "S256",
   }).toString();
@@ -272,62 +278,22 @@ function authPath(path: string) {
   return `/api/auth/consumer/${path}`;
 }
 
-export async function perministerLogin(identifier: string, password: string) {
-  const payload = await request(authPath("login"), {
-    method: "POST",
-    body: { identifier, password },
-    purpose: "login",
-  });
-  const sessionToken = payload.sessionToken;
-  const account = asRecord(payload.account);
-  const session = asRecord(payload.session);
-  if (
-    payload.authenticated !== true ||
-    typeof sessionToken !== "string" ||
-    !sessionToken ||
-    !account ||
-    !session
-  ) {
-    throw new HttpError(503, "Perminister returned an invalid login response.");
-  }
-  return {
-    token: sessionToken,
-    expiresAt:
-      typeof session.expiresAt === "string" ? session.expiresAt : undefined,
-  };
-}
-
 export async function perministerExchangeAuthorizationCode(
   code: string,
   codeVerifier: string,
+  nonce: string,
+  redirectUri: string,
 ) {
-  const payload = await request(authPath("token"), {
-    method: "POST",
-    body: {
-      grant_type: "authorization_code",
-      code,
-      code_verifier: codeVerifier,
-    },
-    purpose: "login",
+  const config = authConfig();
+  return exchangePerministerOidcCode({
+    baseUrl: config.baseUrl,
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
+    code,
+    codeVerifier,
+    redirectUri,
+    nonce,
   });
-  const sessionToken = payload.sessionToken;
-  const session = asRecord(payload.session);
-  if (
-    payload.authenticated !== true ||
-    typeof sessionToken !== "string" ||
-    !sessionToken ||
-    !session
-  ) {
-    throw new HttpError(
-      503,
-      "Perminister returned an invalid sign-in response.",
-    );
-  }
-  return {
-    token: sessionToken,
-    expiresAt:
-      typeof session.expiresAt === "string" ? session.expiresAt : undefined,
-  };
 }
 
 export async function perministerSession(
