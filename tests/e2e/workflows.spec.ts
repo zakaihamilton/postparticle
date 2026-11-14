@@ -18,12 +18,11 @@ test.beforeEach(async ({ page }, info) => {
 });
 async function signIn(page: Page, username = "admin") {
   await page.goto("/login");
+  await expect(page).toHaveURL(/127\.0\.0\.1:3102\/oauth\/authorize/);
   await page
     .getByLabel("Username or email address", { exact: true })
     .fill(username);
-  await page
-    .getByLabel("Password", { exact: true })
-    .fill("fixture-password-123");
+  await page.getByLabel("Password", { exact: true }).fill("fixture-password-123");
   await page.getByRole("button", { name: "Log in", exact: true }).click();
   await expect(page).toHaveURL(/\/projects$/);
 }
@@ -183,7 +182,7 @@ test("email usernames support account creation, resets, membership, and sign-in"
   await expect(page.getByRole("link", { name: /Demo Journal/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /SENTRY8/ })).toHaveCount(0);
 });
-test("public welcome leads to a separate login page, supports themes and reduced motion", async ({
+test("public welcome leads to Perminister sign-in, supports themes and reduced motion", async ({
   page,
 }, info) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -222,7 +221,8 @@ test("public welcome leads to a separate login page, supports themes and reduced
     fullPage: true,
   });
   await page.getByRole("link", { name: "Log in", exact: true }).click();
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/127\.0\.0\.1:3102\/oauth\/authorize/);
+  await expect(page.getByRole("heading", { name: "Perminister sign-in" })).toBeVisible();
 });
 test("login, project selection, article editing, publishing, tags, history, and unpublishing", async ({
   page,
@@ -650,7 +650,7 @@ test("logout uses the custom unsaved-changes dialog", async ({ page }) => {
   await confirmation
     .getByRole("button", { name: "Log out and discard" })
     .click();
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/login\?signedOut=1$/);
   expect(nativeDialogCount).toBe(0);
 });
 
@@ -719,13 +719,11 @@ test("form constraints show inline errors without native validation dialogs", as
   });
 
   await page.goto("/login");
+  await expect(page).toHaveURL(/127\.0\.0\.1:3102\/oauth\/authorize/);
+  await expect(page.getByLabel("Username or email address", { exact: true })).toHaveAttribute("required", "");
+  await expect(page.getByLabel("Password", { exact: true })).toHaveAttribute("required", "");
   await page.getByRole("button", { name: "Log in" }).click();
-  await expect(
-    page.getByText("This field is required.", { exact: true }),
-  ).toHaveCount(2);
-  await expect(
-    page.getByLabel("Username or email address", { exact: true }),
-  ).toHaveAttribute("aria-invalid", "true");
+  await expect(page).toHaveURL(/127\.0\.0\.1:3102\/oauth\/authorize/);
   expect(loginRequests).toBe(0);
 
   await signIn(page);

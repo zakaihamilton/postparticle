@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { generateKeyPairSync, sign as signBytes } from "node:crypto";
 import {
   perministerAuthorize,
-  perministerLogin,
+  perministerAuthorizationUrl,
+  perministerExchangeAuthorizationCode,
   perministerRecoveryUrl,
   perministerRoleForProject,
   perministerSession,
@@ -14,6 +16,55 @@ function configure() {
   vi.stubEnv("PERMINISTER_BASE_URL", "https://perminister.example");
   vi.stubEnv("PERMINISTER_APP_CLIENT_ID", clientId);
   vi.stubEnv("PERMINSITER_APP_CLIENT_SECRET", "server-only-client-secret");
+  vi.stubEnv("APP_ORIGIN", "https://postparticle.example");
+}
+
+const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+const keyId = "test-signing-key";
+const publicJwk = {
+  ...(publicKey.export({ format: "jwk" }) as Record<string, string>),
+  alg: "RS256",
+  kid: keyId,
+  use: "sig",
+};
+
+function signedIdToken(nonce: string, claims: Record<string, unknown> = {}): string {
+  const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url");
+  const header = encode({ alg: "RS256", typ: "JWT", kid: keyId });
+  const payload = encode({
+    iss: "https://perminister.example",
+    sub: "subject-1",
+    aud: clientId,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 300,
+    nonce,
+    ...claims,
+  });
+  const signingInput = `${header}.${payload}`;
+  return `${signingInput}.${signBytes("RSA-SHA256", Buffer.from(signingInput), privateKey).toString("base64url")}`;
+}
+
+function oidcFetch(nonce: string, claims: Record<string, unknown> = {}) {
+  return vi.fn()
+    .mockResolvedValueOnce(Response.json({
+      issuer: "https://perminister.example",
+      authorization_endpoint: "https://perminister.example/oauth/authorize",
+      token_endpoint: "https://perminister.example/oauth/token",
+      jwks_uri: "https://perminister.example/.well-known/jwks.json",
+      response_types_supported: ["code"],
+      id_token_signing_alg_values_supported: ["RS256"],
+      code_challenge_methods_supported: ["S256"],
+      token_endpoint_auth_methods_supported: ["client_secret_basic"],
+      scopes_supported: ["openid", "profile", "email", "perminister_api"],
+    }))
+    .mockResolvedValueOnce(Response.json({
+      access_token: "opaque-access-token",
+      token_type: "Bearer",
+      expires_in: 3600,
+      scope: "openid profile email perminister_api",
+      id_token: signedIdToken(nonce, claims),
+    }))
+    .mockResolvedValueOnce(Response.json({ keys: [publicJwk] }));
 }
 
 afterEach(() => {
@@ -36,40 +87,63 @@ describe("Perminister consumer integration", () => {
     vi.stubEnv("PERMINISTER_BASE_URL", "");
     expect(perministerRecoveryUrl()).toBeNull();
   });
-  it("sends credentials only to the server-side login endpoint", async () => {
+  it("creates a full OIDC authorization request with a personalized return callback", () => {
     configure();
-    const fetch = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          authenticated: true,
-          sessionToken: "remote-session-token",
-          account: { subjectId: "subject-id" },
-          session: { expiresAt: "2026-10-08T12:00:00.000Z" },
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
-    );
+    vi.stubEnv("NODE_ENV", "development");
+    const destination = new URL(perministerAuthorizationUrl("a".repeat(43), "b".repeat(43), "c".repeat(43), "http://localhost:3000", "login"));
+    expect(destination.origin).toBe("https://perminister.example");
+    expect(destination.searchParams.get("scope")).toBe("openid profile email perminister_api");
+    expect(destination.searchParams.get("state")).toBe("a".repeat(43));
+    expect(destination.searchParams.get("nonce")).toBe("c".repeat(43));
+    expect(destination.searchParams.get("prompt")).toBe("login");
+    expect(destination.searchParams.get("redirect_uri")).toBe("http://localhost:3000/auth/perminister/callback");
+  });
+
+  it("exchanges the code with client_secret_basic and verifies the signed ID token", async () => {
+    configure();
+    const fetch = oidcFetch("nonce-value");
     vi.stubGlobal("fetch", fetch);
 
     await expect(
-      perministerLogin("writer", "secret-password"),
-    ).resolves.toEqual({
-      token: "remote-session-token",
-      expiresAt: "2026-10-08T12:00:00.000Z",
+      perministerExchangeAuthorizationCode("auth-code", "v".repeat(43), "nonce-value", "https://postparticle.example/auth/perminister/callback"),
+    ).resolves.toMatchObject({
+      accessToken: "opaque-access-token",
     });
-    const [url, init] = fetch.mock.calls[0];
-    const headers = new Headers(init?.headers);
-    expect(String(url)).toBe(
-      "https://perminister.example/api/auth/consumer/login",
-    );
-    expect(headers.get("X-Perminister-Client-Id")).toBe(clientId);
-    expect(headers.get("X-Perminister-Client-Secret")).toBe(
-      "server-only-client-secret",
-    );
-    expect(JSON.parse(String(init?.body))).toEqual({
-      identifier: "writer",
-      password: "secret-password",
-    });
+    const [url, init] = fetch.mock.calls[1] as [URL, RequestInit];
+    const headers = new Headers(init.headers);
+    expect(String(url)).toBe("https://perminister.example/oauth/token");
+    expect(headers.get("Authorization")).toBe(`Basic ${Buffer.from(`${clientId}:server-only-client-secret`).toString("base64")}`);
+    expect(new URLSearchParams(String(init.body))).toEqual(new URLSearchParams({
+      grant_type: "authorization_code",
+      code: "auth-code",
+      redirect_uri: "https://postparticle.example/auth/perminister/callback",
+      code_verifier: "v".repeat(43),
+    }));
+  });
+
+  it("rejects a correctly signed ID token with a mismatched nonce", async () => {
+    configure();
+    vi.stubGlobal("fetch", oidcFetch("different-nonce"));
+    await expect(
+      perministerExchangeAuthorizationCode("auth-code", "v".repeat(43), "expected-nonce", "https://postparticle.example/auth/perminister/callback"),
+    ).rejects.toThrow("ID token validation failed");
+  });
+
+  it.each([
+    ["issuer", { iss: "https://attacker.example" }],
+    ["audience", { aud: "another-client" }],
+    ["expiry", { exp: Math.floor(Date.now() / 1000) - 1 }],
+  ])("rejects a signed ID token with a mismatched %s", async (_label, claims) => {
+    configure();
+    vi.stubGlobal("fetch", oidcFetch("expected-nonce", claims));
+    await expect(
+      perministerExchangeAuthorizationCode(
+        "auth-code",
+        "v".repeat(43),
+        "expected-nonce",
+        "https://postparticle.example/auth/perminister/callback",
+      ),
+    ).rejects.toThrow("ID token validation failed");
   });
 
   it("treats invalid central sessions as signed out", async () => {

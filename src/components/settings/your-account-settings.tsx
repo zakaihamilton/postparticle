@@ -75,7 +75,7 @@ export function YourAccountSettings({
                   password: data.get("password"),
                 }),
               });
-              router.push("/login");
+              router.push("/login?signedOut=1");
               router.refresh();
             });
           }}

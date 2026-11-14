@@ -35,7 +35,7 @@ export function AccountArea({
     setError("");
     try {
       await api("/api/auth/logout", { method: "POST" });
-      router.push("/login");
+      router.push("/login?signedOut=1");
       router.refresh();
     } catch (e) {
       setError((e as Error).message);

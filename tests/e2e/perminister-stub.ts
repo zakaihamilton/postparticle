@@ -1,4 +1,10 @@
-import { randomUUID } from "node:crypto";
+import {
+  createHash,
+  generateKeyPairSync,
+  randomBytes,
+  randomUUID,
+  sign as signBytes,
+} from "node:crypto";
 import { testOrganizationId } from "./organization";
 import {
   createServer,
@@ -24,6 +30,27 @@ interface Account {
 const accounts = new Map<string, Account>();
 const memberships = new Map<string, string>();
 const sessions = new Map<string, string>();
+const oauthCodes = new Map<
+  string,
+  {
+    clientId: string;
+    redirectUri: string;
+    challenge: string;
+    nonce: string;
+    state: string;
+    subjectId: string;
+    createdAt: number;
+  }
+>();
+const signingKeyId = "postparticle-e2e-key";
+const { privateKey: oidcPrivateKey, publicKey: oidcPublicKey } =
+  generateKeyPairSync("rsa", { modulusLength: 2048 });
+const oidcPublicJwk = {
+  ...oidcPublicKey.export({ format: "jwk" }),
+  alg: "RS256",
+  kid: signingKeyId,
+  use: "sig",
+};
 
 function addAccount(
   username: string,
@@ -54,6 +81,86 @@ addAccount("outsider");
 function send(response: ServerResponse, status: number, body: unknown) {
   response.writeHead(status, { "Content-Type": "application/json" });
   response.end(JSON.stringify(body));
+}
+
+function sendHtml(response: ServerResponse, status: number, body: string) {
+  response.writeHead(status, {
+    "Cache-Control": "no-store",
+    "Content-Type": "text/html; charset=utf-8",
+  });
+  response.end(body);
+}
+
+function readForm(request: IncomingMessage): Promise<URLSearchParams> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    request.on("data", (chunk: Buffer) => chunks.push(chunk));
+    request.on("error", reject);
+    request.on("end", () =>
+      resolve(new URLSearchParams(Buffer.concat(chunks).toString("utf8"))),
+    );
+  });
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[character]!);
+}
+
+function signTestIdToken(account: Account, nonce: string): string {
+  const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url");
+  const header = encode({ alg: "RS256", typ: "JWT", kid: signingKeyId });
+  const now = Math.floor(Date.now() / 1000);
+  const payload = encode({
+    iss: "http://127.0.0.1:3102",
+    sub: account.subjectId,
+    aud: clientId,
+    iat: now,
+    exp: now + 300,
+    nonce,
+    email: account.email,
+    preferred_username: account.username,
+  });
+  const input = `${header}.${payload}`;
+  const signature = signBytes("RSA-SHA256", Buffer.from(input), oidcPrivateKey).toString("base64url");
+  return `${input}.${signature}`;
+}
+
+function validAuthorizationRequest(url: URL): boolean {
+  return (
+    url.searchParams.get("client_id") === clientId &&
+    url.searchParams.get("response_type") === "code" &&
+    url.searchParams.get("scope") === "openid profile email perminister_api" &&
+    /^[A-Za-z0-9_-]{43}$/.test(url.searchParams.get("state") ?? "") &&
+    /^[A-Za-z0-9_-]{43}$/.test(url.searchParams.get("nonce") ?? "") &&
+    url.searchParams.get("code_challenge_method") === "S256" &&
+    /^[A-Za-z0-9_-]{43}$/.test(url.searchParams.get("code_challenge") ?? "") &&
+    url.searchParams.get("redirect_uri") ===
+      "http://localhost:3100/auth/perminister/callback"
+  );
+}
+
+function authorizationHtml(values: Record<string, string>, error = ""): string {
+  const hidden = Object.entries(values)
+    .map(([key, value]) => `<input type="hidden" name="${escapeHtml(key)}" value="${escapeHtml(value)}">`)
+    .join("\n");
+  return `<!doctype html>
+    <html lang="en"><head><meta charset="utf-8"><title>Perminister sign-in</title></head>
+    <body><main><h1>Perminister sign-in</h1>
+      <p>Use your Perminister account to continue to PostParticle.</p>
+      ${error ? `<p role="alert">${escapeHtml(error)}</p>` : ""}
+      <form action="/oauth/authorize/continue" method="post">
+        ${hidden}
+        <label>Username or email address <input name="identifier" autocomplete="username" required></label>
+        <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+        <button type="submit">Log in</button>
+      </form>
+    </main></body></html>`;
 }
 
 function readJson(request: IncomingMessage): Promise<Record<string, unknown>> {
@@ -126,41 +233,125 @@ const server = createServer(async (request, response) => {
     send(response, 200, { ok: true });
     return;
   }
-  if (
-    request.headers["x-perminister-client-id"] !== clientId ||
-    request.headers["x-perminister-client-secret"] !== clientSecret
-  ) {
-    send(response, 401, { error: "invalid_client" });
+  if (request.method === "GET" && url.pathname === "/.well-known/openid-configuration") {
+    send(response, 200, {
+      issuer: "http://127.0.0.1:3102",
+      authorization_endpoint: "http://127.0.0.1:3102/oauth/authorize",
+      token_endpoint: "http://127.0.0.1:3102/oauth/token",
+      jwks_uri: "http://127.0.0.1:3102/.well-known/jwks.json",
+      response_types_supported: ["code"],
+      id_token_signing_alg_values_supported: ["RS256"],
+      code_challenge_methods_supported: ["S256"],
+      token_endpoint_auth_methods_supported: ["client_secret_basic"],
+      scopes_supported: ["openid", "profile", "email", "perminister_api"],
+    });
     return;
   }
-
-  if (
-    request.method === "POST" &&
-    url.pathname === "/api/auth/consumer/login"
-  ) {
-    const body = await readJson(request);
-    const identifier = String(body.identifier ?? "")
-      .trim()
-      .toLowerCase();
+  if (request.method === "GET" && url.pathname === "/.well-known/jwks.json") {
+    response.writeHead(200, {
+      "Cache-Control": "no-store",
+      "Content-Type": "application/jwk-set+json; charset=utf-8",
+    });
+    response.end(JSON.stringify({ keys: [oidcPublicJwk] }));
+    return;
+  }
+  if (request.method === "GET" && url.pathname === "/oauth/authorize") {
+    if (!validAuthorizationRequest(url)) {
+      send(response, 400, { error: "invalid_request" });
+      return;
+    }
+    sendHtml(response, 200, authorizationHtml(Object.fromEntries(url.searchParams.entries())));
+    return;
+  }
+  if (request.method === "POST" && url.pathname === "/oauth/authorize/continue") {
+    const form = await readForm(request);
+    const authorization = new URLSearchParams();
+    for (const key of [
+      "client_id", "redirect_uri", "response_type", "scope", "state", "nonce",
+      "code_challenge", "code_challenge_method",
+    ]) {
+      const value = form.get(key);
+      if (value !== null) authorization.set(key, value);
+    }
+    const authorizationUrl = new URL("/oauth/authorize", "http://127.0.0.1:3102");
+    authorizationUrl.search = authorization.toString();
+    if (!validAuthorizationRequest(authorizationUrl)) {
+      send(response, 400, { error: "invalid_request" });
+      return;
+    }
+    const identifier = (form.get("identifier") ?? "").trim().toLowerCase();
     const account = [...accounts.values()].find(
       (candidate) =>
         candidate.status === "active" &&
         (candidate.username === identifier || candidate.email === identifier),
     );
-    if (!account || account.password !== body.password) {
-      send(response, 401, { error: "invalid_credentials" });
+    if (!account || account.password !== form.get("password")) {
+      sendHtml(response, 401, authorizationHtml(Object.fromEntries(authorization), "Invalid username or password."));
       return;
     }
-    const token = randomUUID();
-    sessions.set(token, account.subjectId);
-    send(response, 200, {
-      authenticated: true,
-      sessionToken: token,
-      account: accountPayload(account),
-      session: {
-        expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
-      },
+    const code = randomBytes(32).toString("base64url");
+    oauthCodes.set(code, {
+      clientId,
+      redirectUri: authorization.get("redirect_uri")!,
+      challenge: authorization.get("code_challenge")!,
+      nonce: authorization.get("nonce")!,
+      state: authorization.get("state")!,
+      subjectId: account.subjectId,
+      createdAt: Date.now(),
     });
+    const callback = new URL(authorization.get("redirect_uri")!);
+    callback.search = new URLSearchParams({ code, state: authorization.get("state")! }).toString();
+    response.writeHead(303, { "Cache-Control": "no-store", Location: callback.toString() });
+    response.end();
+    return;
+  }
+  if (request.method === "POST" && url.pathname === "/oauth/token") {
+    const basic = /^Basic ([A-Za-z0-9+/]+={0,2})$/i.exec(request.headers.authorization ?? "");
+    const credentials = basic ? Buffer.from(basic[1], "base64").toString("utf8") : "";
+    const separator = credentials.indexOf(":");
+    const authenticatedClient = separator >= 0 &&
+      credentials.slice(0, separator) === clientId &&
+      credentials.slice(separator + 1) === clientSecret;
+    const form = await readForm(request);
+    const codeValue = form.get("code") ?? "";
+    const code = oauthCodes.get(codeValue);
+    const verifier = form.get("code_verifier") ?? "";
+    const challenge = createHash("sha256").update(verifier).digest("base64url");
+    if (
+      !authenticatedClient ||
+      form.get("grant_type") !== "authorization_code" ||
+      !code ||
+      code.createdAt < Date.now() - 5 * 60 * 1000 ||
+      code.clientId !== clientId ||
+      code.redirectUri !== form.get("redirect_uri") ||
+      code.challenge !== challenge
+    ) {
+      send(response, 400, { error: "invalid_grant" });
+      return;
+    }
+    oauthCodes.delete(codeValue);
+    const account = accounts.get(code.subjectId);
+    if (!account || account.status !== "active") {
+      send(response, 400, { error: "invalid_grant" });
+      return;
+    }
+    const accessToken = randomBytes(32).toString("base64url");
+    sessions.set(accessToken, account.subjectId);
+    send(response, 200, {
+      access_token: accessToken,
+      token_type: "Bearer",
+      expires_in: 8 * 60 * 60,
+      scope: "openid profile email perminister_api",
+      id_token: signTestIdToken(account, code.nonce),
+    });
+    return;
+  }
+
+  if (
+    request.headers["x-perminister-client-id"] !== clientId ||
+    request.headers["x-perminister-client-secret"] !== clientSecret
+  ) {
+    send(response, 401, { error: "invalid_client" });
     return;
   }
 

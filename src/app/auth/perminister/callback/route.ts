@@ -6,15 +6,21 @@ import {
   matchesPerministerSsoState,
   perministerSsoCookieName,
   readPerministerSsoTransaction,
+  safePostParticleReturnTo,
 } from "@/lib/perminister-sso";
 
 export const runtime = "nodejs";
 
-function responseToLogin(request: Request, state: string, error = "sso") {
-  const response = NextResponse.redirect(
-    new URL(`/login?error=${error}`, request.url),
-    303,
-  );
+function responseToLogin(
+  request: Request,
+  state: string,
+  error = "sso",
+  returnTo: string | null = null,
+) {
+  const query = new URLSearchParams({ error });
+  const safeReturn = safePostParticleReturnTo(returnTo);
+  if (safeReturn) query.set("next", safeReturn);
+  const response = NextResponse.redirect(new URL(`/login?${query}`, request.url), 303);
   const cookieName = perministerSsoCookieName(state);
   if (cookieName) {
     response.cookies.set(cookieName, "", {
@@ -32,14 +38,14 @@ function responseToLogin(request: Request, state: string, error = "sso") {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const code = url.searchParams.get("code") ?? "";
   const state = url.searchParams.get("state") ?? "";
-  if (url.searchParams.has("error") || !code || !state)
+  if (url.searchParams.getAll("state").length !== 1) {
     return responseToLogin(request, state);
-
+  }
   const cookieName = perministerSsoCookieName(state);
   if (!cookieName) return responseToLogin(request, state);
 
+  let returnTo: string | null = null;
   try {
     const secret = perministerClientSecretForSso();
     const cookieValue = (await cookies()).get(cookieName)?.value;
@@ -47,9 +53,26 @@ export async function GET(request: Request) {
     if (!transaction || !matchesPerministerSsoState(transaction.state, state)) {
       return responseToLogin(request, state);
     }
-    await loginWithPerministerAuthorizationCode(code, transaction.verifier);
+    returnTo = transaction.returnTo;
+    const codes = url.searchParams.getAll("code");
+    if (
+      url.searchParams.has("error") ||
+      url.searchParams.getAll("error").length > 1 ||
+      codes.length !== 1 ||
+      !codes[0] ||
+      codes[0].length > 2048
+    ) {
+      return responseToLogin(request, state, "sso", returnTo);
+    }
+
+    await loginWithPerministerAuthorizationCode(
+      codes[0],
+      transaction.verifier,
+      transaction.nonce,
+      transaction.redirectUri,
+    );
     const response = NextResponse.redirect(
-      new URL("/projects", request.url),
+      new URL(returnTo ?? "/projects", request.url),
       303,
     );
     response.cookies.set(cookieName, "", {
@@ -63,6 +86,6 @@ export async function GET(request: Request) {
     response.headers.set("Referrer-Policy", "no-referrer");
     return response;
   } catch {
-    return responseToLogin(request, state);
+    return responseToLogin(request, state, "sso", returnTo);
   }
 }

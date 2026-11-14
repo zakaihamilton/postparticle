@@ -145,12 +145,9 @@ test("workspace Settings & API links to the public guides", async ({
 }) => {
   await page.setExtraHTTPHeaders({ "x-forwarded-for": "2001:db8::deve" });
   await page.goto("/login");
-  await page
-    .getByLabel("Username or email address", { exact: true })
-    .fill("admin");
-  await page
-    .getByLabel("Password", { exact: true })
-    .fill("fixture-password-123");
+  await expect(page).toHaveURL(/127\.0\.0\.1:3102\/oauth\/authorize/);
+  await page.getByLabel("Username or email address", { exact: true }).fill("admin");
+  await page.getByLabel("Password", { exact: true }).fill("fixture-password-123");
   await page.getByRole("button", { name: "Log in", exact: true }).click();
   await expect(page).toHaveURL(/\/projects$/);
   await page.goto("/workspace/demo/settings");
