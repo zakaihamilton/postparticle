@@ -57,6 +57,9 @@ function WorkspaceContent({
   initialDashboard,
   previewContent,
   previewContentError,
+  previewUnsaved,
+  previewMediaScenario,
+  previewInitialMediaQuery,
   previewRequest,
 }: {
   actor: Actor;
@@ -68,6 +71,9 @@ function WorkspaceContent({
   initialDashboard: Promise<WorkspaceDashboardResult>;
   previewContent?: ContentListData;
   previewContentError?: string;
+  previewUnsaved?: boolean;
+  previewMediaScenario?: "uploading" | "failed";
+  previewInitialMediaQuery?: string;
   previewRequest?: typeof api;
 }) {
   const router = useRouter();
@@ -216,6 +222,7 @@ function WorkspaceContent({
               projectId={project.id}
               canEdit={canEdit}
               request={previewRequest}
+              initialDirty={previewUnsaved}
             />
           ) : (
             <ContentList
@@ -241,6 +248,8 @@ function WorkspaceContent({
               projectId={project.id}
               canEdit={canEdit}
               request={previewRequest}
+              previewUploadState={previewMediaScenario}
+              previewInitialQuery={previewInitialMediaQuery}
             />
           ))}
         {tab === "members" ? (

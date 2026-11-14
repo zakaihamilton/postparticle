@@ -100,6 +100,25 @@ const existingRecord: RecordState<Article> = {
   trashed: false,
   revision: "preview-revision",
 };
+const scenarioOptions = [
+  { value: "populated", label: "Populated" },
+  { value: "empty", label: "Empty" },
+  { value: "error", label: "Error" },
+  { value: "high-volume", label: "High volume" },
+  { value: "long-names", label: "Long names" },
+  { value: "no-results", label: "No search results" },
+  { value: "uploading", label: "Upload in progress" },
+  { value: "upload-error", label: "Upload failed" },
+  { value: "missing-image", label: "Missing image preview" },
+];
+const articleScenarioOptions = [
+  { value: "draft", label: "Draft" },
+  { value: "published", label: "Published" },
+  { value: "history", label: "Revision history" },
+  { value: "empty", label: "Empty editor" },
+  { value: "long-content", label: "Long content" },
+  { value: "unsaved", label: "Unsaved changes" },
+];
 type Screen =
   | "overview"
   | "articles"
@@ -119,8 +138,27 @@ type Screen =
   | "account"
   | "media"
   | "settings";
-type Scenario = "populated" | "empty" | "error";
-type ArticleScenario = "draft" | "published" | "history";
+type Scenario = (typeof scenarioOptions)[number]["value"];
+type ArticleScenario = (typeof articleScenarioOptions)[number]["value"];
+function articleRowsForScenario(scenario: Scenario) {
+  if (scenario === "long-names")
+    return articles.map((article, index) => ({
+      ...article,
+      draft: {
+        ...article.draft,
+        title:
+          index === 0
+            ? "A deliberately long editorial headline to check how article cards and project navigation wrap on small screens"
+            : article.draft.title,
+      },
+    }));
+  if (scenario === "high-volume")
+    return Array.from({ length: 36 }, (_, index) => ({
+      ...articles[index % articles.length],
+      id: `preview-article-${index + 1}`,
+    }));
+  return articles;
+}
 function fixture(scenario: Scenario): WorkspaceDashboardResult {
   if (scenario === "error")
     return {
@@ -139,10 +177,10 @@ function fixture(scenario: Scenario): WorkspaceDashboardResult {
     };
   return {
     data: {
-      articleCount: 12,
-      publishedCount: 8,
-      mediaCount: 24,
-      recentArticles: articles,
+      articleCount: scenario === "high-volume" ? 426 : 12,
+      publishedCount: scenario === "high-volume" ? 318 : 8,
+      mediaCount: scenario === "high-volume" ? 184 : 24,
+      recentArticles: articleRowsForScenario(scenario),
     },
     error: "",
   };
@@ -153,6 +191,13 @@ export default function Preview() {
   const [articleScenario, setArticleScenario] =
     useState<ArticleScenario>("published");
   const [scenario, setScenario] = useState<Scenario>("populated");
+  const previewProject =
+    scenario === "long-names"
+      ? {
+          ...project,
+          name: "The Field Notes for Distributed Editorial Teams and Regional Publishers",
+        }
+      : project;
   const dashboard = useMemo(
     () => Promise.resolve(fixture(scenario)),
     [scenario],
@@ -192,7 +237,7 @@ export default function Preview() {
               scenario === "empty"
                 ? []
                 : [
-                    { ...project, role: "editor" },
+                    { ...previewProject, role: "editor" },
                     {
                       id: "archive",
                       name: "Archive",
@@ -208,7 +253,7 @@ export default function Preview() {
                 ? []
                 : [
                     {
-                      ...project,
+                      ...previewProject,
                       production: true,
                       archived: false,
                       deleting: false,
@@ -246,18 +291,42 @@ export default function Preview() {
                   ? {
                       ...existingRecord,
                       published:
-                        articleScenario === "draft" ? null : existingArticle,
+                        articleScenario === "draft" || articleScenario === "empty"
+                          ? null
+                          : existingArticle,
                       publishedAt:
-                        articleScenario === "draft"
+                        articleScenario === "draft" || articleScenario === "empty"
                           ? null
                           : existingRecord.publishedAt,
                       draft:
-                        articleScenario === "history"
+                        articleScenario === "empty"
                           ? {
                               ...existingArticle,
-                              body: `${existingArticle.body}\n\nA saved draft with newer ideas.`,
+                              title: "",
+                              excerpt: "",
+                              body: "",
+                              seoTitle: "",
+                              seoDescription: "",
                             }
-                          : existingArticle,
+                          : articleScenario === "long-content"
+                            ? {
+                                ...existingArticle,
+                                title:
+                                  "A deliberately long editorial headline to test typography and responsive wrapping in the article editor",
+                                body: `${existingArticle.body}\n\n${"A long paragraph for checking editor line length, spacing, and scrolling on narrow screens. ".repeat(22)}`,
+                              }
+                            : articleScenario === "unsaved"
+                              ? {
+                                  ...existingArticle,
+                                  title: "A quieter way to work — revised draft",
+                                  body: `${existingArticle.body}\n\nThis synthetic draft is marked unsaved for preview.`,
+                                }
+                              : articleScenario === "history"
+                                ? {
+                                    ...existingArticle,
+                                    body: `${existingArticle.body}\n\nA saved draft with newer ideas.`,
+                                }
+                                : existingArticle,
                     }
                   : null,
             media: [],
@@ -315,6 +384,8 @@ export default function Preview() {
               builtAt: "2026-10-01T00:00:00Z",
             },
           } as T;
+        if (scenario === "missing-image" && url.endsWith("/preview-thumbnail"))
+          throw new Error("The synthetic image preview is unavailable.");
         if (url.endsWith("/preview") || url.endsWith("/preview-thumbnail"))
           return { url: syntheticImageUrl } as T;
         if (url.includes("/media")) {
@@ -324,14 +395,33 @@ export default function Preview() {
               ?.toLowerCase() ?? "";
           const matches =
             scenario !== "empty" &&
+            scenario !== "no-results" &&
             (!query || "studio-notes.jpg studio notes".includes(query));
-          return {
-            items: !matches
-              ? []
+          const mediaItems = !matches
+            ? []
+            : scenario === "high-volume"
+              ? Array.from({ length: 24 }, (_, index) => ({
+                  id: `sample-${index + 1}`,
+                  filename: `studio-notes-${String(index + 1).padStart(2, "0")}.jpg`,
+                  contentType: "image/jpeg",
+                  size: 42000 + index * 128,
+                  alt: `Studio notes ${index + 1}`,
+                  caption: "",
+                  metadata: {},
+                  createdAt: "2026-10-01T00:00:00Z",
+                  ready: true,
+                  deleted: false,
+                  previewUrl: syntheticImageUrl,
+                }))
               : [
                   {
                     id: "sample",
-                    filename: "studio-notes.jpg",
+                    filename:
+                      scenario === "long-names"
+                        ? "studio-notes-for-distributed-editorial-teams-and-regional-publishers.jpg"
+                        : scenario === "missing-image"
+                          ? "missing-preview-studio-notes.jpg"
+                          : "studio-notes.jpg",
                     contentType: "image/jpeg",
                     size: 42000,
                     alt: "Studio notes",
@@ -340,11 +430,14 @@ export default function Preview() {
                     createdAt: "2026-10-01T00:00:00Z",
                     ready: true,
                     deleted: false,
-                    previewUrl: syntheticImageUrl,
+                    previewUrl:
+                      scenario === "missing-image" ? "/missing-preview.jpg" : syntheticImageUrl,
                   },
-                ],
-            total: matches ? 1 : 0,
-            nextOffset: null,
+                ];
+          return {
+            items: mediaItems,
+            total: scenario === "high-volume" && matches ? 48 : mediaItems.length,
+            nextOffset: scenario === "high-volume" && matches ? 24 : null,
           } as T;
         }
         throw new Error("No preview fixture is available for this request.");
@@ -353,13 +446,13 @@ export default function Preview() {
   );
   const previewContent = useMemo(() => {
     const rows =
-      scenario === "populated"
+      ["populated", "high-volume", "long-names"].includes(scenario)
         ? screen === "documents"
-          ? articles.map((article) => ({
+          ? articleRowsForScenario(scenario).map((article) => ({
               ...article,
               draft: { ...article.draft, key: `content.${article.id}` },
             }))
-          : articles
+          : articleRowsForScenario(scenario)
         : [];
     return { rows, recordCount: rows.length, activeCount: rows.length };
   }, [scenario, screen]);
@@ -403,28 +496,21 @@ export default function Preview() {
           ]}
           onSelect={(value) => setScreen(value as Screen)}
         />
-        <PreviewDropdown
-          label="Scenario"
-          value={screen === "existing-article" ? articleScenario : scenario}
-          options={
-            screen === "existing-article"
-              ? [
-                  { value: "draft", label: "Draft" },
-                  { value: "published", label: "Published" },
-                  { value: "history", label: "Revision history" },
-                ]
-              : [
-                  { value: "populated", label: "Populated" },
-                  { value: "empty", label: "Empty" },
-                  { value: "error", label: "Error" },
-                ]
-          }
-          onSelect={(value) => {
-            if (screen === "existing-article")
-              setArticleScenario(value as ArticleScenario);
-            else setScenario(value as Scenario);
-          }}
-        />
+        {screen === "existing-article" ? (
+          <PreviewDropdown
+            label="Article state"
+            value={articleScenario}
+            options={articleScenarioOptions}
+            onSelect={(value) => setArticleScenario(value as ArticleScenario)}
+          />
+        ) : (
+          <PreviewDropdown
+            label="Scenario"
+            value={scenario}
+            options={scenarioOptions}
+            onSelect={(value) => setScenario(value as Scenario)}
+          />
+        )}
         {!screen.startsWith("platform-") &&
           ![
             "project-picker",
@@ -474,7 +560,7 @@ export default function Preview() {
           <ProjectPicker
             actor={actor}
             projects={
-              scenario === "empty" ? [] : [{ ...project, role: "admin" }]
+              scenario === "empty" ? [] : [{ ...previewProject, role: "admin" }]
             }
           />
         ) : screen === "project-admin" || screen === "project-create" ? (
@@ -525,7 +611,7 @@ export default function Preview() {
           <Workspace
             actor={actor}
             role={previewRole}
-            project={project}
+            project={previewProject}
             view={
               screen === "overview"
                 ? []
@@ -543,6 +629,17 @@ export default function Preview() {
             }
             previewRequest={previewRequest}
             previewContent={previewContent}
+            previewUnsaved={articleScenario === "unsaved"}
+            previewInitialMediaQuery={
+              screen === "media" && scenario === "no-results" ? "campaign" : ""
+            }
+            previewMediaScenario={
+              scenario === "uploading"
+                ? "uploading"
+                : scenario === "upload-error"
+                  ? "failed"
+                  : undefined
+            }
             previewContentError={
               scenario === "error" &&
               (screen === "articles" || screen === "documents")
