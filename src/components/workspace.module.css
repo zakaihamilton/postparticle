@@ -186,7 +186,8 @@
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  flex-shrink: 0;
+  min-width: 0;
+  flex-shrink: 1;
 }
 .topbar strong {
   font-weight: 500;
@@ -1541,22 +1542,46 @@ a.secondary:hover {
     grid-template-columns: 1fr;
   }
 }
-@media (min-width: 701px) and (max-width: 820px) {
+@media (min-width: 701px) and (max-width: 900px) {
   .topbar {
-    height: auto;
+    height: 75px;
     min-height: 75px;
-    flex-wrap: wrap;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    gap: 8px 10px;
+    flex-wrap: nowrap;
+    padding: 0 18px;
+    gap: 8px;
   }
-  .topbar > div:first-child,
-  .topbar > .topRight {
-    flex: 1 1 100%;
+  .topbar > div {
+    min-width: 0;
+    gap: 8px;
+  }
+  .topbar > div:first-child {
+    flex: 0 1 auto;
+    width: auto;
   }
   .topbar > .topRight {
     justify-content: flex-end;
     gap: 8px;
+  }
+  .topbar > .accountHeaderActions {
+    flex: 0 1 auto;
+    width: auto;
+    gap: 6px;
+  }
+  .accountHeaderActions > div:first-child {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  .accountHeaderActions > div:first-child > span:first-child {
+    display: none;
+  }
+  .accountHeaderActions > div:first-child > span:nth-of-type(2) {
+    display: inline;
+  }
+  .accountHeaderActions > div:first-child > :global(.pf-select) {
+    flex: 0 1 150px;
+    width: 150px;
+    min-width: 0;
+    max-width: 150px;
   }
 }
 @media (max-width: 700px) {
@@ -1571,13 +1596,13 @@ a.secondary:hover {
   }
   .sidebarOpen {
     transform: translateX(0);
-    top: 112px;
+    top: 64px;
     visibility: visible;
     transition-delay: 0s;
   }
   .sidebarBackdrop {
     position: fixed;
-    inset: 112px 0 0;
+    inset: 64px 0 0;
     z-index: 9;
     border: 0;
     padding: 0;
@@ -1589,21 +1614,23 @@ a.secondary:hover {
     width: 100%;
   }
   .topbar {
-    height: 112px;
-    padding: 8px 18px;
+    height: auto;
+    min-height: 64px;
+    padding: 8px 14px;
     position: sticky;
     top: 0;
     z-index: 11;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-content: center;
-    gap: 4px;
+    gap: 8px;
   }
   .topbar > div {
     min-width: 0;
-    gap: 10px;
+    gap: 8px;
   }
   .topbar > div:first-child {
-    flex: 1 1 100%;
+    flex: 0 1 auto;
+    width: auto;
   }
   .topbar > div:first-child > span:not(.breadcrumb),
   .topbar > div:first-child > strong {
@@ -1612,14 +1639,28 @@ a.secondary:hover {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .topbar > div:first-child > strong {
-    flex: 0 1 auto;
-  }
-  .topbar .topRight,
   .topbar .accountHeaderActions {
-    flex: 1 1 100%;
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 0;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 6px;
+  }
+  .accountHeaderActions > div:first-child {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  .accountHeaderActions > div:first-child > span:first-child {
+    display: none;
+  }
+  .accountHeaderActions > div:first-child > span:nth-of-type(2) {
+    display: inline;
+  }
+  .accountHeaderActions > div:first-child > :global(.pf-select) {
+    flex: 0 1 120px;
+    width: min(120px, 28vw);
+    min-width: 0;
+    max-width: min(120px, 28vw);
   }
   .mobileMenu {
     display: inline-block;
@@ -1754,7 +1795,7 @@ a.secondary:hover {
   }
   .shell .sidebarOpen {
     transform: translateX(0);
-    top: 112px;
+    top: 75px;
     visibility: visible;
     transition-delay: 0s;
   }
@@ -1763,21 +1804,22 @@ a.secondary:hover {
     width: 100%;
   }
   .shell .topbar {
-    height: 112px;
-    padding: 8px 18px;
+    height: 75px;
+    min-height: 75px;
+    padding: 0 18px;
     position: sticky;
     top: 0;
     z-index: 11;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-content: center;
-    gap: 4px;
+    gap: 8px;
   }
   .shell .topbar > div {
     min-width: 0;
-    gap: 10px;
+    gap: 8px;
   }
   .shell .topbar > div:first-child {
-    flex: 1 1 100%;
+    flex: 0 1 auto;
   }
   .shell .topbar > div:first-child > span:not(.breadcrumb),
   .shell .topbar > div:first-child > strong {
@@ -1786,13 +1828,12 @@ a.secondary:hover {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .shell .topbar > div:first-child > strong {
-    flex: 0 1 auto;
-  }
   .shell .topbar .accountHeaderActions {
-    flex: 1 1 100%;
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 0;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 6px;
   }
   .shell .mobileMenu {
     display: inline-block;
@@ -1811,9 +1852,13 @@ a.secondary:hover {
     display: none;
   }
   .topbar {
-    height: 112px;
+    height: auto;
+    min-height: 64px;
     padding: 8px 12px;
-    gap: 4px 6px;
+    gap: 4px;
+  }
+  .topbar > div {
+    gap: 6px;
   }
   .topbar > .topRight,
   .topbar > .accountHeaderActions {
