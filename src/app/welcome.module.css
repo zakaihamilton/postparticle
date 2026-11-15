@@ -30,6 +30,13 @@
   align-items: center;
   gap: 25px;
 }
+@media (min-width: 721px) {
+  .header nav > :global(.pf-theme-select) {
+    flex: 0 0 168px;
+    min-width: 168px;
+    width: 168px;
+  }
+}
 .header nav > a {
   color: var(--muted);
   text-decoration: none;
