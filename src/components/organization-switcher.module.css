@@ -27,7 +27,9 @@
   min-width: 130px;
   max-width: 220px;
 }
-.select .pf-select-trigger {
+/* Match the adjacent theme control in the account and workspace toolbars. */
+.select :global(.pf-select.pf-select-context) :global(.pf-select-trigger) {
+  height: 40px;
   min-height: 40px;
   padding: 7px 10px;
   font-size: 13px;
@@ -38,6 +40,25 @@
   font-size: 12px;
   max-width: 180px;
   overflow-wrap: anywhere;
+}
+@media (min-width: 601px) and (max-width: 1100px) {
+  .switcher {
+    gap: 6px;
+  }
+  .label {
+    display: none;
+  }
+  .mobileLabel {
+    display: inline;
+    color: var(--muted);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .select {
+    flex: 0 1 150px;
+    min-width: 0;
+    max-width: 150px;
+  }
 }
 @media (max-width: 600px) {
   .switcher {
@@ -59,12 +80,32 @@
     min-width: 0;
     max-width: min(150px, 36vw);
   }
-  .select .pf-select-trigger {
+  .select :global(.pf-select.pf-select-context) :global(.pf-select-trigger) {
     min-height: 40px;
     padding: 6px 8px;
     font-size: 12px;
   }
   .error {
     max-width: 110px;
+  }
+}
+
+@media (max-width: 420px) {
+  .switcher {
+    gap: 3px;
+  }
+  .mobileLabel {
+    display: none;
+  }
+  .single,
+  .select {
+    flex: 0 1 64px;
+    width: 64px;
+    min-width: 0;
+    max-width: 64px;
+  }
+  .select :global(.pf-select.pf-select-context) :global(.pf-select-trigger) {
+    padding: 5px;
+    gap: 3px;
   }
 }

@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:run": "vitest run",
     "test:e2e": "pnpm run build && pnpm run example:build && playwright test --grep-invert='matches the reviewed'",
+    "test:responsive-ui": "playwright test --config=playwright.ui-preview.config.ts",
     "health": "repnix check",
     "storage:verify": "tsx --conditions=react-server --env-file=.env.local scripts/verify-storage.ts",
     "storage:checkpoint": "tsx --conditions=react-server --env-file=.env.local scripts/rebuild-content-checkpoints.ts",

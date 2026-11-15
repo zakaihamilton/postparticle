@@ -188,6 +188,9 @@
   gap: 12px;
   flex-shrink: 0;
 }
+.accountHeaderActions > .ghost {
+  margin-left: 16px;
+}
 .topbar strong {
   font-weight: 500;
   color: var(--text);
@@ -1559,6 +1562,35 @@ a.secondary:hover {
     gap: 8px;
   }
 }
+
+@media (min-width: 701px) and (max-width: 820px) {
+  .accountHeaderActions {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .accountHeaderActions > .ghost {
+    margin-left: 0;
+  }
+  .accountHeaderActions > div:first-child {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  .accountHeaderActions > div:first-child > span:first-child {
+    display: none;
+  }
+  .accountHeaderActions > div:first-child > span:nth-of-type(2) {
+    display: inline;
+  }
+  .accountHeaderActions > div:first-child > :global(.pf-select) {
+    flex: 0 1 150px;
+    width: 150px;
+    min-width: 0;
+    max-width: 150px;
+  }
+}
 @media (max-width: 700px) {
   .sidebar {
     transform: translateX(-100%);
@@ -1571,13 +1603,13 @@ a.secondary:hover {
   }
   .sidebarOpen {
     transform: translateX(0);
-    top: 112px;
+    top: 64px;
     visibility: visible;
     transition-delay: 0s;
   }
   .sidebarBackdrop {
     position: fixed;
-    inset: 112px 0 0;
+    inset: 64px 0 0;
     z-index: 9;
     border: 0;
     padding: 0;
@@ -1589,21 +1621,23 @@ a.secondary:hover {
     width: 100%;
   }
   .topbar {
-    height: 112px;
-    padding: 8px 18px;
+    height: 64px;
+    min-height: 64px;
+    padding: 6px 8px;
     position: sticky;
     top: 0;
     z-index: 11;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-content: center;
     gap: 4px;
   }
   .topbar > div {
     min-width: 0;
-    gap: 10px;
+    gap: 4px;
   }
   .topbar > div:first-child {
-    flex: 1 1 100%;
+    flex: 1 1 auto;
+    width: auto;
   }
   .topbar > div:first-child > span:not(.breadcrumb),
   .topbar > div:first-child > strong {
@@ -1617,9 +1651,14 @@ a.secondary:hover {
   }
   .topbar .topRight,
   .topbar .accountHeaderActions {
-    flex: 1 1 100%;
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 0;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 3px;
+  }
+  .accountHeaderActions > .ghost {
+    margin-left: 0;
   }
   .mobileMenu {
     display: inline-block;
@@ -1754,7 +1793,7 @@ a.secondary:hover {
   }
   .shell .sidebarOpen {
     transform: translateX(0);
-    top: 112px;
+    top: 64px;
     visibility: visible;
     transition-delay: 0s;
   }
@@ -1763,21 +1802,23 @@ a.secondary:hover {
     width: 100%;
   }
   .shell .topbar {
-    height: 112px;
-    padding: 8px 18px;
+    height: 64px;
+    min-height: 64px;
+    padding: 6px 8px;
     position: sticky;
     top: 0;
     z-index: 11;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-content: center;
     gap: 4px;
   }
   .shell .topbar > div {
     min-width: 0;
-    gap: 10px;
+    gap: 4px;
   }
   .shell .topbar > div:first-child {
-    flex: 1 1 100%;
+    flex: 1 1 auto;
+    width: auto;
   }
   .shell .topbar > div:first-child > span:not(.breadcrumb),
   .shell .topbar > div:first-child > strong {
@@ -1790,9 +1831,14 @@ a.secondary:hover {
     flex: 0 1 auto;
   }
   .shell .topbar .accountHeaderActions {
-    flex: 1 1 100%;
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 0;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 3px;
+  }
+  .shell .accountHeaderActions > .ghost {
+    margin-left: 0;
   }
   .shell .mobileMenu {
     display: inline-block;
@@ -1805,15 +1851,16 @@ a.secondary:hover {
 
 @media (max-width: 420px) {
   .accountHeaderActions {
-    gap: 4px;
+    gap: 2px;
   }
   .accountHeaderActions .accountLogoutText {
     display: none;
   }
   .topbar {
-    height: 112px;
-    padding: 8px 12px;
-    gap: 4px 6px;
+    height: 64px;
+    min-height: 64px;
+    padding: 6px 8px;
+    gap: 3px;
   }
   .topbar > .topRight,
   .topbar > .accountHeaderActions {

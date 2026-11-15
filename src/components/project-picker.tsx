@@ -6,12 +6,18 @@ import styles from "./workspace.module.css";
 export default function ProjectPicker({
   actor,
   projects,
+  onBeforeOrganizationChange,
 }: {
   actor: Actor;
   projects: (Project & { role: Role | null })[];
+  onBeforeOrganizationChange?: () => Promise<boolean>;
 }) {
   return (
-    <AccountArea actor={actor} activeSection="workspaces">
+    <AccountArea
+      actor={actor}
+      activeSection="workspaces"
+      onBeforeOrganizationChange={onBeforeOrganizationChange}
+    >
       <div className={styles.pickerMain}>
         <div className={styles.eyebrow}>YOUR WORKSPACES</div>
         <h1>Good to see you, {actor.username}.</h1>
