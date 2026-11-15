@@ -27,7 +27,9 @@
   min-width: 130px;
   max-width: 220px;
 }
-.select .pf-select-trigger {
+/* Match the adjacent theme control in the account and workspace toolbars. */
+.select :global(.pf-select.pf-select-context) :global(.pf-select-trigger) {
+  height: 40px;
   min-height: 40px;
   padding: 7px 10px;
   font-size: 13px;
@@ -78,7 +80,7 @@
     min-width: 0;
     max-width: min(150px, 36vw);
   }
-  .select .pf-select-trigger {
+  .select :global(.pf-select.pf-select-context) :global(.pf-select-trigger) {
     min-height: 40px;
     padding: 6px 8px;
     font-size: 12px;
@@ -102,7 +104,7 @@
     min-width: 0;
     max-width: 64px;
   }
-  .select .pf-select-trigger {
+  .select :global(.pf-select.pf-select-context) :global(.pf-select-trigger) {
     padding: 5px;
     gap: 3px;
   }

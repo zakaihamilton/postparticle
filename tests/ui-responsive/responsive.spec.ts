@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 const viewports = [
   { name: "320", width: 320, height: 900 },
@@ -147,6 +147,7 @@ test("account header stays in one row without control collisions", async ({
             right: box.right,
             top: box.top,
             bottom: box.bottom,
+            height: box.height,
             centerY: box.top + box.height / 2,
           };
         };
@@ -184,6 +185,10 @@ test("account header stays in one row without control collisions", async ({
         ).toBe(true);
       }
       if (layout.organization) {
+        expect(
+          Math.abs(layout.organization.height - layout.theme!.height),
+          "account header dropdowns should share a height",
+        ).toBeLessThanOrEqual(1);
         expect(layout.organization.right).toBeLessThanOrEqual(
           layout.theme!.left,
         );
@@ -220,6 +225,9 @@ test("workspace preview preserves spacing without horizontal overflow", async ({
         const location = toolbar?.querySelector('[class*="toolbarLocation"]');
         const actions = toolbar?.querySelector('[class*="accountHeaderActions"]');
         const organization = actions?.children.item(0);
+        const organizationTrigger = organization?.querySelector(
+          ".pf-select-trigger",
+        );
         const theme = actions?.querySelector(
           ".pf-theme-select .pf-select-trigger",
         );
@@ -231,6 +239,7 @@ test("workspace preview preserves spacing without horizontal overflow", async ({
             right: box.right,
             top: box.top,
             bottom: box.bottom,
+            height: box.height,
           };
         };
         return {
@@ -238,6 +247,7 @@ test("workspace preview preserves spacing without horizontal overflow", async ({
           location: rect(location),
           actions: rect(actions),
           organization: rect(organization),
+          organizationTrigger: rect(organizationTrigger),
           theme: rect(theme),
         };
       });
@@ -246,6 +256,12 @@ test("workspace preview preserves spacing without horizontal overflow", async ({
       expect(layout.location).not.toBeNull();
       expect(layout.actions).not.toBeNull();
       expect(layout.theme).not.toBeNull();
+      if (layout.organizationTrigger) {
+        expect(
+          Math.abs(layout.organizationTrigger.height - layout.theme!.height),
+          "workspace toolbar dropdowns should share a height",
+        ).toBeLessThanOrEqual(1);
+      }
       if (layout.location!.bottom <= layout.actions!.top) {
         expect(layout.location!.bottom).toBeLessThanOrEqual(layout.actions!.top);
       } else if (layout.actions!.bottom <= layout.location!.top) {

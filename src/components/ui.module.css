@@ -32,6 +32,8 @@
   width: 140px;
 }
 .themeControl:global(.pf-theme-select) :global(.pf-select-trigger) {
+  height: 40px;
+  min-height: 40px;
   font-size: 14px;
   color: var(--muted);
   padding: 8px 14px;
