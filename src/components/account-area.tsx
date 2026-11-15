@@ -14,10 +14,12 @@ export function AccountArea({
   actor,
   activeSection,
   children,
+  onBeforeOrganizationChange,
 }: {
   actor: Actor;
   activeSection: AccountSection;
   children: ReactNode;
+  onBeforeOrganizationChange?: () => Promise<boolean>;
 }) {
   const router = useRouter();
   const [menu, setMenu] = useState(false);
@@ -126,7 +128,11 @@ export function AccountArea({
             <strong>{title}</strong>
           </div>
           <div className={styles.accountHeaderActions}>
-            <OrganizationSwitcher key={actor.organizationId} actor={actor} />
+            <OrganizationSwitcher
+              key={actor.organizationId}
+              actor={actor}
+              onBeforeChange={onBeforeOrganizationChange}
+            />
             <ThemeSwitch />
             <button
               className={styles.ghost}

@@ -25,13 +25,19 @@ const actor = {
   organizations: [
     {
       organizationId: "preview",
-      organizationName: "Example Studio",
+      organizationName: "A Very Long Studio Organization",
+      platformAdmin: false,
+    },
+    {
+      organizationId: "preview-secondary",
+      organizationName: "North Star Press",
       platformAdmin: false,
     },
   ],
   platformAdmin: false,
 };
 const adminActor = { ...actor, platformAdmin: true };
+const preventPreviewOrganizationSwitch = async () => false;
 const syntheticImageUrl =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='300'%3E%3Crect width='480' height='300' fill='%23e9eee9'/%3E%3Ctext x='50' y='150' font-size='30'%3EStudio notes%3C/text%3E%3C/svg%3E";
 const project = {
@@ -559,6 +565,7 @@ export default function Preview() {
         {screen === "project-picker" ? (
           <ProjectPicker
             actor={actor}
+            onBeforeOrganizationChange={preventPreviewOrganizationSwitch}
             projects={
               scenario === "empty" ? [] : [{ ...previewProject, role: "admin" }]
             }
@@ -567,6 +574,7 @@ export default function Preview() {
           <AccountArea
             actor={screen === "project-admin" ? adminActor : actor}
             activeSection="projects"
+            onBeforeOrganizationChange={preventPreviewOrganizationSwitch}
           >
             {screen === "project-admin" ? (
               <ProjectSettings
@@ -580,7 +588,11 @@ export default function Preview() {
         ) : screen === "platform-accounts" ||
           screen === "platform-account-create" ||
           screen === "platform-account-reset" ? (
-          <AccountArea actor={adminActor} activeSection="platform-accounts">
+          <AccountArea
+            actor={adminActor}
+            activeSection="platform-accounts"
+            onBeforeOrganizationChange={preventPreviewOrganizationSwitch}
+          >
             {screen === "platform-accounts" ? (
               <PlatformAccountsSettings
                 currentUsername={actor.username}
@@ -601,7 +613,11 @@ export default function Preview() {
             )}
           </AccountArea>
         ) : screen === "account" ? (
-          <AccountArea actor={actor} activeSection="account">
+          <AccountArea
+            actor={actor}
+            activeSection="account"
+            onBeforeOrganizationChange={preventPreviewOrganizationSwitch}
+          >
             <YourAccountSettings
               minimumPasswordLength={15}
               request={previewRequest}
@@ -612,6 +628,7 @@ export default function Preview() {
             actor={actor}
             role={previewRole}
             project={previewProject}
+            onBeforeOrganizationChange={preventPreviewOrganizationSwitch}
             view={
               screen === "overview"
                 ? []

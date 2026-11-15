@@ -61,6 +61,7 @@ function WorkspaceContent({
   previewMediaScenario,
   previewInitialMediaQuery,
   previewRequest,
+  onBeforeOrganizationChange,
 }: {
   actor: Actor;
   role: Role;
@@ -75,6 +76,7 @@ function WorkspaceContent({
   previewMediaScenario?: "uploading" | "failed";
   previewInitialMediaQuery?: string;
   previewRequest?: typeof api;
+  onBeforeOrganizationChange?: () => Promise<boolean>;
 }) {
   const router = useRouter();
   const { confirmNavigation } = useNavigationGuard();
@@ -193,7 +195,10 @@ function WorkspaceContent({
             <OrganizationSwitcher
               key={actor.organizationId}
               actor={actor}
-              onBeforeChange={() => confirmNavigation("Switch organization and discard")}
+              onBeforeChange={
+                onBeforeOrganizationChange ??
+                (() => confirmNavigation("Switch organization and discard"))
+              }
             />
             <span className={styles.projectType}>Content Workspace</span>
             <ThemeSwitch />
