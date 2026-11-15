@@ -209,6 +209,8 @@
 }
 .accountMain {
   max-width: 1320px;
+  margin: 0 auto;
+  padding: 40px clamp(28px, 3vw, 42px);
 }
 .accountLogoutText {
   display: inline;
@@ -1455,7 +1457,7 @@ a.secondary:hover {
 }
 
 @media (min-width: 1600px) {
-  .main {
+  .accountMain {
     padding: 50px 60px;
   }
 }
@@ -1467,7 +1469,7 @@ a.secondary:hover {
     margin-left: 220px;
     width: calc(100% - 220px);
   }
-  .main {
+  .accountMain {
     padding: 28px;
   }
   .topbar {
@@ -1635,7 +1637,7 @@ a.secondary:hover {
     margin: 0;
     padding: 14px;
   }
-  .main {
+  .accountMain {
     padding: 26px 18px;
   }
   .pageHeading {
@@ -1663,7 +1665,7 @@ a.secondary:hover {
     gap: 13px;
   }
   .workspaceFooter {
-    margin: 0 18px;
+    margin: 0;
   }
   .editorAside {
     display: block;
@@ -1739,6 +1741,68 @@ a.secondary:hover {
     white-space: nowrap;
   }
 }
+
+@media (min-width: 701px) and (max-width: 780px) {
+  .shell .sidebar {
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition:
+      transform 0.25s,
+      visibility 0s linear 0.25s;
+    width: 248px;
+    box-shadow: var(--shadow);
+  }
+  .shell .sidebarOpen {
+    transform: translateX(0);
+    top: 112px;
+    visibility: visible;
+    transition-delay: 0s;
+  }
+  .shell .contentArea {
+    margin-left: 0;
+    width: 100%;
+  }
+  .shell .topbar {
+    height: 112px;
+    padding: 8px 18px;
+    position: sticky;
+    top: 0;
+    z-index: 11;
+    flex-wrap: wrap;
+    align-content: center;
+    gap: 4px;
+  }
+  .shell .topbar > div {
+    min-width: 0;
+    gap: 10px;
+  }
+  .shell .topbar > div:first-child {
+    flex: 1 1 100%;
+  }
+  .shell .topbar > div:first-child > span:not(.breadcrumb),
+  .shell .topbar > div:first-child > strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .shell .topbar > div:first-child > strong {
+    flex: 0 1 auto;
+  }
+  .shell .topbar .accountHeaderActions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .shell .mobileMenu {
+    display: inline-block;
+    border: 0;
+    background: none;
+    color: var(--text);
+    padding: 7px;
+  }
+}
+
 @media (max-width: 420px) {
   .accountHeaderActions {
     gap: 4px;
@@ -1767,6 +1831,32 @@ a.secondary:hover {
   gap: 18px;
   color: var(--muted);
   font-size: 14px;
+}
+
+.accountFooter {
+  width: 100%;
+  max-width: 1320px;
+  align-self: center;
+  margin: 0 auto;
+  padding: 22px clamp(28px, 3vw, 42px);
+}
+
+@media (min-width: 1600px) {
+  .accountFooter {
+    padding: 22px 60px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .accountFooter {
+    padding: 22px 28px;
+  }
+}
+
+@media (max-width: 700px) {
+  .accountFooter {
+    padding: 22px 18px;
+  }
 }
 
 .toolbarLocation {

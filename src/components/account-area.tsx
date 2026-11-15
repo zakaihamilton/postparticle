@@ -143,7 +143,7 @@ export function AccountArea({
           <Notice error={error} />
           {children}
         </main>
-        <footer className={styles.workspaceFooter}>
+        <footer className={`${styles.workspaceFooter} ${styles.accountFooter}`}>
           <span>Your content, thoughtfully managed.</span>
           <span>postparticle</span>
         </footer>
