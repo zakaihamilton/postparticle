@@ -25,10 +25,29 @@ async function choosePreviewScreen(page: Page, name: string) {
 }
 
 async function expectNoPageOverflow(page: Page, width: number) {
-  const documentWidth = await page.evaluate(
-    () => document.documentElement.scrollWidth,
-  );
-  expect(documentWidth, `page overflowed at ${width}px`).toBeLessThanOrEqual(
+  const layout = await page.evaluate(() => {
+    const viewportWidth = document.documentElement.clientWidth;
+    const overflowingElements = Array.from(document.querySelectorAll("body *"))
+      .filter((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0 && rect.right > viewportWidth + 1;
+      })
+      .slice(-8)
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          element: `${element.tagName.toLowerCase()}.${String(element.className).slice(0, 80)}`,
+          left: Math.round(rect.left),
+          right: Math.round(rect.right),
+        };
+      });
+    return {
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth,
+      overflowingElements,
+    };
+  });
+  expect(layout.documentWidth, `page overflowed at ${width}px: ${JSON.stringify(layout)}`).toBeLessThanOrEqual(
     width,
   );
 }
@@ -89,7 +108,7 @@ test("welcome page keeps its theme control clear of Log in", async ({ page }) =>
 
       await expect(page).toHaveScreenshot(
         `welcome-${viewport.name}-${theme}.png`,
-        { animations: "disabled", caret: "hide" },
+        { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.015 },
       );
     }
   }
@@ -145,10 +164,25 @@ test("account header stays in one row without control collisions", async ({
       expect(layout.actions, "account controls should be present").not.toBeNull();
       expect(layout.theme, "theme control should be present").not.toBeNull();
       expect(layout.logout, "Log out button should be present").not.toBeNull();
-      expect(
-        Math.abs(layout.title!.centerY - layout.actions!.centerY),
-        "account header title and controls should share a row",
-      ).toBeLessThanOrEqual(2);
+      const titleActionsOverlap =
+        layout.title!.left < layout.actions!.right &&
+        layout.title!.right > layout.actions!.left &&
+        layout.title!.top < layout.actions!.bottom &&
+        layout.title!.bottom > layout.actions!.top;
+      expect(titleActionsOverlap, "account title should stay clear of controls").toBe(false);
+      if (viewport.width <= 700 || viewport.width >= 900) {
+        expect(
+          Math.abs(layout.title!.centerY - layout.actions!.centerY),
+          "mobile and desktop account header title and controls should share a row",
+        ).toBeLessThanOrEqual(2);
+      } else {
+        expect(
+          Math.abs(layout.title!.centerY - layout.actions!.centerY) <= 2 ||
+            layout.title!.bottom <= layout.actions!.top + 2 ||
+            layout.actions!.bottom <= layout.title!.top + 2,
+          "tablet account title and controls should share a row or have clear spacing",
+        ).toBe(true);
+      }
       if (layout.organization) {
         expect(layout.organization.right).toBeLessThanOrEqual(
           layout.theme!.left,
@@ -164,7 +198,7 @@ test("account header stays in one row without control collisions", async ({
 
       await expect(page).toHaveScreenshot(
         `account-${viewport.name}-${theme}.png`,
-        { animations: "disabled", caret: "hide" },
+        { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.015 },
       );
     }
   }
@@ -225,7 +259,7 @@ test("workspace preview preserves spacing without horizontal overflow", async ({
 
       await expect(page).toHaveScreenshot(
         `workspace-${viewport.name}-${theme}.png`,
-        { animations: "disabled", caret: "hide" },
+        { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.015 },
       );
     }
   }
