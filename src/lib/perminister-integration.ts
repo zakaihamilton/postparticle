@@ -7,6 +7,8 @@ import { exchangePerministerOidcCode } from "./perminister-oidc";
 
 const productId = "postparticle";
 const requestTimeoutMs = 12_000;
+// A cold Perminister session lookup can fan out across many organization records.
+const consumerSessionTimeoutMs = 30_000;
 
 interface PerministerOrganizationAccess {
   organizationId: string;
@@ -309,6 +311,7 @@ export async function perministerSession(
     const payload = await request(sessionPath, {
       token,
       purpose: "session",
+      timeoutMs: consumerSessionTimeoutMs,
     });
     if (payload.authenticated !== true) return null;
     const account = asRecord(payload.account);
