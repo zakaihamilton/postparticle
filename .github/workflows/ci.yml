@@ -26,6 +26,7 @@ jobs:
       - run: pnpm run test:e2e
 
   visual-regression:
+    if: github.event_name == 'pull_request'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
