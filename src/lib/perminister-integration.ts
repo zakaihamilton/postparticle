@@ -7,6 +7,8 @@ import { exchangePerministerOidcCode } from "./perminister-oidc";
 
 const productId = "postparticle";
 const requestTimeoutMs = 12_000;
+// A cold Perminister session lookup can fan out across many organization records.
+const consumerSessionTimeoutMs = 30_000;
 
 interface PerministerOrganizationAccess {
   organizationId: string;
@@ -80,9 +82,10 @@ function requiredEnv(name: string) {
   return value;
 }
 
-function requiredEnvWithFallback(primaryName: string, fallbackName: string) {
-  const value =
-    process.env[primaryName]?.trim() || process.env[fallbackName]?.trim();
+function requiredEnvWithFallback(primaryName: string, ...fallbackNames: string[]) {
+  const value = [primaryName, ...fallbackNames]
+    .map((name) => process.env[name]?.trim())
+    .find(Boolean);
   if (!value) throw new HttpError(503, "Perminister is not configured.");
   return value;
 }
@@ -121,6 +124,7 @@ export function perministerRecoveryUrl(): string | null {
 function authConfig(): AuthConfig {
   const clientId = requiredEnv("PERMINISTER_APP_CLIENT_ID");
   const clientSecret = requiredEnvWithFallback(
+    "PERMINISTER_APP_CLIENT_SECRET",
     "PERMINSITER_APP_CLIENT_SECRET",
     "PERMINISTER_CLIENT_SECRET",
   );
@@ -309,6 +313,7 @@ export async function perministerSession(
     const payload = await request(sessionPath, {
       token,
       purpose: "session",
+      timeoutMs: consumerSessionTimeoutMs,
     });
     if (payload.authenticated !== true) return null;
     const account = asRecord(payload.account);
