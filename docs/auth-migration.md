@@ -7,14 +7,16 @@ server-only values in each environment:
 ```dotenv
 PERMINISTER_BASE_URL=https://www.perminister.com
 PERMINISTER_APP_CLIENT_ID=<postparticle-client-uuid>
+# Preferred secret name:
+PERMINISTER_APP_CLIENT_SECRET=<postparticle-client-secret>
+# Compatibility fallbacks for existing deployments:
 PERMINSITER_APP_CLIENT_SECRET=<postparticle-client-secret>
-# Optional fallback for existing Vercel secrets that cannot be renamed:
 PERMINISTER_CLIENT_SECRET=<postparticle-client-secret>
 ```
 
-`PERMINSITER_APP_CLIENT_SECRET` takes precedence when both names are set. The app accepts
-`PERMINISTER_CLIENT_SECRET` as a fallback so existing Vercel environments can keep their current
-secret name.
+`PERMINISTER_APP_CLIENT_SECRET` takes precedence. The app also accepts the historical misspelling
+`PERMINSITER_APP_CLIENT_SECRET` and the older `PERMINISTER_CLIENT_SECRET` name, so existing Vercel
+environments can keep their current secret without rotation.
 
 Use a separate Perminister client for development and preview deployments, and select the organization
 that owns each project's data. The PostParticle product client must be restricted to the matching
