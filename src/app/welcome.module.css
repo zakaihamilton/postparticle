@@ -952,6 +952,13 @@
   font-size: 13px;
   color: var(--muted);
 }
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+}
 .developerFooterLink {
   display: flex;
   gap: 7px;

@@ -373,9 +373,14 @@ export default function Welcome() {
       <footer className={styles.footer}>
         <Brand />
         <span>Open source. Your storage. Your content.</span>
-        <Link className={styles.developerFooterLink} href="/developers">
-          Developer guides <Icon name="arrow-up-right" size={14} />
-        </Link>
+        <nav className={styles.footerLinks} aria-label="Footer links">
+          <Link className={styles.developerFooterLink} href="/developers">
+            Developer guides <Icon name="arrow-up-right" size={14} />
+          </Link>
+          <Link className={styles.developerFooterLink} href="/privacy">
+            Privacy policy
+          </Link>
+        </nav>
       </footer>
     </WelcomeReveal>
   );
