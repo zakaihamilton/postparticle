@@ -197,13 +197,16 @@ export default function Preview() {
   const [articleScenario, setArticleScenario] =
     useState<ArticleScenario>("published");
   const [scenario, setScenario] = useState<Scenario>("populated");
-  const previewProject =
-    scenario === "long-names"
-      ? {
-          ...project,
-          name: "The Field Notes for Distributed Editorial Teams and Regional Publishers",
-        }
-      : project;
+  const previewProject = useMemo(
+    () =>
+      scenario === "long-names"
+        ? {
+            ...project,
+            name: "The Field Notes for Distributed Editorial Teams and Regional Publishers",
+          }
+        : project,
+    [scenario],
+  );
   const dashboard = useMemo(
     () => Promise.resolve(fixture(scenario)),
     [scenario],
@@ -448,7 +451,7 @@ export default function Preview() {
         }
         throw new Error("No preview fixture is available for this request.");
       },
-    [scenario, screen, articleScenario],
+    [scenario, screen, articleScenario, previewProject],
   );
   const previewContent = useMemo(() => {
     const rows =
