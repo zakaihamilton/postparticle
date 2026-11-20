@@ -1,6 +1,6 @@
 # Local UI preview
 
-Run `pnpm dev` and open http://localhost:3000/ui-preview. This development-only route renders production components with synthetic identity and data. Open “Preview controls” to select a screen and scenario, resize the browser, and use the theme control to review the UI. The controls sit above the preview so they do not cover page content. The route returns 404 outside development and does not bypass authentication on the actual application routes.
+Run `pnpm dev` and open http://localhost:3000/ui-preview. This route renders production components with synthetic identity and data. Open “Preview controls” to select a screen and scenario, resize the browser, and use the theme control to review the UI. The controls sit above the preview so they do not cover page content. The route is available in local development and Vercel preview deployments (`VERCEL_ENV=preview`), returns 404 in production, and does not bypass authentication on the actual application routes.
 
 Preview links and logout are disabled. Fixture requests reject non-GET operations; forms can be filled and validated, but changes cannot be saved. Use synthetic values, not real passwords. This preview does not test authentication, persistence, storage, networking, or integrations.
 
