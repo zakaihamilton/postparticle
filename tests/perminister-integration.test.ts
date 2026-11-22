@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { generateKeyPairSync, sign as signBytes } from "node:crypto";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  perministerAuthorize,
   perministerAuthorizationUrl,
+  perministerAuthorize,
   perministerExchangeAuthorizationCode,
   perministerRecoveryUrl,
   perministerRoleForProject,

@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { guideLinks } from "./topics";
 import styles from "./developers.module.css";
+import { guideLinks } from "./topics";
 export default function DeveloperNavigation() {
   const pathname = usePathname();
   return (

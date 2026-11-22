@@ -1,25 +1,26 @@
 "use client";
+import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
+import { DashboardShell as PanelFrameDashboardShell } from "panel-frame-ui";
+import { type ComponentProps, useState } from "react";
+import type {
+  Actor,
+  ContentListData,
+  Media,
+  Project,
+  Role,
+  WorkspaceDashboardResult,
+} from "@/lib/types";
+import { ContentList, Dashboard } from "./content-list";
 import {
   GuardedLink as Link,
   NavigationGuardProvider,
   useNavigationGuard,
 } from "./navigation-guard";
-import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
-import { useState, type ComponentProps } from "react";
-import { DashboardShell as PanelFrameDashboardShell } from "panel-frame-ui";
-import type {
-  Actor,
-  Media,
-  Project,
-  Role,
-  WorkspaceDashboardResult,
-  ContentListData,
-} from "@/lib/types";
 import { OrganizationSwitcher } from "./organization-switcher";
 import { api, BrandContent, Icon, Notice, ThemeSwitch } from "./ui";
-import { ContentList, Dashboard } from "./content-list";
-import styles from "./workspace.module.css";
+import primitives from "./workspace-primitives.module.css";
+import styles from "./workspace-shell.module.css";
 
 const Editor = dynamic(() => import("./editor"));
 const MediaLibrary = dynamic(() => import("./media-library"));
@@ -90,7 +91,7 @@ function WorkspaceContent({
       brand={<BrandContent />}
       sidebarContext={
         <Link href="/projects" className={styles.projectSwitch}>
-          <span className={styles.projectAvatar}>{project.name[0]}</span>
+          <span className={primitives.projectAvatar}>{project.name[0]}</span>
           <span>
             <strong>{project.name}</strong>
             <small>Switch project</small>

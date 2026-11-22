@@ -1,0 +1,344 @@
+.workspaceShell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  background: var(--bg);
+}
+
+.workspaceSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 16px 18px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.workspaceProject {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.workspaceNav {
+  display: grid;
+  gap: 7px;
+}
+
+.workspaceNavItem {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 10px;
+  border-radius: 5px;
+}
+
+.workspaceSidebarBottom {
+  display: grid;
+  gap: 17px;
+  margin-top: auto;
+  padding-top: 17px;
+  border-top: 1px solid var(--border);
+}
+
+.workspaceContent {
+  display: flex;
+  min-width: 0;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.workspaceTopbar {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.workspaceBreadcrumbs {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.workspaceMain {
+  width: min(100%, 1500px);
+  flex: 1;
+  padding: 30px 30px 48px;
+  margin: 0 auto;
+}
+
+.workspaceStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+  margin-bottom: 24px;
+}
+
+.statCard {
+  min-height: 132px;
+  display: grid;
+  align-content: space-between;
+  gap: 18px;
+  padding: 19px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.workflowBanner {
+  display: grid;
+  gap: 12px;
+  padding: 13px 22px;
+  margin-bottom: 22px;
+  border-left: 2px solid var(--accent);
+}
+
+.quickLinks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.quickLink {
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+
+.tableFilters {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) repeat(3, minmax(125px, 1fr));
+  gap: 11px;
+  padding: 17px;
+  border-bottom: 1px solid var(--border);
+}
+
+.filterSkeleton {
+  height: 40px !important;
+  border: 1px solid var(--border);
+  background-color: var(--bg);
+}
+
+.tableLabels,
+.tableSkeletonRow {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.6fr) minmax(120px, 1fr) minmax(100px, 0.8fr)
+    44px;
+  align-items: center;
+  gap: 15px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tableLabels {
+  min-height: 48px;
+  background: var(--surface-alt);
+}
+
+.tableSkeletonRow:last-child {
+  border-bottom: 0;
+}
+
+.editorGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 270px;
+  gap: 20px;
+}
+
+.editorMain,
+.editorAside {
+  display: grid;
+  align-content: start;
+  gap: 17px;
+}
+
+.editorBody {
+  min-height: 260px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.mediaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.mediaDetailsPanel {
+  margin-top: 28px;
+}
+
+.mediaDetailsHeading {
+  display: grid;
+  gap: 18px;
+  padding: 24px 26px 0;
+}
+
+.mediaDetailsHeading > :first-child {
+  justify-self: start;
+}
+
+.mediaDetailsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.mediaDetailsPreview {
+  min-width: 0;
+  padding: 23px;
+}
+
+.mediaDetailsImage {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 370px;
+  aspect-ratio: 4 / 3;
+  margin-bottom: 15px;
+  border-radius: 8px !important;
+}
+
+.mediaDetailsForm {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  padding: 23px;
+}
+
+.mediaMetadataSkeleton {
+  height: 200px !important;
+  border: 1px solid var(--border);
+  background-color: var(--bg);
+}
+
+.buttonGroupSkeleton {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.mediaCard {
+  display: grid;
+  gap: 11px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.mediaThumb {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 4 / 3;
+  border-radius: 4px !important;
+}
+
+.memberRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 17px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 980px) {
+  .workspaceStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mediaGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mediaDetailsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .workspaceShell {
+    grid-template-columns: 1fr;
+  }
+
+  .workspaceSidebar {
+    gap: 12px;
+    padding: 14px 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .workspaceTopbar {
+    min-height: 60px;
+    padding: 10px 17px;
+  }
+
+  .workspaceMain {
+    padding: 25px 18px 36px;
+  }
+
+  .tableFilters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .editorGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .editorAside {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .workspaceTopbar > :last-child > :first-child {
+    display: none;
+  }
+
+  .workspaceStats,
+  .quickLinks {
+    grid-template-columns: 1fr;
+  }
+
+  .tableFilters {
+    grid-template-columns: 1fr;
+  }
+
+  .tableLabels,
+  .tableSkeletonRow {
+    grid-template-columns: minmax(0, 1.5fr) minmax(70px, 0.8fr) 30px;
+    gap: 10px;
+    padding: 13px;
+  }
+
+  .tableLabels > :nth-child(3),
+  .tableSkeletonRow > :nth-child(3) {
+    display: none;
+  }
+
+  .mediaGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .memberRow {
+    align-items: flex-start;
+  }
+}

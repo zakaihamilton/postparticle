@@ -1,8 +1,8 @@
-import { readBlogFilters } from "../examples/next-blog/lib/filters";
-import Blog from "../examples/next-blog/app/blog/page";
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
+import Blog from "../examples/next-blog/app/blog/page";
 import { getArticle, getArticles } from "../examples/next-blog/lib/content";
+import { readBlogFilters } from "../examples/next-blog/lib/filters";
 
 vi.mock("next/server", () => ({ connection: async () => undefined }));
 vi.mock("next/navigation", () => ({
@@ -11,8 +11,9 @@ vi.mock("next/navigation", () => ({
   },
 }));
 afterEach(() => vi.unstubAllGlobals());
-import { snippets, integrationGuide } from "@/components/developers/snippets";
-import type { PublicArticle, ArticlePage } from "@/lib/types";
+
+import { integrationGuide, snippets } from "@/components/developers/snippets";
+import type { ArticlePage, PublicArticle } from "@/lib/types";
 import type {
   PublicArticle as ExampleArticle,
   ArticlePage as ExamplePage,

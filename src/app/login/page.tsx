@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthCard, AuthShell } from "panel-frame-ui";
+import { BrandContent } from "@/components/ui";
 import { currentActor } from "@/lib/auth";
 import { safePostParticleReturnTo } from "@/lib/perminister-sso";
-import { BrandContent } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Log in" };
 

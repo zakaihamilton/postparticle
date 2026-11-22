@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { Actor, Project, Role } from "@/lib/types";
 import { AccountArea } from "./account-area";
+import pickerStyles from "./project-picker.module.css";
 import { Empty, Icon } from "./ui";
-import styles from "./workspace.module.css";
+import styles from "./workspace-primitives.module.css";
 export default function ProjectPicker({
   actor,
   projects,
@@ -27,14 +28,14 @@ export default function ProjectPicker({
         <Link className={styles.primary} href="/account/projects">
           Create a project
         </Link>
-        <div className={styles.projectGrid}>
+        <div className={pickerStyles.projectGrid}>
           {projects.map((p) => (
             <Link
               key={p.id}
-              className={styles.projectCard}
+              className={pickerStyles.projectCard}
               href={`/workspace/${p.id}`}
             >
-              <div className={styles.projectCardTop}>
+              <div className={pickerStyles.projectCardTop}>
                 <span className={styles.projectAvatar}>
                   {p.name.slice(0, 1)}
                 </span>
@@ -42,7 +43,7 @@ export default function ProjectPicker({
               </div>
               <h2>{p.name}</h2>
               <p>{p.description}</p>
-              <div className={styles.projectCardBottom}>
+              <div className={pickerStyles.projectCardBottom}>
                 <span>Open workspace</span>
                 <Icon name="arrow" size={18} />
               </div>
@@ -55,7 +56,7 @@ export default function ProjectPicker({
             grant you access to an existing one.
           </Empty>
         )}
-        <div className={styles.pickerNote}>
+        <div className={pickerStyles.pickerNote}>
           <Icon name="lock" size={16} /> Only projects you have access to appear
           here.
         </div>

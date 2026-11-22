@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { currentActor } from "@/lib/auth";
 import { AccountArea } from "@/components/account-area";
 import { ProjectCreationForm } from "@/components/settings/project-creation-form";
 import { ProjectSettings } from "@/components/settings/project-settings";
-import styles from "@/components/workspace.module.css";
+import styles from "@/components/workspace-primitives.module.css";
+import { currentActor } from "@/lib/auth";
 
 export default async function ProjectSettingsPage() {
   const actor = await currentActor();

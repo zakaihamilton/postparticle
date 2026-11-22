@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
-import styles from "./skeletons.module.css";
+import accountStyles from "./account-skeletons.module.css";
+import styles from "./skeleton-primitives.module.css";
 
 export function Skeleton({
   width = "100%",
@@ -53,21 +54,25 @@ export function AccountFrame({
 }) {
   return (
     <LoadingPage label={label}>
-      <div className={styles.accountShell}>
-        <aside className={styles.accountSidebar}>
+      <div className={accountStyles.accountShell}>
+        <aside className={accountStyles.accountSidebar}>
           <div className={styles.brand}>
             <Skeleton width={34} height={34} radius={6} />
             <Skeleton width={114} height={18} />
           </div>
-          <div className={styles.navGroup}>
-            <Skeleton width={91} height={9} />
+          <div className={accountStyles.navGroup}>
+            <Skeleton
+              width={91}
+              height={9}
+              className={accountStyles.navGroupHeading}
+            />
             <AccountNavItem active={active === "workspaces"} />
             <Skeleton width={58} height={9} className={styles.navCaption} />
             <AccountNavItem active={active === "account"} />
             <AccountNavItem active={active === "projects"} />
             <AccountNavItem active={active === "platform-accounts"} />
           </div>
-          <div className={styles.accountProfile}>
+          <div className={accountStyles.accountProfile}>
             <Skeleton width={36} height={36} radius="50%" />
             <div className={styles.profileCopy}>
               <Skeleton width={104} height={12} />
@@ -75,8 +80,8 @@ export function AccountFrame({
             </div>
           </div>
         </aside>
-        <div className={styles.accountBody}>
-          <header className={styles.appTopbar}>
+        <div className={accountStyles.accountBody}>
+          <header className={accountStyles.appTopbar}>
             <Skeleton width={title.length > 15 ? 178 : 132} height={16} />
             <div className={styles.topbarActions}>
               <Skeleton width={142} height={34} radius={6} />
@@ -84,7 +89,7 @@ export function AccountFrame({
               <Skeleton width={78} height={34} radius={6} />
             </div>
           </header>
-          <main className={styles.accountMain}>{children}</main>
+          <main className={accountStyles.accountMain}>{children}</main>
           <footer className={styles.appFooter}>
             <Skeleton width={200} height={10} />
             <Skeleton width={83} height={10} />
@@ -98,7 +103,7 @@ export function AccountFrame({
 function AccountNavItem({ active }: { active: boolean }) {
   return (
     <div
-      className={`${styles.accountNavItem} ${active ? styles.navCurrent : ""}`}
+      className={`${accountStyles.accountNavItem} ${active ? styles.navCurrent : ""}`}
     >
       <Skeleton width={17} height={17} radius={4} />
       <Skeleton width={active ? 112 : 96} height={12} />

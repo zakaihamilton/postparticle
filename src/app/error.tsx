@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import styles from "@/components/workspace.module.css";
+import styles from "@/components/workspace-primitives.module.css";
 export default function ErrorPage({ reset }: { reset: () => void }) {
   return (
     <main className={styles.pickerMain}>

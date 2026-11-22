@@ -5,12 +5,12 @@ import {
   randomUUID,
   sign as signBytes,
 } from "node:crypto";
-import { testOrganizationId } from "./organization";
 import {
   createServer,
   type IncomingMessage,
   type ServerResponse,
 } from "node:http";
+import { testOrganizationId } from "./organization";
 
 const organizationId = testOrganizationId;
 const productId = "postparticle";

@@ -2,8 +2,8 @@ import "server-only";
 
 import { HttpError } from "./config";
 import { isDevelopmentLoopbackOrigin } from "./origin";
-import type { Role } from "./types";
 import { exchangePerministerOidcCode } from "./perminister-oidc";
+import type { Role } from "./types";
 
 const productId = "postparticle";
 const requestTimeoutMs = 12_000;

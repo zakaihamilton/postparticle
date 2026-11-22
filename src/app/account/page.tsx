@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { currentActor, minimumAccountPasswordLength } from "@/lib/auth";
 import { AccountArea } from "@/components/account-area";
 import { YourAccountSettings } from "@/components/settings";
+import { currentActor, minimumAccountPasswordLength } from "@/lib/auth";
 
 export default async function AccountPage() {
   const actor = await currentActor();

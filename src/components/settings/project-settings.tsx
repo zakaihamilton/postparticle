@@ -1,16 +1,17 @@
 "use client";
 
+import { AlertDialog } from "panel-frame-ui";
 import {
+  type FormEvent,
   useCallback,
   useEffect,
   useRef,
   useState,
-  type FormEvent,
 } from "react";
-import { AlertDialog } from "panel-frame-ui";
 import { api, Notice } from "../ui";
-import styles from "../workspace.module.css";
+import styles from "../workspace-primitives.module.css";
 import { ProjectCreationForm } from "./project-creation-form";
+import settingsStyles from "./settings.module.css";
 
 interface ProjectRecord {
   id: string;
@@ -231,11 +232,11 @@ export function ProjectSettings({
         {loading ? (
           <p className={styles.tableFooter}>Loading projects…</p>
         ) : projects.length ? (
-          <div className={styles.accountList}>
+          <div className={settingsStyles.accountList}>
             {projects.map((project) => (
-              <article className={styles.accountUser} key={project.id}>
-                <div className={styles.accountUserTop}>
-                  <div className={styles.accountUserIdentity}>
+              <article className={settingsStyles.accountUser} key={project.id}>
+                <div className={settingsStyles.accountUserTop}>
+                  <div className={settingsStyles.accountUserIdentity}>
                     <strong>{project.name}</strong>
                     <small>ID: {project.id}</small>
                     <small>
@@ -254,7 +255,7 @@ export function ProjectSettings({
                       </small>
                     )}
                   </div>
-                  <div className={styles.accountUserActions}>
+                  <div className={settingsStyles.accountUserActions}>
                     {project.deleting ? (
                       <button
                         className={styles.dangerButton}
@@ -293,7 +294,7 @@ export function ProjectSettings({
                 </div>
                 {!project.deleting && (
                   <form
-                    className={styles.projectEditForm}
+                    className={settingsStyles.projectEditForm}
                     onSubmit={(event) => void updateProject(project.id, event)}
                   >
                     <label>
@@ -316,7 +317,7 @@ export function ProjectSettings({
                         disabled={busy}
                       />
                     </label>
-                    <label className={styles.projectProductionToggle}>
+                    <label className={settingsStyles.projectProductionToggle}>
                       <input
                         name="production"
                         type="checkbox"
@@ -343,7 +344,7 @@ export function ProjectSettings({
       {deleteTarget ? (
         <AlertDialog
           aria-busy={busy}
-          className={styles.projectDeleteDialog}
+          className={settingsStyles.projectDeleteDialog}
           description="This removes the project and its stored content and media, revokes its project grants, and stops its API responses. Its project ID stays retired. This cannot be undone."
           initialFocusRef={deleteInput}
           onOpenChange={(open) => {
@@ -371,7 +372,7 @@ export function ProjectSettings({
                 spellCheck={false}
               />
             </label>
-            <div className={styles.projectDeleteActions}>
+            <div className={settingsStyles.projectDeleteActions}>
               <button
                 className={styles.secondary}
                 type="button"

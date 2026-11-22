@@ -1,0 +1,157 @@
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 17px;
+  margin-bottom: 25px;
+}
+
+.stat {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 21px;
+  background: transparent;
+}
+
+.stat > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.stat svg {
+  color: var(--accent-ink);
+  opacity: 0.7;
+}
+
+.stat > strong {
+  font-size: 32px;
+  letter-spacing: -1px;
+  font-weight: 500;
+  display: block;
+  margin: 16px 0 10px;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat small {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.dashboardBanner {
+  margin-bottom: 27px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+  background: transparent;
+  border: 0;
+  border-left: 2px solid var(--accent);
+  border-radius: 0;
+  padding: 10px 24px;
+}
+
+.bannerEyebrow {
+  color: var(--accent-ink);
+  font-size: 13px;
+  letter-spacing: 0.8px;
+}
+
+.dashboardBanner h2 {
+  font-family: var(--font-editorial), Georgia, serif;
+  font-weight: 400;
+  font-size: 23px;
+  margin: 10px 0;
+}
+
+.dashboardBanner p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.7;
+}
+
+.quickLinks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.quickLinks > a {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 22px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  text-decoration: none;
+  color: var(--accent-ink);
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.quickLinks > a:not([class]):hover {
+  background: var(--surface-alt);
+  border-color: var(--accent-ink);
+  text-decoration: none;
+  transform: translateY(-2px);
+}
+
+.quickLinks strong {
+  display: block;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.quickLinks span {
+  display: block;
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.quickLinks svg:last-child {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+@media (max-width: 1200px) {
+  .stats {
+    gap: 12px;
+  }
+
+  .stat {
+    padding: 17px;
+  }
+}
+
+@media (max-width: 950px) {
+  .stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .stats {
+    gap: 12px;
+  }
+
+  .dashboardBanner {
+    padding: 23px;
+  }
+
+  .dashboardBanner h2 {
+    font-size: 21px;
+  }
+
+  .quickLinks {
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+}

@@ -4,9 +4,9 @@ import { errorResponse } from "@/lib/http";
 import {
   findLegacyProject,
   getProject,
+  type ProjectRecord,
   productionVisible,
   projectStoreFor,
-  type ProjectRecord,
 } from "@/lib/projects";
 export async function GET(
   _: Request,

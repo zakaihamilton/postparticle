@@ -1,10 +1,10 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { ContextSwitcher } from "panel-frame-ui";
 import { useState } from "react";
 import type { Actor } from "@/lib/types";
-import { api } from "./ui";
-import { ContextSwitcher } from "panel-frame-ui";
 import styles from "./organization-switcher.module.css";
+import { api } from "./ui";
 
 export function OrganizationSwitcher({
   actor,

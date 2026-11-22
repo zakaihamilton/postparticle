@@ -1,0 +1,169 @@
+.editorStatus {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.editorGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 270px;
+  gap: 22px;
+}
+
+.editorAside {
+  display: block;
+}
+
+.toolbar {
+  display: flex;
+  gap: 5px;
+  padding: 10px 15px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.toolbar button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  padding: 7px 9px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.toolbar button:hover {
+  background: var(--surface-alt);
+}
+
+.mediaSelect {
+  margin-left: auto;
+  max-width: 180px;
+}
+
+.mediaSelect > button {
+  font-size: 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.markdownGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.markdownInput {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+}
+
+.markdownInput > span,
+.preview > span {
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.7px;
+  display: block;
+  padding: 16px 18px 6px;
+}
+
+.markdownInput textarea {
+  border: 0;
+  border-radius: 0;
+  padding: 14px 18px;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.9;
+  resize: vertical;
+  box-shadow: none;
+  min-height: 380px;
+}
+
+.preview {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.preview > span {
+  padding-left: 20px;
+}
+
+.previewPlaceholder {
+  color: var(--muted);
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: 15px;
+  margin: 30px 20px;
+}
+
+.history {
+  padding: 0 23px;
+}
+
+.history > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.history > div:last-child {
+  border: 0;
+}
+
+.history strong {
+  font-size: 14px;
+}
+
+.history small {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 7px;
+}
+
+@media (max-width: 1200px) {
+  .editorGrid {
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 16px;
+  }
+
+  .markdownGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .markdownInput {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .markdownInput textarea {
+    min-height: 320px;
+  }
+}
+
+@media (max-width: 950px) {
+  .editorGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editorAside {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 700px) {
+  .editorAside {
+    display: block;
+  }
+
+  .history > div {
+    flex-wrap: wrap;
+  }
+}

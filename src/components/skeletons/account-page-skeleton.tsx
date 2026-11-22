@@ -1,5 +1,5 @@
-import styles from "./skeletons.module.css";
 import { AccountFrame, HeadingSkeleton, Skeleton } from "./skeleton-primitives";
+import styles from "./skeleton-primitives.module.css";
 
 export default function AccountPageSkeleton() {
   return (

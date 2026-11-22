@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useId, useState } from "react";
-import { api, Notice } from "../ui";
 import {
   clearFieldError,
   FieldError,
-  validateForm,
   type FieldErrors,
+  validateForm,
 } from "../form-validation";
-import styles from "../workspace.module.css";
+import { api, Notice } from "../ui";
+import styles from "../workspace-primitives.module.css";
 
 export function CreatePlatformAccountSettings({
   minimumPasswordLength,

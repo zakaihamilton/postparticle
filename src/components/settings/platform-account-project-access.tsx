@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import type { Role } from "@/lib/types";
-import { api, Notice } from "../ui";
 import Select from "../select";
-import styles from "../workspace.module.css";
+import { api, Notice } from "../ui";
+import styles from "./settings.module.css";
 
 type ProjectAccess = {
   id: string;

@@ -1,6 +1,4 @@
 "use client";
-import { GuardedLink as Link } from "./navigation-guard";
-import { ThemeControl as PanelThemeControl } from "panel-frame-ui";
 import {
   ArrowDown,
   ArrowDownRight,
@@ -20,6 +18,7 @@ import {
   LinkIcon,
   LockKeyhole,
   LogOut,
+  type LucideIcon,
   Menu,
   Monitor,
   Moon,
@@ -31,9 +30,11 @@ import {
   Sun,
   Upload,
   Users,
-  type LucideIcon,
 } from "lucide-react";
+import { ThemeControl as PanelThemeControl } from "panel-frame-ui";
+import { GuardedLink as Link } from "./navigation-guard";
 import styles from "./ui.module.css";
+
 function Wordmark() {
   return (
     <span className={styles.wordmark}>

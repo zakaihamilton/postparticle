@@ -1,5 +1,6 @@
-import styles from "./skeletons.module.css";
+import accountStyles from "./account-skeletons.module.css";
 import { AccountFrame, HeadingSkeleton, Skeleton } from "./skeleton-primitives";
+import styles from "./skeleton-primitives.module.css";
 
 export default function AccountProjectsPageSkeleton() {
   return (
@@ -44,9 +45,9 @@ export default function AccountProjectsPageSkeleton() {
           </div>
           <Skeleton width={78} height={32} radius={5} />
         </div>
-        <div className={styles.accountRows}>
+        <div className={accountStyles.accountRows}>
           {[0, 1, 2].map((row) => (
-            <div className={styles.accountRow} key={row}>
+            <div className={accountStyles.accountRow} key={row}>
               <div className={styles.identity}>
                 <Skeleton width={38} height={38} radius={7} />
                 <div className={styles.identityLines}>
@@ -54,7 +55,7 @@ export default function AccountProjectsPageSkeleton() {
                   <Skeleton width="70%" height={10} />
                 </div>
               </div>
-              <div className={styles.rowActions}>
+              <div className={accountStyles.rowActions}>
                 <Skeleton width={93} height={34} radius={5} />
                 <Skeleton width={82} height={34} radius={5} />
               </div>

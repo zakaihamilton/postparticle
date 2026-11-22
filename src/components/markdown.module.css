@@ -1,0 +1,51 @@
+.prose {
+  padding: 6px 20px 20px;
+  font-size: 16px;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+
+.prose h1,
+.prose h2,
+.prose h3 {
+  line-height: 1.4;
+}
+
+.prose img,
+.prose video {
+  max-width: 100%;
+  border-radius: 5px;
+}
+
+.prose a {
+  color: var(--accent-ink);
+}
+
+.prose blockquote {
+  margin-left: 0;
+  padding-left: 15px;
+  border-left: 2px solid var(--accent);
+  color: var(--muted);
+}
+
+.prose pre {
+  overflow-x: auto;
+  background: var(--surface-alt);
+  padding: 12px;
+  border-radius: 5px;
+  font-size: 13px;
+}
+
+.prose table {
+  border-collapse: collapse;
+  max-width: 100%;
+  font-size: 14px;
+  display: block;
+  overflow-x: auto;
+}
+
+.prose td,
+.prose th {
+  border: 1px solid var(--border);
+  padding: 7px;
+}

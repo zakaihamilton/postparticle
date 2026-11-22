@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Source_Sans_3, Lora } from "next/font/google";
+import { Lora, Source_Sans_3 } from "next/font/google";
 import { getThemeBootstrapScript, ThemeProvider } from "panel-frame-ui";
 import "./globals.css";
 

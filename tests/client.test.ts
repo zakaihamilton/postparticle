@@ -1,5 +1,6 @@
 import { expect, it, vi } from "vitest";
 import { PostparticleClient } from "@/lib/client";
+
 it("encodes public identifiers and queries and preserves fetch options", async () => {
   const fetcher = vi
     .fn()

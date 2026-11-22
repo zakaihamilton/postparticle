@@ -1,5 +1,6 @@
-import styles from "./skeletons.module.css";
+import accountStyles from "./account-skeletons.module.css";
 import { AccountFrame, Skeleton, SkeletonLines } from "./skeleton-primitives";
+import styles from "./skeleton-primitives.module.css";
 
 export default function ProjectsPageSkeleton() {
   return (
@@ -17,18 +18,18 @@ export default function ProjectsPageSkeleton() {
         width={146}
         height={42}
         radius={5}
-        className={styles.pickerAction}
+        className={accountStyles.pickerAction}
       />
-      <div className={styles.cardGrid}>
+      <div className={accountStyles.cardGrid}>
         {[0, 1, 2].map((card) => (
-          <div className={styles.projectCard} key={card}>
-            <div className={styles.projectCardTop}>
+          <div className={accountStyles.projectCard} key={card}>
+            <div className={accountStyles.projectCardTop}>
               <Skeleton width={38} height={38} radius={7} />
               <Skeleton width={72} height={23} radius={12} />
             </div>
             <Skeleton width="67%" height={19} />
             <SkeletonLines count={2} widths={["96%", "72%"]} height={11} />
-            <div className={styles.projectCardBottom}>
+            <div className={accountStyles.projectCardBottom}>
               <Skeleton width={104} height={11} />
               <Skeleton width={17} height={17} />
             </div>

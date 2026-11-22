@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Check, Copy } from "lucide-react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { PublicArticleMetadataIndexStatus } from "@/lib/types";
 import { GuardedLink as Link } from "../navigation-guard";
 import { api, Notice } from "../ui";
-import styles from "../workspace.module.css";
+import styles from "../workspace-primitives.module.css";
+import settingsStyles from "./settings.module.css";
 
 function normalizeWebsiteUrl(value: string) {
   const trimmed = value.trim();
@@ -236,10 +237,10 @@ export function IntegrationSettings({
               Copy these details and paste them above the AI integration prompt.
             </p>
           </div>
-          <div className={styles.integrationCopyControl}>
+          <div className={settingsStyles.integrationCopyControl}>
             <button
               type="button"
-              className={styles.integrationCopyButton}
+              className={settingsStyles.integrationCopyButton}
               aria-label={
                 copyState === "copied"
                   ? "AI integration parameters copied"
@@ -258,7 +259,7 @@ export function IntegrationSettings({
             </button>
             <span
               id="integration-parameters-tooltip"
-              className={styles.integrationCopyTooltip}
+              className={settingsStyles.integrationCopyTooltip}
               role="tooltip"
             >
               {copyState === "copied"
@@ -274,7 +275,7 @@ export function IntegrationSettings({
             Postparticle values are filled in from this workspace. Enter the
             public base URL of the website you’re connecting.
           </p>
-          <label className={styles.integrationWebsiteField}>
+          <label className={settingsStyles.integrationWebsiteField}>
             <span>
               Public website URL <code>WEBSITE_URL</code>
             </span>
@@ -302,7 +303,7 @@ export function IntegrationSettings({
               className={
                 copyState === "website-required" ||
                 copyState === "website-invalid"
-                  ? styles.integrationWebsiteError
+                  ? settingsStyles.integrationWebsiteError
                   : undefined
               }
             >

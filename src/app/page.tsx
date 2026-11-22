@@ -1,9 +1,10 @@
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { Brand, Icon, ThemeSwitch } from "@/components/ui";
 import { WelcomePreview } from "@/components/welcome-preview";
 import WelcomeReveal from "@/components/welcome-reveal";
 import styles from "./welcome.module.css";
+
 const questions = [
   {
     q: "Where does my content live?",

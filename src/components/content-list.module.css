@@ -1,0 +1,151 @@
+.contentListTableScroll {
+  min-width: 0;
+}
+
+.mobileRecordList {
+  display: none;
+}
+
+.mobileRecordCard {
+  list-style: none;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.mobileRecordTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.mobileRecordTitle {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.mobileRecordTitle strong {
+  display: block;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.mobileRecordTitle small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.mobileRecordTitle:hover strong {
+  color: var(--accent-ink);
+}
+
+.mobileRecordMeta {
+  display: grid;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.mobileRecordMetaRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.mobileRecordLabel {
+  width: 74px;
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.mobileRecordTags {
+  flex-wrap: wrap;
+}
+
+.recordTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.recordTitle strong,
+.recordIcon {
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.recordTitle:hover strong,
+.recordTitle:hover .recordIcon {
+  color: var(--accent-ink);
+}
+
+.recordTitle:hover .recordIcon {
+  border-color: var(--accent-ink);
+}
+
+.recordIcon {
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 9px;
+  display: flex;
+}
+
+.recordTitle strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: normal;
+  max-width: 330px;
+}
+
+.recordTitle small {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 7px;
+}
+
+.date {
+  color: var(--muted);
+  font-size: 13px !important;
+}
+
+.rowArrow {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 17px;
+  transition:
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.rowArrow:hover {
+  color: var(--accent-ink);
+  transform: translate(2px, -2px);
+}
+
+@media (max-width: 700px) {
+  .contentListTableScroll {
+    display: none;
+  }
+
+  .mobileRecordList {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 14px;
+  }
+}

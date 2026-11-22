@@ -1,9 +1,9 @@
-import { manageHandler, manageProject } from "@/lib/manage-api";
 import {
   publicArticleMetadataIndexStatus,
   rebuildPublicArticleMetadataIndex,
 } from "@/lib/article-metadata-index";
 import { json } from "@/lib/http";
+import { manageHandler, manageProject } from "@/lib/manage-api";
 
 type Context = { params: Promise<{ projectId: string }> };
 
