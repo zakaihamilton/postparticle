@@ -15,7 +15,7 @@ import type {
 import { useUnsavedChanges } from "../navigation-guard";
 import { api } from "../ui";
 
-export const blankArticle = (): Article => ({
+const blankArticle = (): Article => ({
   title: "",
   slug: "",
   excerpt: "",
@@ -29,14 +29,14 @@ export const blankArticle = (): Article => ({
   socialMediaId: "",
 });
 
-export const blankDocument = (): JsonDocument => ({
+const blankDocument = (): JsonDocument => ({
   title: "",
   key: "",
   tags: [],
   value: {},
 });
 
-export const blankJsonText = '{\n  "message": "Hello, world"\n}';
+const blankJsonText = '{\n  "message": "Hello, world"\n}';
 
 export function useEditorController({
   kind,

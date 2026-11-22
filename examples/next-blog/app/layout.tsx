@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import styles from "./blog.module.css";
 import { websiteUrl } from "../lib/content";
+import styles from "./blog.module.css";
 export const metadata: Metadata = {
   title: { default: "Demo Journal", template: "%s · Demo Journal" },
   description:

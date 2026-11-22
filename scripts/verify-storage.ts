@@ -1,15 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { identifier, organizationIdentifier } from "../src/lib/config";
-import { getProject } from "../src/lib/projects";
-import { projectStore, SpacesStore } from "../src/lib/storage";
 import {
   contentIndexStatus,
   readContentRecords,
   rebuildContentCheckpoints,
 } from "../src/lib/content-state";
 import { contentEventFeedKey } from "../src/lib/events";
+import { getProject } from "../src/lib/projects";
 import { listPublicArticles } from "../src/lib/public";
+import { projectStore, SpacesStore } from "../src/lib/storage";
 import type { Article, Event } from "../src/lib/types";
+
 if (process.env.STORAGE_DRIVER !== "spaces")
   throw new Error(
     "Verification requires STORAGE_DRIVER=spaces and real Spaces credentials",

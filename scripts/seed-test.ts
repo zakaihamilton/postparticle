@@ -1,10 +1,11 @@
-import { saveContent, contentAction } from "../src/lib/content";
+import { contentAction, saveContent } from "../src/lib/content";
 import {
-  updateProjectRegistry,
   getProject,
   projectStoreFor,
+  updateProjectRegistry,
 } from "../src/lib/projects";
 import { testOrganizationId } from "../tests/e2e/organization";
+
 if (
   process.env.STORAGE_DRIVER !== "local" ||
   !process.env.LOCAL_STORAGE_PATH?.includes("postparticle-test")

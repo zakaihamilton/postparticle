@@ -1,9 +1,9 @@
+import { rebuildPublicArticleMetadataIndex } from "../src/lib/article-metadata-index";
 import { identifier, organizationIdentifier } from "../src/lib/config";
 import {
   contentIndexStatus,
   rebuildContentCheckpoints,
 } from "../src/lib/content-state";
-import { rebuildPublicArticleMetadataIndex } from "../src/lib/article-metadata-index";
 import { getProject, projectStoreFor } from "../src/lib/projects";
 
 const args = process.argv.slice(2);

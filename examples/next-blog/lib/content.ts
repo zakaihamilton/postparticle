@@ -1,6 +1,6 @@
 import "server-only";
-import { connection } from "next/server";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 
 export interface PublicArticle {
   title: string;

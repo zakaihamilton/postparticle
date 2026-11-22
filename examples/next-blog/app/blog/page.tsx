@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { getArticles } from "../../lib/content";
-import styles from "../blog.module.css";
 import BlogFilters from "../../components/blog-filters";
-import { readBlogFilters, type BlogSearchParams } from "../../lib/filters";
+import { getArticles } from "../../lib/content";
+import { type BlogSearchParams, readBlogFilters } from "../../lib/filters";
+import styles from "../blog.module.css";
 export default async function Blog({
   searchParams,
 }: {

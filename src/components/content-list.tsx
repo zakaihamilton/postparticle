@@ -12,7 +12,7 @@ import Select from "./select";
 import { api, Empty, Icon, Notice } from "./ui";
 import styles from "./workspace-primitives.module.css";
 
-export { Dashboard, Status, Table };
+export { Dashboard, Status };
 
 export function ContentList({
   kind,

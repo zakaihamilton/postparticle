@@ -17,6 +17,6 @@ export async function signIn(page: Page, username = "admin") {
   await expect(page).toHaveURL(/\/projects$/);
 }
 
-export function workspaceNavigationToggle(page: Page) {
+function workspaceNavigationToggle(page: Page) {
   return page.locator("button.pf-mobile-menu-button");
 }

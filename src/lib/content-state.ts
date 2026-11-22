@@ -1,10 +1,6 @@
 import "server-only";
 
 export { rebuildContentCheckpoints } from "./content-state/checkpoint-builder";
-export type {
-  CheckpointBuildResult,
-  ContentIndexStatus,
-} from "./content-state/checkpoint-codec";
 export {
   contentIndexStatus,
   readContentRecord,

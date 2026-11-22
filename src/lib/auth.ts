@@ -5,7 +5,6 @@ export {
   createPerministerAccount,
   getUser,
   listUsers,
-  type ManagedAccount,
   membership,
   minimumAccountPasswordLength,
   projectMemberAccounts,
@@ -20,7 +19,6 @@ export {
   authorizeResolvedProject,
 } from "./auth-authorization";
 export {
-  type AuthContext,
   currentActor,
   currentAuthContext,
   loginWithPerministerAuthorizationCode,

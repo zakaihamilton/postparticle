@@ -1,7 +1,8 @@
-import { defineConfig, devices } from "@playwright/test";
-import path from "node:path";
 import { tmpdir } from "node:os";
+import path from "node:path";
+import { defineConfig, devices } from "@playwright/test";
 import { testOrganizationId } from "./tests/e2e/organization";
+
 process.env.LOCAL_STORAGE_PATH = path.join(
   tmpdir(),
   `postparticle-test-e2e-${process.pid}`,

@@ -41,7 +41,7 @@ export interface ProjectRecord extends Project {
   registryConflict?: boolean;
 }
 
-export interface ProjectRegistryProjection {
+interface ProjectRegistryProjection {
   projects: ProjectRecord[];
   conflictedProjectIds: Set<string>;
 }

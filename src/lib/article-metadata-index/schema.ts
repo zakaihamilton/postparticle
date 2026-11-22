@@ -2,7 +2,7 @@ import "server-only";
 import type { Store } from "../storage";
 import type { Article, PublicArticleMetadata, RecordState } from "../types";
 
-export const indexPrefix = "indexes/public-article-metadata";
+const indexPrefix = "indexes/public-article-metadata";
 export const generationsPrefix = `${indexPrefix}/generations/`;
 export const legacyEntriesPrefix = `${indexPrefix}/entries/`;
 export const canonicalEntriesPrefix = `${legacyEntriesPrefix}by-slug/`;
@@ -53,7 +53,7 @@ export function publicMetadata(
   );
 }
 
-export function metadataForArticle(
+function metadataForArticle(
   article: Article,
   createdAt: string,
   publishedAt: string,
@@ -85,7 +85,7 @@ export function sortedMetadata(items: PublicArticleMetadata[], order: Order) {
   });
 }
 
-export function isMetadata(value: unknown): value is PublicArticleMetadata {
+function isMetadata(value: unknown): value is PublicArticleMetadata {
   if (!value || typeof value !== "object") return false;
   const item = value as Partial<PublicArticleMetadata>;
   return (

@@ -19,7 +19,6 @@ import { contentStore, projectStore, type Store } from "./storage";
 export {
   beginProjectDeletion,
   getProjectDeletionMarker,
-  type ProjectDeletionMarker,
 } from "./project-deletions";
 export type { ProjectRecord } from "./project-registry-log";
 
