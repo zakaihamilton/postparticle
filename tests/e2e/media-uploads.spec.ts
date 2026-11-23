@@ -3,12 +3,18 @@ import { organizationScopedPath, signIn } from "./helpers";
 
 async function openMediaLibrary(page: any) {
   await page.getByRole("link", { name: /Demo Journal/ }).click();
-  const openNavigation = page.getByRole("button", {
-    name: "Open navigation",
-    exact: true,
-  });
-  if (await openNavigation.isVisible()) await openNavigation.click();
-  await page.getByRole("link", { name: "Media library", exact: true }).click();
+  const mediaLibraryLink = page
+    .locator("#pf-dashboard-sidebar")
+    .getByRole("link", { name: "Media library", exact: true });
+  if (!(await mediaLibraryLink.isVisible())) {
+    const openNavigation = page.getByRole("button", {
+      name: "Open navigation",
+      exact: true,
+    });
+    await openNavigation.waitFor({ state: "visible" });
+    await openNavigation.click();
+  }
+  await mediaLibraryLink.click();
 }
 
 async function chooseFixtureImage(page: any, filename: string) {
