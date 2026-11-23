@@ -1,5 +1,5 @@
 import Link from "next/link";
-import styles from "@/components/workspace.module.css";
+import styles from "@/components/workspace-primitives.module.css";
 export default function NotFound() {
   return (
     <main className={styles.pickerMain}>

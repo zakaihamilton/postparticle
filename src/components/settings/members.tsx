@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { api, Notice } from "../ui";
 import type { Role } from "@/lib/types";
-import styles from "../workspace.module.css";
 import Select from "../select";
+import { api, Notice } from "../ui";
+import styles from "../workspace-primitives.module.css";
+
 type Member = {
   username: string;
   disabled: boolean;

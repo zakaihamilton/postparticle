@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { manageHandler, manageProject } from "@/lib/manage-api";
-import { getRecord } from "@/lib/content";
 import { HttpError, identifier } from "@/lib/config";
+import { getRecord } from "@/lib/content";
 import { json } from "@/lib/http";
+import { manageHandler, manageProject } from "@/lib/manage-api";
 import { listMedia } from "@/lib/media";
 
 type Context = { params: Promise<{ projectId: string }> };

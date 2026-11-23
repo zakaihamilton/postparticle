@@ -1,7 +1,7 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import { usernameSchema, usernameError } from "@/lib/username";
+import { usernameError, usernameSchema } from "@/lib/username";
 import styles from "./form-validation.module.css";
 
 export type FieldErrors = Record<string, string>;

@@ -1,8 +1,8 @@
 import Link from "next/link";
+import styles from "@/components/developers/developers.module.css";
 import Guide from "@/components/developers/guide";
 import { guideLinks } from "@/components/developers/topics";
 import { Icon } from "@/components/ui";
-import styles from "@/components/developers/developers.module.css";
 
 const nextjsGuides = [
   {

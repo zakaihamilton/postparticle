@@ -1,158 +1,19 @@
 "use client";
 import Link from "next/link";
-import { Suspense, use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type {
   ContentListData,
   ContentListRow,
   Kind,
-  WorkspaceDashboardResult,
 } from "@/lib/types";
-import { api, Empty, Icon, Notice } from "./ui";
-import styles from "./workspace.module.css";
+import { Status, Table } from "./content-table";
+import { Dashboard } from "./dashboard";
 import Select from "./select";
-function recordTitle(r: { draft: { title: string } }) {
-  return r.draft.title;
-}
-export function Status({
-  record,
-}: {
-  record: { published: unknown; trashed: boolean };
-}) {
-  return (
-    <span
-      className={`${styles.badge} ${record.published && !record.trashed ? styles.published : ""}`}
-    >
-      <span />
-      {record.trashed ? "Trashed" : record.published ? "Published" : "Draft"}
-    </span>
-  );
-}
-function Table({
-  rows,
-  kind,
-  projectId,
-}: {
-  rows: ContentListRow[];
-  kind: Kind;
-  projectId: string;
-}) {
-  const dateLabel = kind === "articles" ? "Article date" : "Updated";
-  return (
-    <>
-      <div className={`${styles.tableScroll} ${styles.contentListTableScroll}`}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>{kind === "articles" ? "ARTICLE" : "DOCUMENT"}</th>
-              <th>STATUS</th>
-              <th>TAGS</th>
-              <th>{kind === "articles" ? "ARTICLE DATE" : "UPDATED"}</th>
-              <th>
-                <span className={styles.srOnly}>Open</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id}>
-                <td>
-                  <Link
-                    href={`/workspace/${projectId}/${kind}/${r.id}`}
-                    className={styles.recordTitle}
-                  >
-                    <span className={styles.recordIcon}>
-                      <Icon
-                        name={kind === "articles" ? "article" : "code"}
-                        size={18}
-                      />
-                    </span>
-                    <span>
-                      <strong>{recordTitle(r)}</strong>
-                      <small>
-                        {kind === "articles" ? r.draft.author : r.draft.key}
-                      </small>
-                    </span>
-                  </Link>
-                </td>
-                <td>
-                  <Status record={r} />
-                </td>
-                <td>
-                  <div className={styles.tags}>
-                    {r.draft.tags.slice(0, 3).map((tag) => (
-                      <span key={tag}>{tag}</span>
-                    ))}
-                  </div>
-                </td>
-                <td className={styles.date}>
-                  {kind === "articles"
-                    ? r.draft.articleDate
-                    : r.updatedAt.slice(0, 10)}
-                </td>
-                <td>
-                  <Link
-                    aria-label={`Open ${recordTitle(r)}`}
-                    href={`/workspace/${projectId}/${kind}/${r.id}`}
-                    className={styles.rowArrow}
-                  >
-                    <Icon name="arrow-up-right" size={17} />
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <ul
-        className={styles.mobileRecordList}
-        aria-label={kind === "articles" ? "Articles" : "JSON documents"}
-      >
-        {rows.map((r) => (
-          <li className={styles.mobileRecordCard} key={r.id}>
-            <div className={styles.mobileRecordTop}>
-              <Link
-                href={`/workspace/${projectId}/${kind}/${r.id}`}
-                className={styles.mobileRecordTitle}
-              >
-                <strong>{recordTitle(r)}</strong>
-                <small>
-                  {kind === "articles" ? r.draft.author : r.draft.key}
-                </small>
-              </Link>
-              <Status record={r} />
-            </div>
-            <div className={styles.mobileRecordMeta}>
-              {!!r.draft.tags.length && (
-                <div className={styles.mobileRecordMetaRow}>
-                  <span className={styles.mobileRecordLabel}>Tags</span>
-                  <div className={styles.tags}>
-                    {r.draft.tags.slice(0, 3).map((tag) => (
-                      <span key={tag}>{tag}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <div className={styles.mobileRecordMetaRow}>
-                <span className={styles.mobileRecordLabel}>{dateLabel}</span>
-                <time
-                  dateTime={
-                    kind === "articles"
-                      ? r.draft.articleDate
-                      : r.updatedAt.slice(0, 10)
-                  }
-                >
-                  {kind === "articles"
-                    ? r.draft.articleDate
-                    : r.updatedAt.slice(0, 10)}
-                </time>
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
+import { api, Empty, Icon, Notice } from "./ui";
+import styles from "./workspace-primitives.module.css";
+
+export { Dashboard, Status };
+
 export function ContentList({
   kind,
   projectId,
@@ -177,7 +38,8 @@ export function ContentList({
   const [status, setStatus] = useState("active");
   const [order, setOrder] = useState("desc");
   const [retry, setRetry] = useState(0);
-// biome-ignore lint/correctness/useExhaustiveDependencies: retry is an explicit trigger after the user requests another load.
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: retry is an explicit trigger after the user requests another load.
   useEffect(() => {
     if (previewData || previewError) return;
     let active = true;
@@ -213,6 +75,7 @@ export function ContentList({
       window.clearTimeout(timer);
     };
   }, [projectId, kind, q, previewData, previewError, retry]);
+
   const query = q.trim().toLowerCase();
   const visibleRows = previewData
     ? previewData.rows.filter(
@@ -240,6 +103,7 @@ export function ContentList({
         a.id.localeCompare(b.id)
       );
     });
+
   return (
     <>
       <div className={styles.pageHeading}>
@@ -356,175 +220,5 @@ export function ContentList({
         )}
       </section>
     </>
-  );
-}
-export function Dashboard({
-  projectId,
-  username,
-  canEdit,
-  initialDashboard,
-}: {
-  projectId: string;
-  username: string;
-  canEdit: boolean;
-  initialDashboard: Promise<WorkspaceDashboardResult>;
-}) {
-  return (
-    <>
-      <div className={styles.pageHeading}>
-        <div>
-          <div className={styles.eyebrow}>WORKSPACE OVERVIEW</div>
-          <h1>Hello, {username}</h1>
-          <p className={styles.subtitle}>
-            Here’s what’s happening in your content workspace.
-          </p>
-        </div>
-        {canEdit && (
-          <Link
-            className={styles.primary}
-            href={`/workspace/${projectId}/articles/new`}
-          >
-            <Icon name="plus" size={17} />
-            New article
-          </Link>
-        )}
-      </div>
-      <Suspense
-        fallback={
-          <div className={styles.loading} role="status">
-            Loading workspace stats…
-          </div>
-        }
-      >
-        <DashboardStats initialDashboard={initialDashboard} />
-      </Suspense>
-      <div className={styles.dashboardBanner}>
-        <div>
-          <span className={styles.bannerEyebrow}>YOUR PUBLISHING WORKFLOW</span>
-          <h2>Write privately. Publish when ready.</h2>
-          <p>
-            Changes to published articles stay in a private draft until you
-            publish the next version.
-          </p>
-        </div>
-      </div>
-      <Suspense
-        fallback={
-          <section className={styles.panel} aria-busy="true">
-            <div className={styles.loading} role="status">
-              Loading recent articles…
-            </div>
-          </section>
-        }
-      >
-        <DashboardRecent
-          projectId={projectId}
-          initialDashboard={initialDashboard}
-        />
-      </Suspense>
-      <div className={styles.quickLinks}>
-        <Link href={`/workspace/${projectId}/media`}>
-          <Icon name="image" />
-          <div>
-            <strong>Media library</strong>
-            <span>Organize images, video, and metadata</span>
-          </div>
-          <Icon name="arrow" size={16} />
-        </Link>
-        <Link href={`/workspace/${projectId}/settings`}>
-          <Icon name="code" />
-          <div>
-            <strong>Connect your website</strong>
-            <span>Find your API endpoints and integration guides</span>
-          </div>
-          <Icon name="arrow" size={16} />
-        </Link>
-      </div>
-    </>
-  );
-}
-
-function DashboardStats({
-  initialDashboard,
-}: {
-  initialDashboard: Promise<WorkspaceDashboardResult>;
-}) {
-  const { data, error } = use(initialDashboard);
-  return (
-    <>
-      <Notice error={error} />
-      <div className={styles.stats}>
-        {[
-          {
-            title: "Total articles",
-            value: data ? data.articleCount : "—",
-            icon: "article",
-            sub: "Active articles",
-          },
-          {
-            title: "Published",
-            value: data ? data.publishedCount : "—",
-            icon: "globe",
-            sub: "Available through the API",
-          },
-          {
-            title: "Drafts",
-            value: data ? data.articleCount - data.publishedCount : "—",
-            icon: "clock",
-            sub: "Not yet published",
-          },
-          {
-            title: "Media assets",
-            value: data ? data.mediaCount : "—",
-            icon: "image",
-            sub: "Images and video",
-          },
-        ].map((stat) => (
-          <div className={styles.stat} key={stat.title}>
-            <div>
-              <span>{stat.title}</span>
-              <Icon name={stat.icon} size={19} />
-            </div>
-            <strong>{stat.value}</strong>
-            <small>{stat.sub}</small>
-          </div>
-        ))}
-      </div>
-    </>
-  );
-}
-
-function DashboardRecent({
-  projectId,
-  initialDashboard,
-}: {
-  projectId: string;
-  initialDashboard: Promise<WorkspaceDashboardResult>;
-}) {
-  const { data, error } = use(initialDashboard);
-  const articles = data?.recentArticles ?? [];
-  return (
-    <section className={styles.panel}>
-      <div className={styles.panelHeading}>
-        <div>
-          <h2>Recent articles</h2>
-          <p>Your five most recently updated articles.</p>
-        </div>
-        <Link href={`/workspace/${projectId}/articles`}>
-          View all articles <Icon name="arrow" size={15} />
-        </Link>
-      </div>
-      {data && articles.length ? (
-        <Table rows={articles} kind="articles" projectId={projectId} />
-      ) : data ? (
-        <Empty title="No articles yet">
-          Create an article to start your content library.
-        </Empty>
-      ) : (
-        <div className={styles.loading} role="status">
-          {error || "Workspace summary is unavailable."}
-        </div>
-      )}
-    </section>
   );
 }

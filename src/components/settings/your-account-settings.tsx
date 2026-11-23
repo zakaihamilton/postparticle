@@ -1,14 +1,14 @@
 "use client";
-import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, Notice } from "../ui";
+import { useId, useState } from "react";
 import {
   clearFieldError,
   FieldError,
-  validateForm,
   type FieldErrors,
+  validateForm,
 } from "../form-validation";
-import styles from "../workspace.module.css";
+import { api, Notice } from "../ui";
+import styles from "../workspace-primitives.module.css";
 export function YourAccountSettings({
   minimumPasswordLength,
   request = api,

@@ -1,9 +1,8 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import type { Event } from "./types";
 import type { Store } from "./storage";
 import { mapBounded } from "./storage";
-import type { Kind } from "./types";
+import type { Event, Kind } from "./types";
 
 export interface ContentEventFeedEntry {
   version: 1;

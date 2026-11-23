@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { allowedProjects, currentAuthContext } from "@/lib/auth";
 import ProjectPicker from "@/components/project-picker";
+import { allowedProjects, currentAuthContext } from "@/lib/auth";
 export default async function ProjectsPage() {
   const context = await currentAuthContext();
   if (!context) redirect("/login");

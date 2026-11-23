@@ -1,5 +1,5 @@
-import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { expect, test } from "@playwright/test";
 
 test("welcome animations finish, publishing is repeatable, and both themes remain accessible", async ({
   page,

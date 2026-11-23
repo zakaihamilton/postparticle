@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
-import { guideSearchIndex, type GuideSearchEntry } from "./search-index";
 import styles from "./developers.module.css";
+import { type GuideSearchEntry, guideSearchIndex } from "./search-index";
 
 const resultLimit = 8;
 

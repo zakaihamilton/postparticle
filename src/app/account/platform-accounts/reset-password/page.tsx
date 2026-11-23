@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { currentActor, minimumAccountPasswordLength } from "@/lib/auth";
 import { AccountArea } from "@/components/account-area";
 import { ResetPlatformAccountPassword } from "@/components/settings";
+import { currentActor, minimumAccountPasswordLength } from "@/lib/auth";
 
 export default async function ResetPlatformAccountPasswordPage({
   searchParams,

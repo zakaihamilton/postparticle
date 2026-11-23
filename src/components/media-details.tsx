@@ -1,11 +1,11 @@
 "use client";
-import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 import type { Media } from "@/lib/types";
-import { api, Notice } from "./ui";
-import { GuardedLink as Link } from "./navigation-guard";
-import styles from "./workspace.module.css";
 import libraryStyles from "./media-library.module.css";
+import { GuardedLink as Link } from "./navigation-guard";
+import { api, Notice } from "./ui";
+import styles from "./workspace-primitives.module.css";
 
 export default function MediaDetails({
   projectId,
@@ -98,7 +98,7 @@ export default function MediaDetails({
 
   const isVideo = media.contentType.startsWith("video/");
   return (
-    <section className={`${styles.panel} ${styles.assetDetails}`}>
+    <section className={`${styles.panel} ${libraryStyles.assetDetails}`}>
       <div className={libraryStyles.detailHeader}>
         <Link className={styles.ghost} href={`/workspace/${projectId}/media`}>
           ← Back to media library
@@ -113,7 +113,7 @@ export default function MediaDetails({
         </div>
       </div>
       <Notice error={error} message={message} />
-      <div className={styles.assetDetailGrid}>
+      <div className={libraryStyles.assetDetailGrid}>
         <div>
           {previewError ? (
             <div className={libraryStyles.detailPreviewError} role="status">

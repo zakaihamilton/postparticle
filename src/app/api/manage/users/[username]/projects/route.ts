@@ -3,12 +3,12 @@ import { getUser, membership, setMembership } from "@/lib/auth";
 import { HttpError } from "@/lib/config";
 import { json, readJson } from "@/lib/http";
 import { manageHandler, managePlatformAdmin } from "@/lib/manage-api";
-import { usernameSchema } from "@/lib/username";
 import {
   getProject,
   getProjectRegistry,
   productionVisible,
 } from "@/lib/projects";
+import { usernameSchema } from "@/lib/username";
 
 type Context = { params: Promise<{ username: string }> };
 

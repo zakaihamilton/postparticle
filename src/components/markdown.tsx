@@ -1,8 +1,8 @@
 "use client";
 import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import styles from "./workspace.module.css";
 import { mediaReferenceId } from "@/lib/media-references";
+import styles from "./markdown.module.css";
 export default function Markdown({
   body,
   projectId,

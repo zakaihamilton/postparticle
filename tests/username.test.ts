@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { usernameSchema } from "@/lib/username";
 import { identifier } from "@/lib/config";
+import { usernameSchema } from "@/lib/username";
 
 describe("account names", () => {
   it("preserves legacy usernames and canonicalizes email names", () => {

@@ -1,13 +1,15 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import styles from "./skeletons.module.css";
+import guideStyles from "./guide-skeletons.module.css";
 import {
   HeadingSkeleton,
   LoadingPage,
   Skeleton,
   SkeletonLines,
 } from "./skeleton-primitives";
+import primitiveStyles from "./skeleton-primitives.module.css";
+import styles from "./workspace-skeleton.module.css";
 
 const workspaceViews = [
   { id: "", width: 82 },
@@ -45,13 +47,13 @@ export default function WorkspacePageSkeleton() {
     >
       <div className={styles.workspaceShell}>
         <aside className={styles.workspaceSidebar}>
-          <div className={styles.brand}>
+          <div className={primitiveStyles.brand}>
             <Skeleton width={34} height={34} radius={6} />
             <Skeleton width={114} height={18} />
           </div>
           <div className={styles.workspaceProject}>
             <Skeleton width={37} height={37} radius={7} />
-            <div className={styles.profileCopy}>
+            <div className={primitiveStyles.profileCopy}>
               <Skeleton width={125} height={12} />
               <Skeleton width={95} height={10} />
             </div>
@@ -61,7 +63,7 @@ export default function WorkspacePageSkeleton() {
           <nav className={styles.workspaceNav}>
             {workspaceViews.slice(0, 4).map((item) => (
               <div
-                className={`${styles.workspaceNavItem} ${view === item.id ? styles.navCurrent : ""}`}
+                className={`${styles.workspaceNavItem} ${view === item.id ? primitiveStyles.navCurrent : ""}`}
                 key={item.id || "overview"}
               >
                 <Skeleton width={18} height={18} radius={4} />
@@ -69,11 +71,15 @@ export default function WorkspacePageSkeleton() {
               </div>
             ))}
           </nav>
-          <Skeleton width={59} height={9} className={styles.navCaption} />
+          <Skeleton
+            width={59}
+            height={9}
+            className={primitiveStyles.navCaption}
+          />
           <nav className={styles.workspaceNav}>
             {workspaceViews.slice(4).map((item) => (
               <div
-                className={`${styles.workspaceNavItem} ${view === item.id ? styles.navCurrent : ""}`}
+                className={`${styles.workspaceNavItem} ${view === item.id ? primitiveStyles.navCurrent : ""}`}
                 key={item.id}
               >
                 <Skeleton width={18} height={18} radius={4} />
@@ -83,9 +89,9 @@ export default function WorkspacePageSkeleton() {
           </nav>
           <div className={styles.workspaceSidebarBottom}>
             <Skeleton width="88%" height={11} />
-            <div className={styles.identity}>
+            <div className={primitiveStyles.identity}>
               <Skeleton width={36} height={36} radius="50%" />
-              <div className={styles.profileCopy}>
+              <div className={primitiveStyles.profileCopy}>
                 <Skeleton width={96} height={12} />
                 <Skeleton width={54} height={10} />
               </div>
@@ -105,7 +111,7 @@ export default function WorkspacePageSkeleton() {
                 </>
               )}
             </div>
-            <div className={styles.topbarActions}>
+            <div className={primitiveStyles.topbarActions}>
               <Skeleton width={142} height={34} radius={6} />
               <Skeleton width={112} height={11} />
               <Skeleton width={38} height={34} radius={6} />
@@ -120,7 +126,7 @@ export default function WorkspacePageSkeleton() {
               renderView(view)
             )}
           </main>
-          <footer className={styles.appFooter}>
+          <footer className={primitiveStyles.appFooter}>
             <Skeleton width={200} height={10} />
             <Skeleton width={83} height={10} />
           </footer>
@@ -157,8 +163,8 @@ function DashboardSkeleton() {
         <Skeleton width="56%" height={23} />
         <Skeleton width="74%" height={11} />
       </div>
-      <section className={styles.skeletonPanel}>
-        <div className={styles.panelHeading}>
+      <section className={primitiveStyles.skeletonPanel}>
+        <div className={primitiveStyles.panelHeading}>
           <Skeleton width={124} height={17} />
           <Skeleton width={88} height={11} />
         </div>
@@ -175,7 +181,7 @@ function DashboardSkeleton() {
         {[0, 1].map((link) => (
           <div className={styles.quickLink} key={link}>
             <Skeleton width={20} height={20} radius={4} />
-            <div className={styles.profileCopy}>
+            <div className={primitiveStyles.profileCopy}>
               <Skeleton width={link ? 149 : 117} height={13} />
               <Skeleton width="92%" height={10} />
             </div>
@@ -190,7 +196,7 @@ function ContentListSkeleton() {
   return (
     <>
       <HeadingSkeleton titleWidth="32%" descriptionWidth="59%" action />
-      <section className={styles.skeletonPanel}>
+      <section className={primitiveStyles.skeletonPanel}>
         <div className={styles.tableFilters}>
           <Skeleton className={styles.filterSkeleton} />
           <Skeleton className={styles.filterSkeleton} />
@@ -205,7 +211,7 @@ function ContentListSkeleton() {
         </div>
         {[0, 1, 2, 3, 4].map((row) => (
           <div className={styles.tableSkeletonRow} key={row}>
-            <div className={styles.profileCopy}>
+            <div className={primitiveStyles.profileCopy}>
               <Skeleton width={`${72 - row * 4}%`} height={13} />
               <Skeleton width={`${87 - row * 6}%`} height={10} />
             </div>
@@ -226,15 +232,15 @@ function EditorSkeleton() {
       <HeadingSkeleton titleWidth="54%" descriptionWidth="48%" action />
       <div className={styles.editorGrid}>
         <div className={styles.editorMain}>
-          <section className={styles.skeletonPanel}>
-            <div className={styles.panelBody}>
-              <div className={styles.field}>
+          <section className={primitiveStyles.skeletonPanel}>
+            <div className={primitiveStyles.panelBody}>
+              <div className={primitiveStyles.field}>
                 <Skeleton width={65} height={11} />
-                <Skeleton className={styles.inputSkeleton} />
+                <Skeleton className={primitiveStyles.inputSkeleton} />
               </div>
-              <div className={styles.field}>
+              <div className={primitiveStyles.field}>
                 <Skeleton width={76} height={11} />
-                <Skeleton className={styles.inputSkeleton} />
+                <Skeleton className={primitiveStyles.inputSkeleton} />
               </div>
               <div className={styles.editorBody}>
                 <SkeletonLines
@@ -248,13 +254,13 @@ function EditorSkeleton() {
         </div>
         <aside className={styles.editorAside}>
           {[0, 1, 2].map((panel) => (
-            <section className={styles.skeletonPanel} key={panel}>
-              <div className={styles.panelHeading}>
+            <section className={primitiveStyles.skeletonPanel} key={panel}>
+              <div className={primitiveStyles.panelHeading}>
                 <Skeleton width="62%" height={14} />
               </div>
-              <div className={styles.panelBody}>
+              <div className={primitiveStyles.panelBody}>
                 <Skeleton width="87%" height={11} />
-                <Skeleton className={styles.inputSkeleton} />
+                <Skeleton className={primitiveStyles.inputSkeleton} />
               </div>
             </section>
           ))}
@@ -268,13 +274,13 @@ function MediaLibrarySkeleton() {
   return (
     <>
       <HeadingSkeleton titleWidth="42%" descriptionWidth="63%" action />
-      <section className={styles.skeletonPanel}>
+      <section className={primitiveStyles.skeletonPanel}>
         <div className={styles.tableFilters}>
           <Skeleton className={styles.filterSkeleton} />
           <Skeleton className={styles.filterSkeleton} />
           <Skeleton width={118} height={40} className={styles.filterSkeleton} />
         </div>
-        <div className={styles.panelBody}>
+        <div className={primitiveStyles.panelBody}>
           <div className={styles.mediaGrid}>
             {[0, 1, 2, 3, 4, 5, 6, 7].map((item) => (
               <div className={styles.mediaCard} key={item}>
@@ -293,12 +299,12 @@ function MediaLibrarySkeleton() {
 function MediaDetailsSkeleton() {
   return (
     <section
-      className={`${styles.skeletonPanel} ${styles.mediaDetailsPanel}`}
+      className={`${primitiveStyles.skeletonPanel} ${styles.mediaDetailsPanel}`}
       aria-label="Media asset details"
     >
       <div className={styles.mediaDetailsHeading}>
         <Skeleton width={164} height={34} radius={5} />
-        <div className={styles.profileCopy}>
+        <div className={primitiveStyles.profileCopy}>
           <Skeleton width={91} height={10} />
           <Skeleton width="min(440px, 72%)" height={31} />
           <Skeleton width={142} height={12} />
@@ -310,15 +316,15 @@ function MediaDetailsSkeleton() {
           <Skeleton width="81%" height={12} />
         </div>
         <div className={styles.mediaDetailsForm}>
-          <div className={styles.field}>
+          <div className={primitiveStyles.field}>
             <Skeleton width={57} height={12} />
-            <Skeleton className={styles.inputSkeleton} />
+            <Skeleton className={primitiveStyles.inputSkeleton} />
           </div>
-          <div className={styles.field}>
+          <div className={primitiveStyles.field}>
             <Skeleton width={63} height={12} />
-            <Skeleton className={styles.inputSkeleton} />
+            <Skeleton className={primitiveStyles.inputSkeleton} />
           </div>
-          <div className={styles.field}>
+          <div className={primitiveStyles.field}>
             <Skeleton width={105} height={12} />
             <Skeleton className={styles.mediaMetadataSkeleton} />
           </div>
@@ -336,16 +342,16 @@ function MembersSkeleton() {
   return (
     <>
       <HeadingSkeleton titleWidth="28%" descriptionWidth="54%" action />
-      <section className={styles.skeletonPanel}>
-        <div className={styles.panelHeading}>
+      <section className={primitiveStyles.skeletonPanel}>
+        <div className={primitiveStyles.panelHeading}>
           <Skeleton width={137} height={16} />
           <Skeleton width={128} height={35} radius={5} />
         </div>
         {[0, 1, 2].map((row) => (
           <div className={styles.memberRow} key={row}>
-            <div className={styles.identity}>
+            <div className={primitiveStyles.identity}>
               <Skeleton width={36} height={36} radius="50%" />
-              <div className={styles.identityLines}>
+              <div className={primitiveStyles.identityLines}>
                 <Skeleton width={row ? 146 : 119} height={12} />
                 <Skeleton width={88} height={10} />
               </div>
@@ -362,39 +368,39 @@ function SettingsSkeleton() {
   return (
     <>
       <HeadingSkeleton titleWidth="40%" descriptionWidth="71%" />
-      <div className={styles.guideContents}>
+      <div className={guideStyles.guideContents}>
         {[0, 1, 2].map((tab) => (
           <Skeleton key={tab} width={[98, 124, 113][tab]} height={12} />
         ))}
       </div>
-      <section className={styles.skeletonPanel}>
-        <div className={styles.panelHeading}>
-          <div className={styles.profileCopy}>
+      <section className={primitiveStyles.skeletonPanel}>
+        <div className={primitiveStyles.panelHeading}>
+          <div className={primitiveStyles.profileCopy}>
             <Skeleton width={172} height={16} />
             <Skeleton width={246} height={11} />
           </div>
         </div>
-        <div className={styles.panelBody}>
-          <div className={styles.formColumns}>
+        <div className={primitiveStyles.panelBody}>
+          <div className={primitiveStyles.formColumns}>
             {[0, 1].map((field) => (
-              <div className={styles.field} key={field}>
+              <div className={primitiveStyles.field} key={field}>
                 <Skeleton width={field ? 98 : 91} height={11} />
-                <Skeleton className={styles.inputSkeleton} />
+                <Skeleton className={primitiveStyles.inputSkeleton} />
               </div>
             ))}
           </div>
-          <div className={styles.field}>
+          <div className={primitiveStyles.field}>
             <Skeleton width={107} height={11} />
-            <Skeleton className={styles.inputSkeleton} />
+            <Skeleton className={primitiveStyles.inputSkeleton} />
           </div>
           <Skeleton width={135} height={40} radius={5} />
         </div>
       </section>
-      <section className={styles.skeletonPanel}>
-        <div className={styles.panelHeading}>
+      <section className={primitiveStyles.skeletonPanel}>
+        <div className={primitiveStyles.panelHeading}>
           <Skeleton width={191} height={16} />
         </div>
-        <div className={styles.panelBody}>
+        <div className={primitiveStyles.panelBody}>
           <SkeletonLines count={3} widths={["95%", "84%", "67%"]} />
           <Skeleton width={138} height={38} radius={5} />
         </div>

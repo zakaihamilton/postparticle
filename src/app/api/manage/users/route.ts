@@ -1,4 +1,3 @@
-import { usernameSchema } from "@/lib/username";
 import { z } from "zod";
 import {
   createPerministerAccount,
@@ -7,6 +6,7 @@ import {
 } from "@/lib/auth";
 import { json, readJson } from "@/lib/http";
 import { manageHandler, managePlatformAdmin } from "@/lib/manage-api";
+import { usernameSchema } from "@/lib/username";
 
 export const GET = manageHandler(async (request: Request) => {
   await managePlatformAdmin(request);

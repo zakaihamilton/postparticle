@@ -2,7 +2,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { Icon } from "./ui";
-import styles from "@/app/welcome.module.css";
+import styles from "./welcome-preview.module.css";
 export function WelcomePreview() {
   const [published, setPublished] = useState(false);
   return (
@@ -17,53 +17,6 @@ export function WelcomePreview() {
         <span className={styles.demoLabel}>Interactive demonstration</span>
       </div>
       <div className={styles.workspaceGrid}>
-        <div className={styles.previewSidebar} aria-hidden="true">
-          <div className={styles.demoProject}>
-            <span>P</span>
-            <div>
-              Demo Studio<small>Content workspace</small>
-            </div>
-          </div>
-          {[
-            ["grid", "Overview"],
-            ["article", "Articles"],
-            ["image", "Media"],
-            ["code", "Documents"],
-            ["users", "Members"],
-          ].map(([icon, title]) => (
-            <div key={title} data-active={title === "Articles"}>
-              <Icon name={icon} size={16} />
-              {title}
-            </div>
-          ))}
-          <span className={styles.previewStorage}>
-            <Icon name="lock" size={14} />
-            Private storage
-          </span>
-        </div>
-        <div className={styles.articleQueue}>
-          <div className={styles.queueHeading}>
-            <strong>Articles</strong>
-            <span>03</span>
-          </div>
-          {[
-            "Light, stone, and open space",
-            "Inside the working studio",
-            "Along the coast",
-          ].map((title, i) => (
-            <div
-              key={title}
-              className={styles.queueItem}
-              data-selected={i === 0}
-            >
-              <span>{i === 0 ? "Selected article" : "Draft"}</span>
-              <strong>{title}</strong>
-              <small>
-                {["Oct 04, 2026", "Sep 28, 2026", "Sep 22, 2026"][i]}
-              </small>
-            </div>
-          ))}
-        </div>
         <div className={styles.articleEditor}>
           <div className={styles.editorTop}>
             <span>

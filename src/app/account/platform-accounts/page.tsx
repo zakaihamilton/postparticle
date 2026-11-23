@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { currentActor } from "@/lib/auth";
 import { AccountArea } from "@/components/account-area";
 import { PlatformAccountsSettings } from "@/components/settings";
+import { currentActor } from "@/lib/auth";
 
 export default async function PlatformAccountsPage() {
   const actor = await currentActor();

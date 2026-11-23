@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import Guide from "@/components/developers/guide";
 import CodeBlock from "@/components/developers/code-block";
+import styles from "@/components/developers/developers.module.css";
+import Guide from "@/components/developers/guide";
 import { integrationPrompt } from "@/components/developers/integration-prompt";
 import { snippets } from "@/components/developers/snippets";
-import styles from "@/components/developers/developers.module.css";
 
 const pages = {
   setup: {

@@ -1,7 +1,7 @@
-import { usernameSchema } from "@/lib/username";
 import { revokeUserSessions } from "@/lib/auth";
 import { json } from "@/lib/http";
 import { manageHandler, managePlatformAdmin } from "@/lib/manage-api";
+import { usernameSchema } from "@/lib/username";
 
 type Context = { params: Promise<{ username: string }> };
 

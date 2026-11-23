@@ -1,9 +1,9 @@
-import { usernameSchema } from "@/lib/username";
 import { z } from "zod";
 import { projectMemberAccounts, setMembership } from "@/lib/auth";
 import { HttpError } from "@/lib/config";
 import { json, readJson } from "@/lib/http";
 import { manageHandler, manageProject } from "@/lib/manage-api";
+import { usernameSchema } from "@/lib/username";
 
 type Context = { params: Promise<{ projectId: string }> };
 

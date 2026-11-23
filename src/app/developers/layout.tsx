@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Brand, Icon, ThemeSwitch } from "@/components/ui";
+import styles from "@/components/developers/developers.module.css";
 import DeveloperNavigation from "@/components/developers/navigation";
 import DeveloperSearch from "@/components/developers/search";
-import styles from "@/components/developers/developers.module.css";
+import { Brand, Icon, ThemeSwitch } from "@/components/ui";
 export const metadata: Metadata = {
   title: "Developer guides",
   description:

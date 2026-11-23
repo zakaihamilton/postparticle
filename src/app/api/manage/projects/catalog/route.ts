@@ -8,8 +8,8 @@ import {
 } from "@/lib/manage-api";
 import {
   getProjectRegistry,
-  updateProjectRegistry,
   type ProjectRecord,
+  updateProjectRegistry,
 } from "@/lib/projects";
 
 export const GET = manageHandler(async (request: Request) => {

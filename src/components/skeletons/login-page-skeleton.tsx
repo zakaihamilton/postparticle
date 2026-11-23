@@ -1,12 +1,13 @@
-import styles from "./skeletons.module.css";
+import styles from "./public-skeletons.module.css";
 import { LoadingPage, Skeleton, SkeletonLines } from "./skeleton-primitives";
+import primitiveStyles from "./skeleton-primitives.module.css";
 
 export default function LoginPageSkeleton() {
   return (
     <LoadingPage label="Loading sign-in page">
       <div className={styles.authPage}>
         <header className={styles.authHeader}>
-          <div className={styles.brand}>
+          <div className={primitiveStyles.brand}>
             <Skeleton width={32} height={32} radius={6} />
             <Skeleton width={132} height={20} />
           </div>
@@ -21,7 +22,7 @@ export default function LoginPageSkeleton() {
             </div>
             <SkeletonLines count={2} widths={["91%", "67%"]} height={14} />
             <Skeleton className={styles.authImage} height="auto" />
-            <div className={styles.projectNote}>
+            <div className={primitiveStyles.projectNote}>
               <Skeleton width={16} height={16} radius={4} />
               <Skeleton width="75%" height={11} />
             </div>
@@ -36,11 +37,11 @@ export default function LoginPageSkeleton() {
             </div>
             <div className={styles.authField}>
               <Skeleton width={70} height={12} />
-              <Skeleton className={styles.inputSkeleton} />
+              <Skeleton className={primitiveStyles.inputSkeleton} />
             </div>
             <div className={styles.authField}>
               <Skeleton width={62} height={12} />
-              <Skeleton className={styles.inputSkeleton} />
+              <Skeleton className={primitiveStyles.inputSkeleton} />
             </div>
             <Skeleton width="100%" height={47} radius={5} />
             <Skeleton width="90%" height={12} />

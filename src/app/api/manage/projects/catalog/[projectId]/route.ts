@@ -1,15 +1,15 @@
 import { z } from "zod";
+import { revokeProjectGrantsForDeletion } from "@/lib/auth";
 import { HttpError, identifier } from "@/lib/config";
 import { json, readJson } from "@/lib/http";
-import { revokeProjectGrantsForDeletion } from "@/lib/auth";
 import { manageHandler, managePlatformAdmin } from "@/lib/manage-api";
 import {
   beginProjectDeletion,
   getProject,
   getProjectDeletionMarker,
+  type ProjectRecord,
   projectStoreFor,
   updateProjectRegistry,
-  type ProjectRecord,
 } from "@/lib/projects";
 
 type Context = { params: Promise<{ projectId: string }> };

@@ -5,8 +5,7 @@ import {
   readContentRecords,
   rebuildContentCheckpoints,
 } from "@/lib/content-state";
-import { append } from "@/lib/events";
-import { contentEventFeedKey } from "@/lib/events";
+import { append, contentEventFeedKey } from "@/lib/events";
 import type { Store } from "@/lib/storage";
 import type { Article, Event } from "@/lib/types";
 

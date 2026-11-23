@@ -1,12 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
+import Workspace from "@/components/workspace";
 import { authorizeProject, currentAuthContext } from "@/lib/auth";
 import { HttpError } from "@/lib/config";
 import { getMedia, mediaOriginalUrl } from "@/lib/media";
 import { projectStoreFor } from "@/lib/projects";
 import type { Media } from "@/lib/types";
 import { readWorkspaceDashboardResult } from "@/lib/workspace-dashboard";
-import Workspace from "@/components/workspace";
 export default async function WorkspacePage({
   params,
 }: {

@@ -1,18 +1,19 @@
 import "server-only";
 import { z } from "zod";
+import { listIndexedPublicArticleMetadata } from "./article-metadata-index";
 import { HttpError } from "./config";
 import { getRecord, records } from "./content";
 import { delivery, resolvePublicMedia } from "./media";
-import { listIndexedPublicArticleMetadata } from "./article-metadata-index";
 import type { Store } from "./storage";
 import type {
   Article,
+  ArticleMetadataPage,
   ArticlePage,
   JsonDocument,
-  ArticleMetadataPage,
   PublicArticle,
   RecordState,
 } from "./types";
+
 function publicArticle(record: RecordState, store: Store): PublicArticle {
   const article = record.published as Article;
   const { coverMediaId, socialMediaId, ...fields } = resolvePublicMedia(

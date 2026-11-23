@@ -1,3 +1,7 @@
+import { createHash } from "node:crypto";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import {
   afterAll,
   beforeAll,
@@ -7,17 +11,13 @@ import {
   it,
   vi,
 } from "vitest";
-import { createHash } from "node:crypto";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import {
   beginProjectDeletion,
-  getProjectRegistry,
   getProject,
+  getProjectRegistry,
+  type ProjectRecord,
   projectStoreFor,
   updateProjectRegistry,
-  type ProjectRecord,
 } from "@/lib/projects";
 import { LocalStore } from "@/lib/storage";
 

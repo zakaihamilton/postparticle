@@ -1,8 +1,8 @@
 import { performance } from "node:perf_hooks";
 import { identifier, organizationIdentifier } from "../src/lib/config";
 import { records } from "../src/lib/content";
-import { listPublicArticles, readPublicArticle } from "../src/lib/public";
 import { getProject, projectStoreFor } from "../src/lib/projects";
+import { listPublicArticles, readPublicArticle } from "../src/lib/public";
 import type { Store } from "../src/lib/storage";
 
 const args = process.argv.slice(2);

@@ -2,8 +2,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import Select from "@/components/select";
 import { ContentList } from "@/components/content-list";
+import Select from "@/components/select";
 import { Members } from "@/components/settings/members";
 
 afterEach(() => vi.unstubAllGlobals());

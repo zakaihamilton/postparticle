@@ -1,4 +1,4 @@
-import styles from "./skeletons.module.css";
+import styles from "./guide-skeletons.module.css";
 import { LoadingPage, Skeleton, SkeletonLines } from "./skeleton-primitives";
 
 export default function ApiReferencePageSkeleton() {

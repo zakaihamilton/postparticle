@@ -1,5 +1,5 @@
-import { manageHandler, manageProject } from "@/lib/manage-api";
 import { json } from "@/lib/http";
+import { manageHandler, manageProject } from "@/lib/manage-api";
 import { readWorkspaceDashboard } from "@/lib/workspace-dashboard";
 
 type Context = { params: Promise<{ projectId: string }> };

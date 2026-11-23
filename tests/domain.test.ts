@@ -1,10 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { LocalStore } from "@/lib/storage";
-import { append } from "@/lib/events";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   articleSchema,
   contentAction,
@@ -14,7 +12,7 @@ import {
   restoreRevision,
   saveContent,
 } from "@/lib/content";
-import { listPublicArticleMetadata, listPublicArticles } from "@/lib/public";
+import { append } from "@/lib/events";
 import {
   abortUpload,
   deleteMedia,
@@ -26,6 +24,9 @@ import {
   startUpload,
   writeLocalUpload,
 } from "@/lib/media";
+import { listPublicArticleMetadata, listPublicArticles } from "@/lib/public";
+import { LocalStore } from "@/lib/storage";
+
 let root: string;
 let store: LocalStore;
 const article = {

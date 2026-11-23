@@ -1,22 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Workspace from "@/components/workspace";
-import ProjectPicker from "@/components/project-picker";
+import { PreviewDropdown, PreviewToolbar } from "ui-preview-kit";
 import { AccountArea } from "@/components/account-area";
-import { YourAccountSettings } from "@/components/settings/your-account-settings";
-import { PlatformAccountsSettings } from "@/components/settings/platform-accounts-settings";
+import ProjectPicker from "@/components/project-picker";
 import { CreatePlatformAccountSettings } from "@/components/settings/create-platform-account-settings";
-import { ResetPlatformAccountPassword } from "@/components/settings/reset-platform-account-password";
-import { ProjectSettings } from "@/components/settings/project-settings";
+import { PlatformAccountsSettings } from "@/components/settings/platform-accounts-settings";
 import { ProjectCreationForm } from "@/components/settings/project-creation-form";
+import { ProjectSettings } from "@/components/settings/project-settings";
+import { ResetPlatformAccountPassword } from "@/components/settings/reset-platform-account-password";
+import { YourAccountSettings } from "@/components/settings/your-account-settings";
+import Workspace from "@/components/workspace";
 import type {
   Article,
   RecordState,
-  WorkspaceDashboardResult,
   Role,
+  WorkspaceDashboardResult,
 } from "@/lib/types";
-import { PreviewDropdown, PreviewToolbar } from "ui-preview-kit";
 
 const actor = {
   username: "Alex Morgan",

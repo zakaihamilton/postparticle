@@ -1,8 +1,7 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { LocalStore } from "@/lib/storage";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { events } from "@/lib/events";
 import {
   abortUpload,
@@ -11,6 +10,8 @@ import {
   getMedia,
   startUpload,
 } from "@/lib/media";
+import { LocalStore } from "@/lib/storage";
+
 let root: string;
 let store: LocalStore;
 beforeEach(async () => {

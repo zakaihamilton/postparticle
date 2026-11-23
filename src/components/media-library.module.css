@@ -15,19 +15,23 @@
     background 0.18s,
     color 0.18s;
 }
+
 .uploadDropZone strong,
 .uploadDropZone small {
   display: block;
 }
+
 .uploadDropZone strong {
   color: var(--text);
   font-size: 14px;
 }
+
 .uploadDropZone small {
   margin-top: 5px;
   font-size: 13px;
   line-height: 1.5;
 }
+
 .fileInput {
   position: absolute;
   width: 1px;
@@ -39,6 +43,7 @@
   white-space: nowrap;
   border: 0;
 }
+
 .uploadBrowse {
   flex: 0 0 auto;
   border: 1px solid var(--border);
@@ -49,18 +54,22 @@
   font-size: 13px;
   font-weight: 600;
 }
+
 .uploadBrowse:hover:not(:disabled) {
   border-color: var(--accent-ink);
   background: var(--accent-soft);
 }
+
 .mediaCardShell {
   min-width: 0;
 }
+
 .previewUnavailable {
   padding: 12px;
   font-size: 12px;
   text-align: center;
 }
+
 .retryPreview {
   width: 100%;
   margin-top: 8px;
@@ -72,31 +81,38 @@
   font-size: 13px;
   font-weight: 600;
 }
+
 .retryPreview:hover:not(:disabled) {
   border-color: var(--accent-ink);
   background: var(--accent-soft);
 }
+
 .loadMore {
   display: flex;
   justify-content: center;
   margin-top: 24px;
 }
+
 .detailHeader {
   display: grid;
   gap: 18px;
   padding: 24px 26px 0;
 }
+
 .detailHeader > a {
   justify-self: start;
   text-decoration: none;
 }
+
 .detailHeader h1 {
   margin: 0;
   overflow-wrap: anywhere;
 }
+
 .detailHeader p {
   margin: 9px 0 0;
 }
+
 .detailPreviewError {
   min-height: 220px;
   display: flex;
@@ -108,14 +124,202 @@
   background: var(--surface-alt);
   color: var(--muted);
 }
+
 .detailPreviewError p {
   margin: 0;
 }
+
 .dragging {
   border-color: var(--accent-ink);
   background: var(--accent-soft);
   color: var(--accent-ink);
 }
+
 [aria-disabled="true"].uploadDropZone {
   opacity: 0.62;
+}
+
+.mediaToolbar {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.mediaSearch {
+  max-width: 330px;
+}
+
+.mediaToolbar > span {
+  color: var(--muted);
+  font-size: 13px;
+  margin-left: auto;
+}
+
+.mediaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.mediaCard {
+  display: block;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0;
+  text-align: left;
+  color: var(--text);
+  text-decoration: none;
+  overflow: hidden;
+  border-radius: 5px;
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
+}
+
+.mediaCard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+}
+
+.mediaCard:focus-visible {
+  outline: 3px solid var(--accent-ink);
+  outline-offset: 3px;
+}
+
+.mediaThumbnail {
+  height: 150px;
+  background: var(--surface-alt);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.mediaThumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mediaThumbnail > span {
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.mediaInfo {
+  padding: 16px;
+}
+
+.mediaInfo strong {
+  display: block;
+  font-size: 14px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.mediaInfo > span {
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.assetDetails {
+  margin-top: 28px;
+}
+
+.assetDetailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.assetDetailGrid > div:first-child {
+  padding: 23px;
+}
+
+.assetDetailGrid img,
+.assetDetailGrid video {
+  width: 100%;
+  max-height: 370px;
+  object-fit: contain;
+  background: var(--surface-alt);
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.assetDetailGrid code {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.uploadProgress {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.uploadProgress > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.uploadProgress strong {
+  font-size: 14px;
+}
+
+.uploadProgress progress {
+  width: 100%;
+  height: 6px;
+  margin-top: 12px;
+  accent-color: var(--accent-ink);
+}
+
+@media (max-width: 1200px) {
+  .mediaGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 950px) {
+  .mediaGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .assetDetailGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .mediaToolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .mediaSearch {
+    max-width: none;
+    flex: none;
+  }
+
+  .mediaToolbar > span {
+    margin-left: 0;
+  }
+
+  .mediaGrid {
+    gap: 12px;
+  }
+
+  .mediaInfo {
+    padding: 12px;
+  }
 }

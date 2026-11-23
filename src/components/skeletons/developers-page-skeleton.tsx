@@ -1,5 +1,6 @@
-import styles from "./skeletons.module.css";
+import styles from "./guide-skeletons.module.css";
 import { LoadingPage, Skeleton, SkeletonLines } from "./skeleton-primitives";
+import primitiveStyles from "./skeleton-primitives.module.css";
 
 export default function DevelopersPageSkeleton() {
   return (
@@ -35,7 +36,7 @@ export default function DevelopersPageSkeleton() {
         <div className={styles.guideCards}>
           {[0, 1, 2, 3].map((card) => (
             <div className={styles.guideCard} key={card}>
-              <div className={styles.identity}>
+              <div className={primitiveStyles.identity}>
                 <Skeleton width={22} height={22} radius={4} />
                 <Skeleton width={`${58 + card * 5}%`} height={13} />
               </div>

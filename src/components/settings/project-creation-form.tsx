@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { type FormEvent, useState } from "react";
 import { api, Notice } from "../ui";
-import styles from "../workspace.module.css";
+import styles from "../workspace-primitives.module.css";
+import settingsStyles from "./settings.module.css";
 
 export function ProjectCreationForm({
   isPlatformAdmin = false,
@@ -83,7 +84,7 @@ export function ProjectCreationForm({
             />
           </label>
           {isPlatformAdmin && (
-            <label className={styles.projectProductionToggle}>
+            <label className={settingsStyles.projectProductionToggle}>
               <input
                 name="production"
                 type="checkbox"

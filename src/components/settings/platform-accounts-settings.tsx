@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, Notice } from "../ui";
-import styles from "../workspace.module.css";
+import styles from "../workspace-primitives.module.css";
 import { PlatformAccountProjectAccess } from "./platform-account-project-access";
+import settingsStyles from "./settings.module.css";
 
 type PlatformUser = {
   username: string;
@@ -106,13 +107,16 @@ export function PlatformAccountsSettings({
             The account list could not be loaded.
           </p>
         ) : users.length ? (
-          <div className={styles.accountList}>
+          <div className={settingsStyles.accountList}>
             {users.map((user) => {
               const isSelf = user.username === currentUsername;
               return (
-                <article className={styles.accountUser} key={user.username}>
-                  <div className={styles.accountUserTop}>
-                    <div className={styles.accountUserIdentity}>
+                <article
+                  className={settingsStyles.accountUser}
+                  key={user.username}
+                >
+                  <div className={settingsStyles.accountUserTop}>
+                    <div className={settingsStyles.accountUserIdentity}>
                       <strong>{user.username}</strong>
                       <small>
                         {user.platformAdmin
@@ -125,7 +129,7 @@ export function PlatformAccountsSettings({
                         <small>Admin access to every project</small>
                       )}
                     </div>
-                    <div className={styles.accountUserActions}>
+                    <div className={settingsStyles.accountUserActions}>
                       {!user.platformAdmin && (
                         <button
                           className={styles.secondary}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Icon } from "../ui";
-import { nextjsGuideSequence } from "./topics";
 import styles from "./developers.module.css";
+import { nextjsGuideSequence } from "./topics";
 export default function Guide({
   index,
   group,

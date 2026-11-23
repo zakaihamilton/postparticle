@@ -1,8 +1,8 @@
 import { performance } from "node:perf_hooks";
 import { HttpError } from "@/lib/config";
 import { errorResponse, json } from "@/lib/http";
-import { listPublicArticleMetadata } from "@/lib/public";
 import { publicProjectStore } from "@/lib/projects";
+import { listPublicArticleMetadata } from "@/lib/public";
 
 export const dynamic = "force-dynamic";
 

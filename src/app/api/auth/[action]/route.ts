@@ -1,8 +1,8 @@
 import { z } from "zod";
 import {
   changePerministerPassword,
-  minimumAccountPasswordLength,
   logout,
+  minimumAccountPasswordLength,
   requireActor,
   selectOrganization,
 } from "@/lib/auth";

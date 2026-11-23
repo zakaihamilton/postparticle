@@ -1,0 +1,324 @@
+.productWindow {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  border-radius: 6px;
+  box-shadow: 0 12px 36px color-mix(in srgb, var(--text) 7%, transparent);
+}
+
+.windowBar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  background: var(--bg);
+  padding: 12px 16px;
+  font-size: 13px;
+}
+
+.windowDots {
+  display: flex;
+  gap: 5px;
+}
+
+.windowDots i {
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--muted);
+  opacity: 0.5;
+  border-radius: 50%;
+}
+
+.demoLabel {
+  margin-left: auto;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.workspaceGrid {
+  display: block;
+}
+
+.articleEditor {
+  min-width: 0;
+  padding: 20px 24px;
+}
+
+.editorTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.7px;
+  margin-bottom: 18px;
+}
+
+.editorTop > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.editorTop > .saved {
+  color: color-mix(in srgb, var(--green) 85%, var(--text));
+  letter-spacing: 0;
+}
+
+.editorCover {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 3px;
+  aspect-ratio: 16 / 7;
+}
+
+.editorMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin: 16px 0 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.articleEditor h2 {
+  letter-spacing: -0.6px;
+  margin: 0 0 8px;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-weight: 400;
+  font-size: 27px;
+  line-height: 1.3;
+}
+
+.articleEditor > p {
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 0;
+  font-size: 15px;
+}
+
+.previewTags {
+  display: flex;
+  gap: 6px;
+  margin: 14px 0 18px;
+}
+
+.previewTags span {
+  font-size: 14px;
+  padding: 4px 7px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+}
+
+.seoPreview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.seoPreview > svg {
+  color: color-mix(in srgb, var(--green) 85%, var(--text));
+}
+
+.seoPreview > div {
+  flex: 1;
+}
+
+.seoPreview strong {
+  display: block;
+  font-size: 14px;
+}
+
+.seoPreview span {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.5;
+  font-size: 13px;
+}
+
+.publishRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 18px;
+}
+
+.publishRow > span {
+  font-size: 14px;
+}
+
+.draftStatus {
+  color: var(--muted);
+}
+
+.publishedStatus {
+  color: color-mix(in srgb, var(--green) 85%, var(--text));
+}
+
+.publishRow button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 0;
+  font-size: 14px;
+  border-radius: 4px;
+  transition: background var(--motion-fast);
+}
+
+.publishRow button:hover {
+  background: var(--accent-hover);
+}
+
+.delivery {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 14px;
+  gap: 14px;
+  padding: 14px;
+}
+
+.delivery > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.deliveryTrack {
+  position: relative;
+  height: 2px;
+  background: var(--border);
+  flex-shrink: 0;
+  width: 40px;
+}
+
+.deliveryTrack i {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  left: 0;
+  top: -3px;
+  opacity: 0;
+}
+
+.delivery[data-published="true"] > div:last-child {
+  color: color-mix(in srgb, var(--green) 85%, var(--text));
+  animation: deliveryEnter var(--motion-panel) var(--ease-out) both;
+}
+
+.delivery[data-published="true"] .deliveryTrack i {
+  animation: transfer var(--motion-enter) both;
+}
+
+@keyframes transfer {
+  0% {
+    opacity: 0;
+    left: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    left: 100%;
+  }
+}
+
+@keyframes deliveryEnter {
+  from {
+    opacity: 0.3;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 1100px) {
+  .demoLabel {
+    display: none;
+  }
+
+  .delivery {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 1000px) {
+  .articleEditor {
+    padding: 22px;
+  }
+}
+
+@media (max-width: 720px) {
+  .windowBar {
+    padding: 12px;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .windowBar > span:nth-child(2) {
+    font-size: 12px;
+  }
+
+  .articleEditor {
+    padding: 18px;
+  }
+
+  .articleEditor h2 {
+    font-size: 25px;
+  }
+
+  .editorTop,
+  .editorMeta {
+    flex-wrap: wrap;
+  }
+
+  .delivery {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 18px;
+    font-size: 12px;
+  }
+
+  .deliveryTrack {
+    width: 65px;
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .publishRow button,
+  .delivery[data-published="true"] > div:last-child,
+  .delivery[data-published="true"] .deliveryTrack i {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -1,12 +1,13 @@
 import "server-only";
 import { z } from "zod";
-import { append, events } from "./events";
-import { readContentRecord, readContentRecords } from "./content-state";
-import { HttpError, identifier } from "./config";
-import { collectMediaReferenceIds } from "./media-references";
 import { syncPublicArticleMetadata } from "./article-metadata-index";
+import { HttpError, identifier } from "./config";
+import { readContentRecord, readContentRecords } from "./content-state";
+import { append, events } from "./events";
+import { collectMediaReferenceIds } from "./media-references";
 import type { Store } from "./storage";
 import type { Article, Content, JsonDocument, Kind } from "./types";
+
 const tags = z
   .array(z.string().trim().min(1).max(60))
   .max(30)
