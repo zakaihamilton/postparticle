@@ -3,6 +3,11 @@ import { organizationScopedPath, signIn } from "./helpers";
 
 async function openMediaLibrary(page: any) {
   await page.getByRole("link", { name: /Demo Journal/ }).click();
+  const openNavigation = page.getByRole("button", {
+    name: "Open navigation",
+    exact: true,
+  });
+  if (await openNavigation.isVisible()) await openNavigation.click();
   await page.getByRole("link", { name: "Media library", exact: true }).click();
 }
 
