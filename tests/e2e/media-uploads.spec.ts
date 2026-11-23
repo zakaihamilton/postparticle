@@ -3,7 +3,7 @@ import { organizationScopedPath, signIn } from "./helpers";
 
 async function openMediaLibrary(page: any) {
   await page.getByRole("link", { name: /Demo Journal/ }).click();
-  await page.getByRole("link", { name: "Media library" }).click();
+  await page.getByRole("link", { name: "Media library", exact: true }).click();
 }
 
 async function chooseFixtureImage(page: any, filename: string) {
