@@ -9,6 +9,16 @@ function recordTitle(r: { draft: { title: string } }) {
   return r.draft.title;
 }
 
+function TagChips({ tags, className }: { tags: string[]; className: string }) {
+  return (
+    <div className={className}>
+      {tags.slice(0, 3).map((tag) => (
+        <span key={tag}>{tag}</span>
+      ))}
+    </div>
+  );
+}
+
 export function Status({
   record,
 }: {
@@ -77,11 +87,7 @@ export function Table({
                   <Status record={r} />
                 </td>
                 <td>
-                  <div className={styles.tags}>
-                    {r.draft.tags.slice(0, 3).map((tag) => (
-                      <span key={tag}>{tag}</span>
-                    ))}
-                  </div>
+                  <TagChips tags={r.draft.tags} className={styles.tags} />
                 </td>
                 <td className={listStyles.date}>
                   {kind === "articles"
@@ -124,11 +130,10 @@ export function Table({
               {!!r.draft.tags.length && (
                 <div className={listStyles.mobileRecordMetaRow}>
                   <span className={listStyles.mobileRecordLabel}>Tags</span>
-                  <div className={`${styles.tags} ${listStyles.mobileRecordTags}`}>
-                    {r.draft.tags.slice(0, 3).map((tag) => (
-                      <span key={tag}>{tag}</span>
-                    ))}
-                  </div>
+                  <TagChips
+                    tags={r.draft.tags}
+                    className={`${styles.tags} ${listStyles.mobileRecordTags}`}
+                  />
                 </div>
               )}
               <div className={listStyles.mobileRecordMetaRow}>

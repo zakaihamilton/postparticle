@@ -26,6 +26,17 @@ export class PostparticleClient {
       throw new Error(`Postparticle returned ${response.status}`);
     return response.json() as Promise<T>;
   }
+  private queryGet<T>(
+    path: string,
+    query: Record<string, string | number | undefined>,
+    init?: RequestInit,
+  ) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined) params.set(key, String(value));
+    }
+    return this.get<T>(`${path}?${params}`, init);
+  }
   articles(
     query: {
       q?: string;
@@ -36,11 +47,7 @@ export class PostparticleClient {
     } = {},
     init?: RequestInit,
   ) {
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(query)) {
-      if (value !== undefined) params.set(key, String(value));
-    }
-    return this.get<ArticlePage>(`articles?${params}`, init);
+    return this.queryGet<ArticlePage>("articles", query, init);
   }
   articleMetadataPage(
     query: {
@@ -50,11 +57,11 @@ export class PostparticleClient {
     } = {},
     init?: RequestInit,
   ) {
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(query)) {
-      if (value !== undefined) params.set(key, String(value));
-    }
-    return this.get<ArticleMetadataPage>(`articles/metadata?${params}`, init);
+    return this.queryGet<ArticleMetadataPage>(
+      "articles/metadata",
+      query,
+      init,
+    );
   }
   article(slug: string, init?: RequestInit) {
     return this.get<PublicArticle>(

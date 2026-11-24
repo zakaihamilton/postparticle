@@ -1,15 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { useId, useState } from "react";
-import {
-  clearFieldError,
-  FieldError,
-  type FieldErrors,
-  validateForm,
-} from "../form-validation";
+import { FieldError, validateForm } from "../form-validation";
 import { api, Notice } from "../ui";
 import styles from "../workspace-primitives.module.css";
+import {
+  PasswordField,
+  PlatformAdminHeading,
+  useSettingsFeedback,
+  useValidatedForm,
+} from "./settings-helpers";
 
 export function CreatePlatformAccountSettings({
   minimumPasswordLength,
@@ -18,36 +17,23 @@ export function CreatePlatformAccountSettings({
   minimumPasswordLength: number;
   request?: typeof api;
 }) {
-  const validationId = useId().replace(/:/g, "");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const { error, setError, message, setMessage, busy, setBusy } =
+    useSettingsFeedback();
+  const { validationId, fieldErrors, setFieldErrors, handleFormChange } =
+    useValidatedForm();
 
   return (
     <>
-      <div className={styles.pageHeading}>
-        <div>
-          <div className={styles.eyebrow}>PLATFORM ADMINISTRATION</div>
-          <h1>Create account</h1>
-          <p className={styles.subtitle}>
-            New accounts start with no project access. Assign access from the
-            users list.
-          </p>
-        </div>
-        <Link className={styles.secondary} href="/account/platform-accounts">
-          View users
-        </Link>
-      </div>
+      <PlatformAdminHeading
+        title="Create account"
+        subtitle="New accounts start with no project access. Assign access from the users list."
+      />
       <Notice error={error} message={message} />
       <section className={styles.panel}>
         <form
           noValidate
           className={styles.formSection}
-          onChange={(event) => {
-            if (event.target instanceof HTMLInputElement)
-              clearFieldError(setFieldErrors, event.target.name);
-          }}
+          onChange={handleFormChange}
           onSubmit={(event) => {
             event.preventDefault();
             const form = event.currentTarget;
@@ -102,27 +88,12 @@ export function CreatePlatformAccountSettings({
                 message={fieldErrors.username}
               />
             </label>
-            <label>
-              Initial password
-              <input
-                type="password"
-                name="password"
-                minLength={minimumPasswordLength}
-                required
-                autoComplete="new-password"
-                aria-label="Initial password"
-                aria-invalid={fieldErrors.password ? true : undefined}
-                aria-describedby={
-                  fieldErrors.password
-                    ? validationId + "-password-error"
-                    : undefined
-                }
-              />
-              <FieldError
-                id={validationId + "-password-error"}
-                message={fieldErrors.password}
-              />
-            </label>
+            <PasswordField
+              validationId={validationId}
+              label="Initial password"
+              minLength={minimumPasswordLength}
+              error={fieldErrors.password}
+            />
           </div>
           <button className={styles.primary} disabled={busy}>
             Create account

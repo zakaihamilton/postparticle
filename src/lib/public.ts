@@ -3,7 +3,9 @@ import { z } from "zod";
 import { listIndexedPublicArticleMetadata } from "./article-metadata-index";
 import { HttpError } from "./config";
 import { getRecord, records } from "./content";
+import { errorResponse } from "./http";
 import { delivery, resolvePublicMedia } from "./media";
+import { publicProjectStore } from "./projects";
 import type { Store } from "./storage";
 import type {
   Article,
@@ -99,4 +101,29 @@ export async function readPublicDocument(
   if (!record?.published || record.trashed)
     throw new HttpError(404, "Document not found");
   return resolvePublicMedia(record.published as JsonDocument, store);
+}
+
+export async function publicProjectGet<P extends { projectId: string }>(
+  request: Request,
+  params: Promise<P>,
+  handler: (ctx: {
+    params: P;
+    url: URL;
+    store: Store;
+  }) => Promise<Response>,
+) {
+  try {
+    const resolved = await params;
+    const url = new URL(request.url);
+    const organizationId = url.searchParams.get("organizationId");
+    if (!organizationId)
+      throw new HttpError(400, "organizationId is required");
+    const { store } = await publicProjectStore(
+      organizationId,
+      resolved.projectId,
+    );
+    return await handler({ params: resolved, url, store });
+  } catch (error) {
+    return errorResponse(error);
+  }
 }

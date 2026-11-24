@@ -1,11 +1,11 @@
-import { z } from "zod";
-import { HttpError, identifier } from "@/lib/config";
+import { HttpError } from "@/lib/config";
 import { json, readJson } from "@/lib/http";
 import {
   manageAuthenticatedContext,
   manageHandler,
   managePlatformAdmin,
 } from "@/lib/manage-api";
+import { projectCreateInputSchema } from "@/lib/project-registry-log";
 import {
   getProjectRegistry,
   type ProjectRecord,
@@ -25,13 +25,7 @@ export const GET = manageHandler(async (request: Request) => {
 export const POST = manageHandler(async (request: Request) => {
   const context = await manageAuthenticatedContext(request);
   const { actor } = context;
-  const input = z
-    .object({
-      id: identifier,
-      name: z.string().trim().min(1).max(120),
-      description: z.string().max(1000),
-      production: z.boolean().default(true),
-    })
+  const input = projectCreateInputSchema
     .strict()
     .parse(await readJson(request));
   let created: ProjectRecord | undefined;

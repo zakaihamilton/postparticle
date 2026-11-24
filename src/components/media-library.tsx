@@ -98,14 +98,18 @@ export default function MediaLibrary({
   // biome-ignore lint/correctness/useExhaustiveDependencies: endpoint changes must abort the previous request.
   useEffect(() => () => abort.current?.abort(), [endpoint]);
 
-  async function reload() {
-    const query = queryRef.current;
+  function buildPageUrl(offset: number, query: string) {
     const params = new URLSearchParams({
-      offset: "0",
+      offset: String(offset),
       limit: String(pageSize),
     });
     if (query.trim()) params.set("q", query.trim());
-    const page = await request<MediaLibraryPage>(`${endpoint}?${params}`);
+    return `${endpoint}?${params}`;
+  }
+
+  async function reload() {
+    const query = queryRef.current;
+    const page = await request<MediaLibraryPage>(buildPageUrl(0, query));
     if (queryRef.current !== query) return;
     setItems(page.items);
     setTotal(page.total);
@@ -123,12 +127,9 @@ export default function MediaLibrary({
     setLoadingMore(true);
     setError("");
     try {
-      const params = new URLSearchParams({
-        offset: String(nextOffset),
-        limit: String(pageSize),
-      });
-      if (query.trim()) params.set("q", query.trim());
-      const page = await request<MediaLibraryPage>(`${endpoint}?${params}`);
+      const page = await request<MediaLibraryPage>(
+        buildPageUrl(nextOffset, query),
+      );
       if (queryRef.current !== query) return;
       setItems((current) => [...current, ...page.items]);
       setTotal(page.total);

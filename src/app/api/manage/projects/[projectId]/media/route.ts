@@ -1,15 +1,9 @@
 import { HttpError } from "@/lib/config";
 import { json, readJson } from "@/lib/http";
-import { manageHandler, manageProject } from "@/lib/manage-api";
+import { projectHandler } from "@/lib/manage-api";
 import { listMediaPage, startUpload } from "@/lib/media";
 
-type Context = { params: Promise<{ projectId: string }> };
-
-export const GET = manageHandler(async (request: Request, context: Context) => {
-  const { store } = await manageProject(
-    request,
-    (await context.params).projectId,
-  );
+export const GET = projectHandler(async (request, { store }) => {
   const url = new URL(request.url);
   const rawOffset = Number(url.searchParams.get("offset") ?? 0);
   const rawLimit = Number(url.searchParams.get("limit") ?? 24);
@@ -32,19 +26,14 @@ export const GET = manageHandler(async (request: Request, context: Context) => {
   );
 });
 
-export const POST = manageHandler(
-  async (request: Request, context: Context) => {
-    const { actor, projectId, store } = await manageProject(
-      request,
-      (await context.params).projectId,
-    );
-    return json(
+export const POST = projectHandler(
+  async (request, { actor, projectId, store }) =>
+    json(
       await startUpload(
         actor.username,
         await readJson(request),
         store,
         projectId,
       ),
-    );
-  },
+    ),
 );

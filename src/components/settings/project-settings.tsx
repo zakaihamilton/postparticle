@@ -12,6 +12,7 @@ import { api, Notice } from "../ui";
 import styles from "../workspace-primitives.module.css";
 import { ProjectCreationForm } from "./project-creation-form";
 import settingsStyles from "./settings.module.css";
+import { useSettingsFeedback } from "./settings-helpers";
 
 interface ProjectRecord {
   id: string;
@@ -32,9 +33,8 @@ export function ProjectSettings({
 }) {
   const [projects, setProjects] = useState<ProjectRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const { error, setError, message, setMessage, busy, setBusy, run } =
+    useSettingsFeedback();
   const [deleteTarget, setDeleteTarget] = useState<ProjectRecord | null>(null);
   const [typedId, setTypedId] = useState("");
   const deleteInput = useRef<HTMLInputElement>(null);
@@ -52,7 +52,7 @@ export function ProjectSettings({
     } finally {
       setLoading(false);
     }
-  }, [request]);
+  }, [request, setError]);
 
 // biome-ignore lint/correctness/useExhaustiveDependencies: organization changes should reload the project list.
   useEffect(() => {
@@ -77,19 +77,6 @@ export function ProjectSettings({
       active = false;
     };
   }, [organizationId, request]);
-
-  async function run(task: () => Promise<void>) {
-    setError("");
-    setMessage("");
-    setBusy(true);
-    try {
-      await task();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function updateProject(
     projectId: string,

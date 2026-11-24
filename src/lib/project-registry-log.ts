@@ -9,11 +9,14 @@ const registryChangePrefix = (organizationId: string) =>
   `organizations/${organizationId}/project-registry/changes/`;
 const mutationTails = new Map<string, Promise<void>>();
 
-const projectRecordSchema = z.object({
+export const projectCreateInputSchema = z.object({
   id: identifier,
   name: z.string().trim().min(1).max(120),
   description: z.string().max(1000),
   production: z.boolean().default(true),
+});
+
+const projectRecordSchema = projectCreateInputSchema.extend({
   createdBySubjectId: z.string().min(1).optional(),
   legacyOrganizationId: organizationIdentifier.optional(),
   archived: z.boolean().default(false),

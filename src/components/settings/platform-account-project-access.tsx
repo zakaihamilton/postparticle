@@ -5,6 +5,7 @@ import type { Role } from "@/lib/types";
 import Select from "../select";
 import { api, Notice } from "../ui";
 import styles from "./settings.module.css";
+import { loadWhileActive, useSettingsFeedback } from "./settings-helpers";
 
 type ProjectAccess = {
   id: string;
@@ -22,28 +23,24 @@ export function PlatformAccountProjectAccess({
 }) {
   const [projects, setProjects] = useState<ProjectAccess[]>([]);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const { error, setError, message, setMessage, busy, setBusy } =
+    useSettingsFeedback();
   const endpoint =
     "/api/manage/users/" + encodeURIComponent(username) + "/projects";
 
   useEffect(() => {
     let active = true;
-    request<{ projects: ProjectAccess[] }>(endpoint)
-      .then((result) => {
-        if (active) setProjects(result.projects);
-      })
-      .catch((e) => {
-        if (active) setError((e as Error).message);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+    loadWhileActive(
+      request<{ projects: ProjectAccess[] }>(endpoint),
+      () => active,
+      (result) => setProjects(result.projects),
+      setError,
+      setLoading,
+    );
     return () => {
       active = false;
     };
-  }, [endpoint, request]);
+  }, [endpoint, request, setError]);
 
   async function updateRole(projectId: string, role: Role | null) {
     setBusy(true);

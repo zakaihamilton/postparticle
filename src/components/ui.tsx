@@ -34,6 +34,7 @@ import {
 import { ThemeControl as PanelThemeControl } from "panel-frame-ui";
 import { GuardedLink as Link } from "./navigation-guard";
 import styles from "./ui.module.css";
+import shellStyles from "./workspace-shell.module.css";
 
 function Wordmark() {
   return (
@@ -169,6 +170,29 @@ export function Empty({
       </span>
       <h3>{title}</h3>
       <p>{children}</p>
+    </div>
+  );
+}
+
+export function SidebarProfile({
+  username,
+  subtitle,
+  children,
+}: {
+  username: string;
+  subtitle: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className={shellStyles.profile}>
+      <span className={shellStyles.userAvatar}>
+        {username.slice(0, 1).toUpperCase()}
+      </span>
+      <div>
+        <strong>{username}</strong>
+        <small>{subtitle}</small>
+      </div>
+      {children}
     </div>
   );
 }
