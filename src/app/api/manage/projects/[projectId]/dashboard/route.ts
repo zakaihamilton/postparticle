@@ -1,11 +1,7 @@
 import { json } from "@/lib/http";
-import { manageHandler, manageProject } from "@/lib/manage-api";
+import { projectHandler } from "@/lib/manage-api";
 import { readWorkspaceDashboard } from "@/lib/workspace-dashboard";
 
-type Context = { params: Promise<{ projectId: string }> };
-
-export const GET = manageHandler(async (request: Request, context: Context) => {
-  const { projectId } = await context.params;
-  const { store } = await manageProject(request, projectId);
-  return json(await readWorkspaceDashboard(store));
-});
+export const GET = projectHandler(async (_request, { store }) =>
+  json(await readWorkspaceDashboard(store)),
+);

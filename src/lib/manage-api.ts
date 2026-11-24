@@ -51,3 +51,20 @@ export async function manageProject(
     store: projectStoreFor(actor.organizationId, project),
   };
 }
+
+export type ProjectRouteContext = { params: Promise<{ projectId: string }> };
+
+export function projectHandler(
+  handler: (
+    request: Request,
+    project: Awaited<ReturnType<typeof manageProject>>,
+  ) => Promise<Response>,
+  admin = false,
+) {
+  return manageHandler(
+    async (request: Request, context: ProjectRouteContext) => {
+      const { projectId } = await context.params;
+      return handler(request, await manageProject(request, projectId, admin));
+    },
+  );
+}

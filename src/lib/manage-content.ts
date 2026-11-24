@@ -10,7 +10,7 @@ import {
 } from "./content";
 import { events } from "./events";
 import { json, readJson } from "./http";
-import { manageProject } from "./manage-api";
+import { manageHandler, manageProject, type ProjectRouteContext } from "./manage-api";
 import { publishMedia } from "./media";
 import type {
   Article,
@@ -66,7 +66,7 @@ async function contentList(
   };
 }
 
-export async function listOrCreateContent(
+async function listOrCreateContent(
   request: Request,
   rawProjectId: string,
   kind: Kind,
@@ -166,4 +166,12 @@ export async function readContentHistory(
       title: data.title,
     }));
   return json(history);
+}
+
+export function projectContentHandlers(kind: Kind) {
+  const handle = manageHandler(
+    async (request: Request, context: ProjectRouteContext) =>
+      listOrCreateContent(request, (await context.params).projectId, kind),
+  );
+  return { GET: handle, POST: handle };
 }

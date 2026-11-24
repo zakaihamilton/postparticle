@@ -2,16 +2,10 @@ import { z } from "zod";
 import { HttpError, identifier } from "@/lib/config";
 import { getRecord } from "@/lib/content";
 import { json } from "@/lib/http";
-import { manageHandler, manageProject } from "@/lib/manage-api";
+import { projectHandler } from "@/lib/manage-api";
 import { listMedia } from "@/lib/media";
 
-type Context = { params: Promise<{ projectId: string }> };
-
-export const GET = manageHandler(async (request: Request, context: Context) => {
-  const { store } = await manageProject(
-    request,
-    (await context.params).projectId,
-  );
+export const GET = projectHandler(async (request, { store }) => {
   const query = new URL(request.url).searchParams;
   const kind = z.enum(["articles", "documents"]).parse(query.get("kind"));
   const rawId = query.get("id");

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import type { Actor } from "@/lib/types";
 import { OrganizationSwitcher } from "./organization-switcher";
-import { api, Brand, Icon, Notice, ThemeSwitch } from "./ui";
+import { api, Brand, Icon, Notice, SidebarProfile, ThemeSwitch } from "./ui";
 import primitives from "./workspace-primitives.module.css";
 import styles from "./workspace-shell.module.css";
 
@@ -101,17 +101,10 @@ export function AccountArea({
           )}
         </nav>
         <div className={styles.sidebarBottom}>
-          <div className={styles.profile}>
-            <span className={styles.userAvatar}>
-              {actor.username.slice(0, 1).toUpperCase()}
-            </span>
-            <div>
-              <strong>{actor.username}</strong>
-              <small>
-                {actor.platformAdmin ? "Platform administrator" : "Account"}
-              </small>
-            </div>
-          </div>
+          <SidebarProfile
+            username={actor.username}
+            subtitle={actor.platformAdmin ? "Platform administrator" : "Account"}
+          />
         </div>
       </aside>
       <div className={styles.contentArea}>

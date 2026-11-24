@@ -90,13 +90,46 @@ export function AccountFrame({
             </div>
           </header>
           <main className={accountStyles.accountMain}>{children}</main>
-          <footer className={styles.appFooter}>
-            <Skeleton width={200} height={10} />
-            <Skeleton width={83} height={10} />
-          </footer>
+          <AppFooterSkeleton className={styles.appFooter} />
         </div>
       </div>
     </LoadingPage>
+  );
+}
+
+export function AppFooterSkeleton({ className }: { className: string }) {
+  return (
+    <footer className={className}>
+      <Skeleton width={200} height={10} />
+      <Skeleton width={83} height={10} />
+    </footer>
+  );
+}
+
+export function AccountRowsPanelSkeleton({
+  titleWidth,
+  subtitleWidth,
+  actionWidth,
+  actionHeight,
+  rows,
+}: {
+  titleWidth: number;
+  subtitleWidth: number;
+  actionWidth: number;
+  actionHeight: number;
+  rows: React.ReactNode;
+}) {
+  return (
+    <section className={styles.skeletonPanel}>
+      <div className={styles.panelHeading}>
+        <div className={styles.headingCopy}>
+          <Skeleton width={titleWidth} height={17} />
+          <Skeleton width={subtitleWidth} height={11} />
+        </div>
+        <Skeleton width={actionWidth} height={actionHeight} radius={5} />
+      </div>
+      <div className={accountStyles.accountRows}>{rows}</div>
+    </section>
   );
 }
 

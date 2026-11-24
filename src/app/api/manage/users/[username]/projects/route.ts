@@ -12,11 +12,16 @@ import { usernameSchema } from "@/lib/username";
 
 type Context = { params: Promise<{ username: string }> };
 
-export const GET = manageHandler(async (request: Request, context: Context) => {
+async function resolveManagedUser(request: Request, context: Context) {
   const actor = await managePlatformAdmin(request);
   const username = usernameSchema.parse((await context.params).username);
   const user = await getUser(username);
   if (!user) throw new HttpError(404, "Account not found");
+  return { actor, username, user };
+}
+
+export const GET = manageHandler(async (request: Request, context: Context) => {
+  const { actor, username, user } = await resolveManagedUser(request, context);
   const projects = (await getProjectRegistry(actor.organizationId)).filter(
     productionVisible,
   );
@@ -37,10 +42,10 @@ export const GET = manageHandler(async (request: Request, context: Context) => {
 
 export const POST = manageHandler(
   async (request: Request, context: Context) => {
-    const actor = await managePlatformAdmin(request);
-    const username = usernameSchema.parse((await context.params).username);
-    const user = await getUser(username);
-    if (!user) throw new HttpError(404, "Account not found");
+    const { actor, username, user } = await resolveManagedUser(
+      request,
+      context,
+    );
     if (user.platformAdmin)
       throw new HttpError(
         400,

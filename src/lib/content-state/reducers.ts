@@ -117,6 +117,12 @@ export function eventMatchesPath(kind: Kind, value: unknown, key: string) {
   return recordId === contentId;
 }
 
+function sortEventsById<T extends Content>(history: Event<T>[]) {
+  return [...history].sort((a, b) =>
+    a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
+  );
+}
+
 export function reduceContent<T extends Content>(
   id: string,
   history: Event<T>[],
@@ -129,9 +135,7 @@ export function reduceContent<T extends Content>(
   let updatedAt = initial?.updatedAt ?? "";
   let publishedAt: string | null = initial?.publishedAt ?? null;
   let revision = initial?.revision ?? "";
-  for (const event of [...history].sort((a, b) =>
-    a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
-  )) {
+  for (const event of sortEventsById(history)) {
     if (event.action === "save") {
       draft = event.data;
       createdAt ||= event.at;
@@ -193,9 +197,7 @@ export function reduceDashboardArticle(
   let published = initial?.published ?? false;
   let trashed = initial?.trashed ?? false;
   let updatedAt = initial?.updatedAt ?? "";
-  for (const event of [...history].sort((a, b) =>
-    a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
-  )) {
+  for (const event of sortEventsById(history)) {
     if (event.action === "save") {
       const article = event.data as Article;
       draft = {

@@ -29,6 +29,7 @@
     "health:visual": "if [ \"$RUN_VISUAL_REGRESSION\" = \"1\" ] || [ \"$(uname)\" = \"Darwin\" ]; then pnpm run build && pnpm run example:build && playwright test tests/e2e/guardrails.spec.ts --project=desktop; else echo \"Visual regression runs in the macOS guardrail job.\"; fi",
     "health:interactions": "vitest run tests/ui/user-interactions.test.tsx",
     "health:styles": "stylelint --formatter json \"**/*.{css,pcss,postcss}\"",
+    "duplication": "jscpd src",
     "dev:preview": "WATCHPACK_POLLING=true next dev --webpack --hostname 127.0.0.1 --port 3300"
   },
   "engines": {
@@ -59,6 +60,7 @@
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "jscpd": "^5.4.3",
     "jsdom": "^26.1.0",
     "knip": "^6.39.0",
     "repnix": "^1.1.0",

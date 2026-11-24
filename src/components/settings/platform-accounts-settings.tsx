@@ -6,6 +6,7 @@ import { api, Notice } from "../ui";
 import styles from "../workspace-primitives.module.css";
 import { PlatformAccountProjectAccess } from "./platform-account-project-access";
 import settingsStyles from "./settings.module.css";
+import { loadWhileActive } from "./settings-helpers";
 
 type PlatformUser = {
   username: string;
@@ -29,16 +30,13 @@ export function PlatformAccountsSettings({
 
   useEffect(() => {
     let active = true;
-    request<PlatformUser[]>("/api/manage/users")
-      .then((accounts) => {
-        if (active) setUsers(accounts);
-      })
-      .catch((e) => {
-        if (active) setError((e as Error).message);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+    loadWhileActive(
+      request<PlatformUser[]>("/api/manage/users"),
+      () => active,
+      setUsers,
+      setError,
+      setLoading,
+    );
     return () => {
       active = false;
     };

@@ -1,5 +1,10 @@
 import accountStyles from "./account-skeletons.module.css";
-import { AccountFrame, HeadingSkeleton, Skeleton } from "./skeleton-primitives";
+import {
+  AccountFrame,
+  AccountRowsPanelSkeleton,
+  HeadingSkeleton,
+  Skeleton,
+} from "./skeleton-primitives";
 import styles from "./skeleton-primitives.module.css";
 
 export default function AccountProjectsPageSkeleton() {
@@ -37,32 +42,27 @@ export default function AccountProjectsPageSkeleton() {
           <Skeleton width={132} height={40} radius={5} />
         </div>
       </section>
-      <section className={styles.skeletonPanel}>
-        <div className={styles.panelHeading}>
-          <div className={styles.headingCopy}>
-            <Skeleton width={135} height={17} />
-            <Skeleton width={92} height={11} />
-          </div>
-          <Skeleton width={78} height={32} radius={5} />
-        </div>
-        <div className={accountStyles.accountRows}>
-          {[0, 1, 2].map((row) => (
-            <div className={accountStyles.accountRow} key={row}>
-              <div className={styles.identity}>
-                <Skeleton width={38} height={38} radius={7} />
-                <div className={styles.identityLines}>
-                  <Skeleton width={row === 1 ? 180 : 132} height={13} />
-                  <Skeleton width="70%" height={10} />
-                </div>
-              </div>
-              <div className={accountStyles.rowActions}>
-                <Skeleton width={93} height={34} radius={5} />
-                <Skeleton width={82} height={34} radius={5} />
+      <AccountRowsPanelSkeleton
+        titleWidth={135}
+        subtitleWidth={92}
+        actionWidth={78}
+        actionHeight={32}
+        rows={[0, 1, 2].map((row) => (
+          <div className={accountStyles.accountRow} key={row}>
+            <div className={styles.identity}>
+              <Skeleton width={38} height={38} radius={7} />
+              <div className={styles.identityLines}>
+                <Skeleton width={row === 1 ? 180 : 132} height={13} />
+                <Skeleton width="70%" height={10} />
               </div>
             </div>
-          ))}
-        </div>
-      </section>
+            <div className={accountStyles.rowActions}>
+              <Skeleton width={93} height={34} radius={5} />
+              <Skeleton width={82} height={34} radius={5} />
+            </div>
+          </div>
+        ))}
+      />
     </AccountFrame>
   );
 }

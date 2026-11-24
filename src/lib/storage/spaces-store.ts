@@ -265,31 +265,24 @@ export class SpacesStore implements Store {
         MaxKeys: 1000,
       }),
     );
+    const toVersionIdentifiers = (
+      items: Array<{ Key?: string; VersionId?: string }> | undefined,
+    ) =>
+      (items ?? []).flatMap((item) =>
+        item.Key
+          ? [
+              {
+                Key: item.Key,
+                ...(item.VersionId === undefined
+                  ? {}
+                  : { VersionId: item.VersionId }),
+              },
+            ]
+          : [],
+      );
     const objects = [
-      ...(page.Versions ?? []).flatMap((item) =>
-        item.Key
-          ? [
-              {
-                Key: item.Key,
-                ...(item.VersionId === undefined
-                  ? {}
-                  : { VersionId: item.VersionId }),
-              },
-            ]
-          : [],
-      ),
-      ...(page.DeleteMarkers ?? []).flatMap((item) =>
-        item.Key
-          ? [
-              {
-                Key: item.Key,
-                ...(item.VersionId === undefined
-                  ? {}
-                  : { VersionId: item.VersionId }),
-              },
-            ]
-          : [],
-      ),
+      ...toVersionIdentifiers(page.Versions),
+      ...toVersionIdentifiers(page.DeleteMarkers),
     ];
     if (objects.length) {
       const deleted = await this.client.send(

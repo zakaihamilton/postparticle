@@ -1,5 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
+import { feedHour } from "./content-state/reducers";
 import type { Store } from "./storage";
 import { mapBounded } from "./storage";
 import type { Event, Kind } from "./types";
@@ -16,14 +17,7 @@ export interface ContentEventFeedEntry {
 const contentFeedRoot = (kind: Kind) => `indexes/content/${kind}/feed`;
 
 export function contentEventFeedKey(kind: Kind, at: string, eventId: string) {
-  const date = new Date(at);
-  const partition = [
-    date.getUTCFullYear().toString().padStart(4, "0"),
-    String(date.getUTCMonth() + 1).padStart(2, "0"),
-    String(date.getUTCDate()).padStart(2, "0"),
-    String(date.getUTCHours()).padStart(2, "0"),
-  ].join("/");
-  return `${contentFeedRoot(kind)}/${partition}/${eventId}.json`;
+  return `${contentFeedRoot(kind)}/${feedHour(at)}/${eventId}.json`;
 }
 
 export function contentEventFeedPrefix(kind: Kind) {

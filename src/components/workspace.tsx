@@ -18,7 +18,14 @@ import {
   useNavigationGuard,
 } from "./navigation-guard";
 import { OrganizationSwitcher } from "./organization-switcher";
-import { api, BrandContent, Icon, Notice, ThemeSwitch } from "./ui";
+import {
+  api,
+  BrandContent,
+  Icon,
+  Notice,
+  SidebarProfile,
+  ThemeSwitch,
+} from "./ui";
 import primitives from "./workspace-primitives.module.css";
 import styles from "./workspace-shell.module.css";
 
@@ -148,14 +155,7 @@ function WorkspaceContent({
             <span className={styles.onlineDot} />
             Your content, in your Space
           </div>
-          <div className={styles.profile}>
-            <span className={styles.userAvatar}>
-              {actor.username.slice(0, 1).toUpperCase()}
-            </span>
-            <div>
-              <strong>{actor.username}</strong>
-              <small>{role}</small>
-            </div>
+          <SidebarProfile username={actor.username} subtitle={role}>
             <button
               aria-label="Log out"
               className={styles.iconButton}
@@ -173,7 +173,7 @@ function WorkspaceContent({
             >
               <Icon name="logout" size={17} />
             </button>
-          </div>
+          </SidebarProfile>
         </div>
       }
       toolbar={

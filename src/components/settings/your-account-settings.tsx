@@ -1,14 +1,10 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useId, useState } from "react";
-import {
-  clearFieldError,
-  FieldError,
-  type FieldErrors,
-  validateForm,
-} from "../form-validation";
+import { FieldError, validateForm } from "../form-validation";
 import { api, Notice } from "../ui";
 import styles from "../workspace-primitives.module.css";
+import { useSettingsFeedback, useValidatedForm } from "./settings-helpers";
+
 export function YourAccountSettings({
   minimumPasswordLength,
   request = api,
@@ -17,23 +13,9 @@ export function YourAccountSettings({
   request?: typeof api;
 }) {
   const router = useRouter();
-  const validationId = useId().replace(/:/g, "");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  async function run(task: () => Promise<void>) {
-    setError("");
-    setMessage("");
-    setBusy(true);
-    try {
-      await task();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
+  const { error, message, busy, run } = useSettingsFeedback();
+  const { validationId, fieldErrors, setFieldErrors, handleFormChange } =
+    useValidatedForm();
   return (
     <>
       <div className={styles.pageHeading}>
@@ -53,10 +35,7 @@ export function YourAccountSettings({
         <form
           noValidate
           className={styles.formSection}
-          onChange={(event) => {
-            if (event.target instanceof HTMLInputElement)
-              clearFieldError(setFieldErrors, event.target.name);
-          }}
+          onChange={handleFormChange}
           onSubmit={(e) => {
             e.preventDefault();
             const form = e.currentTarget;

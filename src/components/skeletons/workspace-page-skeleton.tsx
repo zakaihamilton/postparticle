@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import guideStyles from "./guide-skeletons.module.css";
 import {
+  AppFooterSkeleton,
   HeadingSkeleton,
   LoadingPage,
   Skeleton,
@@ -60,33 +61,13 @@ export default function WorkspacePageSkeleton() {
             <Skeleton width={12} height={12} />
           </div>
           <Skeleton width={92} height={9} />
-          <nav className={styles.workspaceNav}>
-            {workspaceViews.slice(0, 4).map((item) => (
-              <div
-                className={`${styles.workspaceNavItem} ${view === item.id ? primitiveStyles.navCurrent : ""}`}
-                key={item.id || "overview"}
-              >
-                <Skeleton width={18} height={18} radius={4} />
-                <Skeleton width={item.width} height={12} />
-              </div>
-            ))}
-          </nav>
+          <WorkspaceNavGroup items={workspaceViews.slice(0, 4)} view={view} />
           <Skeleton
             width={59}
             height={9}
             className={primitiveStyles.navCaption}
           />
-          <nav className={styles.workspaceNav}>
-            {workspaceViews.slice(4).map((item) => (
-              <div
-                className={`${styles.workspaceNavItem} ${view === item.id ? primitiveStyles.navCurrent : ""}`}
-                key={item.id}
-              >
-                <Skeleton width={18} height={18} radius={4} />
-                <Skeleton width={item.width} height={12} />
-              </div>
-            ))}
-          </nav>
+          <WorkspaceNavGroup items={workspaceViews.slice(4)} view={view} />
           <div className={styles.workspaceSidebarBottom}>
             <Skeleton width="88%" height={11} />
             <div className={primitiveStyles.identity}>
@@ -126,13 +107,32 @@ export default function WorkspacePageSkeleton() {
               renderView(view)
             )}
           </main>
-          <footer className={primitiveStyles.appFooter}>
-            <Skeleton width={200} height={10} />
-            <Skeleton width={83} height={10} />
-          </footer>
+          <AppFooterSkeleton className={primitiveStyles.appFooter} />
         </div>
       </div>
     </LoadingPage>
+  );
+}
+
+function WorkspaceNavGroup({
+  items,
+  view,
+}: {
+  items: readonly (typeof workspaceViews)[number][];
+  view: string;
+}) {
+  return (
+    <nav className={styles.workspaceNav}>
+      {items.map((item) => (
+        <div
+          className={`${styles.workspaceNavItem} ${view === item.id ? primitiveStyles.navCurrent : ""}`}
+          key={item.id || "overview"}
+        >
+          <Skeleton width={18} height={18} radius={4} />
+          <Skeleton width={item.width} height={12} />
+        </div>
+      ))}
+    </nav>
   );
 }
 
@@ -192,36 +192,64 @@ function DashboardSkeleton() {
   );
 }
 
-function ContentListSkeleton() {
+function FilteredPanelSkeleton({
+  titleWidth,
+  descriptionWidth,
+  filters,
+  children,
+}: {
+  titleWidth: string;
+  descriptionWidth: string;
+  filters: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <>
-      <HeadingSkeleton titleWidth="32%" descriptionWidth="59%" action />
+      <HeadingSkeleton
+        titleWidth={titleWidth}
+        descriptionWidth={descriptionWidth}
+        action
+      />
       <section className={primitiveStyles.skeletonPanel}>
-        <div className={styles.tableFilters}>
-          <Skeleton className={styles.filterSkeleton} />
-          <Skeleton className={styles.filterSkeleton} />
-          <Skeleton className={styles.filterSkeleton} />
-          <Skeleton className={styles.filterSkeleton} />
-        </div>
-        <div className={styles.tableLabels}>
-          <Skeleton width="37%" height={10} />
-          <Skeleton width="47%" height={10} />
-          <Skeleton width="55%" height={10} />
-          <Skeleton width={12} height={12} />
-        </div>
-        {[0, 1, 2, 3, 4].map((row) => (
-          <div className={styles.tableSkeletonRow} key={row}>
-            <div className={primitiveStyles.profileCopy}>
-              <Skeleton width={`${72 - row * 4}%`} height={13} />
-              <Skeleton width={`${87 - row * 6}%`} height={10} />
-            </div>
-            <Skeleton width="61%" height={11} />
-            <Skeleton width="67%" height={11} />
-            <Skeleton width={13} height={13} />
-          </div>
-        ))}
+        <div className={styles.tableFilters}>{filters}</div>
+        {children}
       </section>
     </>
+  );
+}
+
+function ContentListSkeleton() {
+  return (
+    <FilteredPanelSkeleton
+      titleWidth="32%"
+      descriptionWidth="59%"
+      filters={
+        <>
+          <Skeleton className={styles.filterSkeleton} />
+          <Skeleton className={styles.filterSkeleton} />
+          <Skeleton className={styles.filterSkeleton} />
+          <Skeleton className={styles.filterSkeleton} />
+        </>
+      }
+    >
+      <div className={styles.tableLabels}>
+        <Skeleton width="37%" height={10} />
+        <Skeleton width="47%" height={10} />
+        <Skeleton width="55%" height={10} />
+        <Skeleton width={12} height={12} />
+      </div>
+      {[0, 1, 2, 3, 4].map((row) => (
+        <div className={styles.tableSkeletonRow} key={row}>
+          <div className={primitiveStyles.profileCopy}>
+            <Skeleton width={`${72 - row * 4}%`} height={13} />
+            <Skeleton width={`${87 - row * 6}%`} height={10} />
+          </div>
+          <Skeleton width="61%" height={11} />
+          <Skeleton width="67%" height={11} />
+          <Skeleton width={13} height={13} />
+        </div>
+      ))}
+    </FilteredPanelSkeleton>
   );
 }
 
@@ -272,27 +300,29 @@ function EditorSkeleton() {
 
 function MediaLibrarySkeleton() {
   return (
-    <>
-      <HeadingSkeleton titleWidth="42%" descriptionWidth="63%" action />
-      <section className={primitiveStyles.skeletonPanel}>
-        <div className={styles.tableFilters}>
+    <FilteredPanelSkeleton
+      titleWidth="42%"
+      descriptionWidth="63%"
+      filters={
+        <>
           <Skeleton className={styles.filterSkeleton} />
           <Skeleton className={styles.filterSkeleton} />
           <Skeleton width={118} height={40} className={styles.filterSkeleton} />
+        </>
+      }
+    >
+      <div className={primitiveStyles.panelBody}>
+        <div className={styles.mediaGrid}>
+          {[0, 1, 2, 3, 4, 5, 6, 7].map((item) => (
+            <div className={styles.mediaCard} key={item}>
+              <Skeleton className={styles.mediaThumb} />
+              <Skeleton width="76%" height={11} />
+              <Skeleton width="48%" height={9} />
+            </div>
+          ))}
         </div>
-        <div className={primitiveStyles.panelBody}>
-          <div className={styles.mediaGrid}>
-            {[0, 1, 2, 3, 4, 5, 6, 7].map((item) => (
-              <div className={styles.mediaCard} key={item}>
-                <Skeleton className={styles.mediaThumb} />
-                <Skeleton width="76%" height={11} />
-                <Skeleton width="48%" height={9} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    </>
+      </div>
+    </FilteredPanelSkeleton>
   );
 }
 

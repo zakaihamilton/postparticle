@@ -1,25 +1,14 @@
 import { performance } from "node:perf_hooks";
-import { HttpError } from "@/lib/config";
-import { errorResponse, json } from "@/lib/http";
-import { publicProjectStore } from "@/lib/projects";
-import { listPublicArticleMetadata } from "@/lib/public";
+import { json } from "@/lib/http";
+import { listPublicArticleMetadata, publicProjectGet } from "@/lib/public";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
+export function GET(
   request: Request,
   { params }: { params: Promise<{ projectId: string }> },
 ) {
-  try {
-    const projectId = (await params).projectId;
-    const url = new URL(request.url);
-    const requestedOrganizationId = url.searchParams.get("organizationId");
-    if (!requestedOrganizationId)
-      throw new HttpError(400, "organizationId is required");
-    const { store } = await publicProjectStore(
-      requestedOrganizationId,
-      projectId,
-    );
+  return publicProjectGet(request, params, async ({ url, store }) => {
     const query = Object.fromEntries(url.searchParams);
     delete query.organizationId;
     const startedAt = performance.now();
@@ -35,7 +24,5 @@ export async function GET(
       "Cache-Control":
         "public, max-age=0, s-maxage=45, stale-while-revalidate=15",
     });
-  } catch (error) {
-    return errorResponse(error);
-  }
+  });
 }
